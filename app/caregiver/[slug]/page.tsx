@@ -11,6 +11,7 @@ import { breadcrumbJsonLd, pageMeta } from "@/lib/seo";
 import { siteUrl } from "@/lib/constants";
 import { trustLabel } from "@/lib/trust";
 import { WORK_VERIFICATION_LABELS } from "@/lib/constants";
+import { slugifySuburb } from "@/prisma/data/suburbs";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -112,7 +113,19 @@ export default async function CaregiverProfilePage({
               <h1 className="text-3xl font-semibold text-ink">{carer.user.name}</h1>
               <p className="mt-1 text-stone-600">{carer.headline}</p>
               <p className="mt-1 text-sm text-stone-500">
-                {carer.suburb}, {carer.city.name} {carer.city.state.abbrev} · {carer.yearsExperience} years
+                {primary ? (
+                  <Link
+                    href={`/caregivers/${primary.slug}/${carer.city.state.slug}/${carer.city.slug}/${slugifySuburb(carer.suburb)}`}
+                    className="hover:text-teal"
+                  >
+                    {carer.suburb}, {carer.city.name} {carer.city.state.abbrev}
+                  </Link>
+                ) : (
+                  <>
+                    {carer.suburb}, {carer.city.name} {carer.city.state.abbrev}
+                  </>
+                )}{" "}
+                · {carer.yearsExperience} years
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Badge tone="teal">{trustLabel(carer.trustScore)} · {carer.trustScore}/100</Badge>

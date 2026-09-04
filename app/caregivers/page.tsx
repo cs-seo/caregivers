@@ -1,5 +1,7 @@
 import { DirectoryResults } from "@/components/directory-page";
+import { FaqBlock, LinkGrid } from "@/components/seo-landing";
 import { parseFilters } from "@/lib/directory";
+import { getSpecialties, getStates } from "@/lib/queries";
 import { pageMeta } from "@/lib/seo";
 
 export const metadata = pageMeta({
@@ -14,7 +16,11 @@ export default async function CaregiversPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const params = await searchParams;
+  const [params, specialties, states] = await Promise.all([
+    searchParams,
+    getSpecialties(),
+    getStates(),
+  ]);
   const filters = parseFilters(params);
   const current = {
     q: filters.q,
@@ -41,6 +47,40 @@ export default async function CaregiversPage({
       filterAction="/caregivers"
       current={current}
       path="/caregivers"
+      extras={
+        <>
+          <FaqBlock
+            faqs={[
+              {
+                q: "How do I hire a carer in Australia?",
+                a: "Search by specialty and suburb, open a verified profile, then Instant Book. Payment is held in escrow until the booking is complete.",
+              },
+              {
+                q: "What checks do CareProof carers have?",
+                a: "Profiles show WWCC or the local equivalent, NDIS Worker Screening, police checks, AHPRA and first aid — with expiry dates.",
+              },
+              {
+                q: "Can I search by suburb?",
+                a: "Yes. Open Cities & suburbs, pick a city, then a suburb page such as nannies in Bondi or aged care in Marrickville.",
+              },
+            ]}
+          />
+          <LinkGrid
+            title="Browse by care type"
+            links={specialties.map((spec) => ({
+              href: `/caregivers/${spec.slug}`,
+              label: spec.pluralName,
+            }))}
+          />
+          <LinkGrid
+            title="Browse by state"
+            links={states.map((state) => ({
+              href: `/locations/${state.slug}`,
+              label: state.name,
+            }))}
+          />
+        </>
+      }
     />
   );
 }

@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { SUBURBS_BY_CITY, slugifySuburb } from "./data/suburbs";
 
 const prisma = new PrismaClient();
 const DEMO_PASSWORD = "CareProof123!";
@@ -1265,6 +1266,7 @@ async function main() {
   await prisma.caregiverProfile.deleteMany();
   await prisma.familyProfile.deleteMany();
   await prisma.user.deleteMany();
+  await prisma.suburb.deleteMany();
   await prisma.city.deleteMany();
   await prisma.state.deleteMany();
   await prisma.specialty.deleteMany();
@@ -1314,6 +1316,23 @@ async function main() {
     if (!found) throw new Error(`Missing city ${state}/${city}`);
     return found.id;
   };
+
+  let suburbCount = 0;
+  for (const [stateSlug, cities] of Object.entries(SUBURBS_BY_CITY)) {
+    for (const [citySlug, names] of Object.entries(cities)) {
+      const id = cityRecords.find((c) => c.key === `${stateSlug}:${citySlug}`)?.id;
+      if (!id) continue;
+      const unique = [...new Set(names)];
+      await prisma.suburb.createMany({
+        data: unique.map((name) => ({
+          name,
+          slug: slugifySuburb(name),
+          cityId: id,
+        })),
+      });
+      suburbCount += unique.length;
+    }
+  }
 
   const familyUsers = await Promise.all([
     prisma.user.create({
@@ -1719,7 +1738,9 @@ async function main() {
   await refreshAggregates(chloe.id);
   await refreshAggregates(william.id);
 
-  console.log(`Seeded ${carerProfiles.length} carers, ${familyUsers.length} families, ${requests.length} jobs.`);
+  console.log(
+    `Seeded ${carerProfiles.length} carers, ${familyUsers.length} families, ${requests.length} jobs, ${suburbCount} suburbs.`,
+  );
   console.log("Demo logins: family@careproof.com.au / carer@careproof.com.au / CareProof123!");
 }
 

@@ -15,7 +15,7 @@ export function pageMeta({
   const url = `${siteUrl()}${path}`;
   const fullTitle = title.includes(SITE_NAME) ? title : `${title} | ${SITE_NAME}`;
   return {
-    title: fullTitle,
+    title,
     description,
     alternates: { canonical: url },
     robots: noIndex ? { index: false, follow: false } : { index: true, follow: true },

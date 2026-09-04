@@ -57,8 +57,19 @@ model City {
   caregivers     CaregiverProfile[]
   families       FamilyProfile[]
   requests       CareRequest[]
+  suburbs        Suburb[]
 
   @@unique([stateId, slug])
+}
+
+model Suburb {
+  id     String @id @default(cuid())
+  slug   String
+  name   String
+  cityId String
+  city   City   @relation(fields: [cityId], references: [id], onDelete: Cascade)
+
+  @@unique([cityId, slug])
 }
 
 model Specialty {

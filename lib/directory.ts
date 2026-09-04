@@ -11,6 +11,7 @@ export function parseFilters(
     specialty: get("specialty") || undefined,
     state: get("state") || undefined,
     city: get("city") || undefined,
+    suburb: get("suburb") || undefined,
     q: get("q") || undefined,
     instantBook: get("instantBook") === "1",
     availableNow: get("availableNow") === "1",

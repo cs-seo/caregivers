@@ -17,6 +17,8 @@ export async function DirectoryResults({
   filterAction,
   current,
   path,
+  nearbyNote,
+  extras,
 }: {
   title: string;
   intro: string;
@@ -25,10 +27,12 @@ export async function DirectoryResults({
   filterAction: string;
   current: Record<string, string | undefined>;
   path: string;
+  nearbyNote?: string;
+  extras?: React.ReactNode;
 }) {
   const [caregivers, stats] = await Promise.all([
-    searchCaregivers(filters),
-    directoryStats(filters),
+    nearbyNote ? searchCaregivers({ ...filters, suburb: undefined }) : searchCaregivers(filters),
+    directoryStats(nearbyNote ? { ...filters, suburb: undefined } : filters),
   ]);
 
   return (
@@ -40,6 +44,15 @@ export async function DirectoryResults({
               .filter((item) => item.href)
               .map((item) => ({ name: item.name, path: item.href! })),
           ),
+          {
+            "@context": "https://schema.org",
+            "@type": "Service",
+            name: title,
+            description: intro,
+            areaServed: "AU",
+            provider: { "@type": "Organization", name: "CareProof" },
+            url: `${siteUrl()}${path}`,
+          },
           {
             "@context": "https://schema.org",
             "@type": "ItemList",
@@ -57,7 +70,8 @@ export async function DirectoryResults({
       />
       <Breadcrumbs items={breadcrumbs} />
       <h1 className="text-3xl font-semibold text-ink">{title}</h1>
-      <p className="mt-3 max-w-3xl text-stone-600">{intro}</p>
+      <p className="mt-3 max-w-3xl text-pretty text-stone-600">{intro}</p>
+      {nearbyNote ? <p className="mt-3 text-sm text-teal-deep">{nearbyNote}</p> : null}
       <p className="mt-2 text-sm text-stone-500">
         {stats.count} carers
         {stats.avgRateCents ? ` · average ${formatAud(stats.avgRateCents)}/hr` : ""}
@@ -78,6 +92,7 @@ export async function DirectoryResults({
           )}
         </div>
       </div>
+      {extras}
     </div>
   );
 }

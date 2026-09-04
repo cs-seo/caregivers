@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { DirectoryResults } from "@/components/directory-page";
+import { FaqBlock, LinkGrid, RelatedSpecialties } from "@/components/seo-landing";
 import { parseFilters } from "@/lib/directory";
-import { getSpecialty, getStates } from "@/lib/queries";
+import { HIRE_GUIDES, landingDescription, landingFaqs, landingH1, landingIntro, landingTitle } from "@/lib/seo-content";
+import { directoryStats, getSpecialties, getSpecialty, getStates } from "@/lib/queries";
 import { pageMeta } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -12,9 +14,10 @@ export async function generateMetadata({
   const { specialty } = await params;
   const record = await getSpecialty(specialty);
   if (!record) return {};
+  const place = { specialty: record };
   return pageMeta({
-    title: record.seoTitle,
-    description: record.seoDescription,
+    title: landingTitle(place),
+    description: landingDescription(place),
     path: `/caregivers/${record.slug}`,
   });
 }
@@ -27,44 +30,70 @@ export default async function SpecialtyPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const [{ specialty }, query] = await Promise.all([params, searchParams]);
-  const record = await getSpecialty(specialty);
+  const [record, states, specialties] = await Promise.all([
+    getSpecialty(specialty),
+    getStates(),
+    getSpecialties(),
+  ]);
   if (!record) notFound();
-  const states = await getStates();
   const filters = { ...parseFilters(query), specialty: record.slug };
+  const stats = await directoryStats(filters);
+  const place = { specialty: record };
+  const guide = HIRE_GUIDES.find((item) => item.specialty === record.slug);
 
   return (
-    <div>
-      <DirectoryResults
-        title={record.seoTitle}
-        intro={`${record.description} Browse verified ${record.pluralName.toLowerCase()} nationwide, or jump to a state below.`}
-        breadcrumbs={[
-          { name: "Home", href: "/" },
-          { name: "Carers", href: "/caregivers" },
-          { name: record.pluralName },
-        ]}
-        filters={filters}
-        filterAction={`/caregivers/${record.slug}`}
-        current={{
-          q: filters.q,
-          instantBook: filters.instantBook ? "1" : undefined,
-          availableNow: filters.availableNow ? "1" : undefined,
-          wwcc: filters.wwcc ? "1" : undefined,
-          ndis: filters.ndis ? "1" : undefined,
-        }}
-        path={`/caregivers/${record.slug}`}
-      />
-      <section className="mt-10">
-        <h2 className="text-xl font-semibold text-ink">{record.pluralName} by state</h2>
-        <ul className="mt-4 grid gap-2 sm:grid-cols-2 md:grid-cols-4">
-          {states.map((state) => (
-            <li key={state.id}>
-              <a className="text-teal hover:underline" href={`/caregivers/${record.slug}/${state.slug}`}>
-                {state.name}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </section>
-    </div>
+    <DirectoryResults
+      title={landingH1(place)}
+      intro={landingIntro(place, stats)}
+      breadcrumbs={[
+        { name: "Home", href: "/" },
+        { name: "Carers", href: "/caregivers" },
+        { name: record.pluralName },
+      ]}
+      filters={filters}
+      filterAction={`/caregivers/${record.slug}`}
+      current={{
+        q: filters.q,
+        instantBook: filters.instantBook ? "1" : undefined,
+        availableNow: filters.availableNow ? "1" : undefined,
+        wwcc: filters.wwcc ? "1" : undefined,
+        ndis: filters.ndis ? "1" : undefined,
+      }}
+      path={`/caregivers/${record.slug}`}
+      extras={
+        <>
+          <FaqBlock faqs={landingFaqs(place)} />
+          <RelatedSpecialties place={place} specialties={specialties} />
+          <LinkGrid
+            title={`${record.pluralName} by state`}
+            links={states.map((state) => ({
+              href: `/caregivers/${record.slug}/${state.slug}`,
+              label: `${record.pluralName} in ${state.name}`,
+            }))}
+          />
+          <LinkGrid
+            title={`Popular cities for ${record.pluralName.toLowerCase()}`}
+            links={states.flatMap((state) =>
+              state.cities
+                .filter((city) =>
+                  ["sydney", "melbourne", "brisbane", "perth", "adelaide", "canberra", "hobart", "darwin", "gold-coast", "newcastle", "geelong"].includes(
+                    city.slug,
+                  ),
+                )
+                .map((city) => ({
+                  href: `/caregivers/${record.slug}/${state.slug}/${city.slug}`,
+                  label: `${record.pluralName} in ${city.name}`,
+                })),
+            )}
+          />
+          {guide ? (
+            <LinkGrid
+              title="Hiring guide"
+              links={[{ href: `/guides/${guide.slug}`, label: guide.title }]}
+            />
+          ) : null}
+        </>
+      }
+    />
   );
 }

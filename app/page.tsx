@@ -89,6 +89,41 @@ export default async function HomePage() {
       </section>
 
       <section>
+        <h2 className="text-2xl font-semibold text-ink">Popular local searches</h2>
+        <p className="mt-2 text-sm text-stone-600">
+          Long-tail pages for the way people actually search — suburb plus care type.
+        </p>
+        <ul className="mt-4 grid gap-2 text-sm sm:grid-cols-2 md:grid-cols-3">
+          {[
+            ["/caregivers/nannies/nsw/sydney/bondi", "Nannies in Bondi"],
+            ["/caregivers/aged-care/nsw/sydney/marrickville", "Aged care in Marrickville"],
+            ["/caregivers/disability-support/vic/melbourne/brunswick", "NDIS support in Brunswick"],
+            ["/caregivers/babysitters/qld/brisbane/paddington", "Babysitters in Paddington"],
+            ["/caregivers/nannies/wa/perth/claremont", "Nannies in Claremont"],
+            ["/caregivers/aged-care/sa/adelaide/norwood", "Aged care in Norwood"],
+            ["/caregivers/after-school-care/act/canberra/griffith", "After-school care in Griffith"],
+            ["/caregivers/nursing/tas/hobart/sandy-bay", "Nurses in Sandy Bay"],
+            ["/caregivers/disability-support/nt/darwin/nightcliff", "Support workers in Nightcliff"],
+          ].map(([href, label]) => (
+            <li key={href}>
+              <Link className="text-teal hover:underline" href={href}>
+                {label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 text-sm">
+          <Link href="/locations" className="text-teal">
+            Browse every city and suburb
+          </Link>
+          {" · "}
+          <Link href="/guides" className="text-teal">
+            Hiring guides
+          </Link>
+        </p>
+      </section>
+
+      <section>
         <h2 className="text-2xl font-semibold text-ink">Browse by care type</h2>
         <div className="mt-5 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
           {specialties.map((specialty) => (

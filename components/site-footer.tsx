@@ -57,6 +57,16 @@ export async function SiteFooter() {
               </Link>
             </li>
             <li>
+              <Link className="hover:text-white" href="/locations">
+                Cities and suburbs
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-white" href="/guides">
+                Hiring guides
+              </Link>
+            </li>
+            <li>
               <Link className="hover:text-white" href="/post-a-job">
                 Post a care request
               </Link>

@@ -51,7 +51,17 @@ export async function getState(slug: string) {
 export async function getCity(stateSlug: string, citySlug: string) {
   return prisma.city.findFirst({
     where: { slug: citySlug, state: { slug: stateSlug } },
-    include: { state: true },
+    include: { state: true, suburbs: { orderBy: { name: "asc" } } },
+  });
+}
+
+export async function getSuburb(stateSlug: string, citySlug: string, suburbSlug: string) {
+  return prisma.suburb.findFirst({
+    where: {
+      slug: suburbSlug,
+      city: { slug: citySlug, state: { slug: stateSlug } },
+    },
+    include: { city: { include: { state: true, suburbs: { orderBy: { name: "asc" } } } } },
   });
 }
 
@@ -59,6 +69,7 @@ export type DirectoryFilters = {
   specialty?: string;
   state?: string;
   city?: string;
+  suburb?: string;
   q?: string;
   instantBook?: boolean;
   wwcc?: boolean;
@@ -85,6 +96,7 @@ export async function searchCaregivers(filters: DirectoryFilters, take = 60) {
         : {}),
       ...(filters.state ? { city: { state: { slug: filters.state } } } : {}),
       ...(filters.city ? { city: { slug: filters.city } } : {}),
+      ...(filters.suburb ? { suburb: { contains: filters.suburb } } : {}),
       ...(filters.instantBook ? { instantBook: true } : {}),
       ...(filters.availableNow ? { availableNow: true } : {}),
       ...(filters.minRating ? { ratingAvg: { gte: filters.minRating } } : {}),
@@ -103,7 +115,9 @@ export async function searchCaregivers(filters: DirectoryFilters, take = 60) {
   return caregivers.map(withTrust);
 }
 
-export async function directoryStats(filters: Pick<DirectoryFilters, "specialty" | "state" | "city">) {
+export async function directoryStats(
+  filters: Pick<DirectoryFilters, "specialty" | "state" | "city" | "suburb">,
+) {
   const where = {
     ...(filters.specialty
       ? { specialties: { some: { specialty: { slug: filters.specialty } } } }
@@ -123,6 +137,18 @@ export async function directoryStats(filters: Pick<DirectoryFilters, "specialty"
     avgRateCents: Math.round(agg._avg.hourlyRateCents ?? 0),
     avgRating: agg._avg.ratingAvg ?? 0,
   };
+}
+
+export async function searchSuburbOrCity(filters: DirectoryFilters) {
+  if (!filters.suburb) {
+    const caregivers = await searchCaregivers(filters);
+    return { caregivers, nearby: false };
+  }
+  const exact = await searchCaregivers(filters);
+  if (exact.length > 0) return { caregivers: exact, nearby: false };
+  const { suburb: _suburb, ...rest } = filters;
+  const nearby = await searchCaregivers(rest);
+  return { caregivers: nearby, nearby: true };
 }
 
 export async function getCaregiverBySlug(slug: string) {

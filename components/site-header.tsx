@@ -4,9 +4,10 @@ import { SITE_NAME } from "@/lib/constants";
 
 const nav = [
   { href: "/caregivers", label: "Find carers" },
+  { href: "/locations", label: "Cities & suburbs" },
+  { href: "/guides", label: "Guides" },
   { href: "/care-requests", label: "Care requests" },
   { href: "/how-it-works", label: "How it works" },
-  { href: "/trust-and-safety", label: "Trust" },
 ];
 
 export async function SiteHeader() {
