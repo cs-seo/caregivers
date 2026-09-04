@@ -1,0 +1,230 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  passwordHash   String
+  name           String
+  phone          String?
+  role           String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  familyProfile    FamilyProfile?
+  caregiverProfile CaregiverProfile?
+  familyBookings   Booking[]      @relation("FamilyBookings")
+  familyRequests   CareRequest[]
+  reviewsAuthored  Review[]       @relation("ReviewAuthor")
+}
+
+model FamilyProfile {
+  id     String  @id @default(cuid())
+  userId String  @unique
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  suburb String?
+  cityId String?
+  city   City?   @relation(fields: [cityId], references: [id])
+  bio    String?
+}
+
+model State {
+  id             String @id @default(cuid())
+  slug           String @unique
+  name           String
+  abbrev         String
+  seoTitle       String
+  seoDescription String
+  cities         City[]
+}
+
+model City {
+  id             String  @id @default(cuid())
+  slug           String
+  name           String
+  stateId        String
+  state          State   @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  seoTitle       String
+  seoDescription String
+  lat            Float?
+  lng            Float?
+  caregivers     CaregiverProfile[]
+  families       FamilyProfile[]
+  requests       CareRequest[]
+
+  @@unique([stateId, slug])
+}
+
+model Specialty {
+  id             String @id @default(cuid())
+  slug           String @unique
+  name           String
+  pluralName     String
+  description    String
+  seoTitle       String
+  seoDescription String
+  caregivers     CaregiverSpecialty[]
+  requests       CareRequest[]
+  bookings       Booking[]
+}
+
+model CaregiverProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slug            String   @unique
+  headline        String
+  bio             String
+  hourlyRateCents Int
+  yearsExperience Int
+  suburb          String
+  cityId          String
+  city            City     @relation(fields: [cityId], references: [id])
+  abn             String?
+  instantBook     Boolean  @default(false)
+  availableNow    Boolean  @default(false)
+  lastActiveAt    DateTime @default(now())
+  ratingAvg       Float    @default(0)
+  reviewCount     Int      @default(0)
+  completedJobs   Int      @default(0)
+  verifiedHours   Int      @default(0)
+  stripeAccountId String?
+
+  specialties CaregiverSpecialty[]
+  workHistory WorkHistory[]
+  credentials Credential[]
+  bookings    Booking[]
+  proposals   Proposal[]
+  reviews     Review[]
+}
+
+model CaregiverSpecialty {
+  caregiverId String
+  specialtyId String
+  caregiver   CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  specialty   Specialty        @relation(fields: [specialtyId], references: [id], onDelete: Cascade)
+
+  @@id([caregiverId, specialtyId])
+}
+
+model WorkHistory {
+  id           String    @id @default(cuid())
+  caregiverId  String
+  caregiver    CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  employer     String
+  title        String
+  startDate    DateTime
+  endDate      DateTime?
+  duties       String
+  verification String
+  hours        Int       @default(0)
+}
+
+model Credential {
+  id           String    @id @default(cuid())
+  caregiverId  String
+  caregiver    CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  type         String
+  issuingState String?
+  number       String?
+  expiresAt    DateTime?
+  verified     Boolean   @default(false)
+  verifiedAt   DateTime?
+}
+
+model CareRequest {
+  id            String    @id @default(cuid())
+  slug          String    @unique
+  familyId      String
+  family        User      @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  specialtyId   String
+  specialty     Specialty @relation(fields: [specialtyId], references: [id])
+  cityId        String
+  city          City      @relation(fields: [cityId], references: [id])
+  title         String
+  description   String
+  budgetType    String
+  budgetCents   Int
+  startDate     DateTime
+  endDate       DateTime?
+  hoursEstimate Int?
+  status        String    @default("open")
+  createdAt     DateTime  @default(now())
+  proposals     Proposal[]
+  bookings      Booking[]
+}
+
+model Proposal {
+  id            String           @id @default(cuid())
+  careRequestId String
+  careRequest   CareRequest      @relation(fields: [careRequestId], references: [id], onDelete: Cascade)
+  caregiverId   String
+  caregiver     CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  coverLetter   String
+  rateCents     Int
+  status        String           @default("pending")
+  createdAt     DateTime         @default(now())
+
+  @@unique([careRequestId, caregiverId])
+}
+
+model Booking {
+  id               String    @id @default(cuid())
+  familyId         String
+  family           User      @relation("FamilyBookings", fields: [familyId], references: [id], onDelete: Cascade)
+  caregiverId      String
+  caregiver        CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  careRequestId    String?
+  careRequest      CareRequest? @relation(fields: [careRequestId], references: [id])
+  specialtyId      String
+  specialty        Specialty @relation(fields: [specialtyId], references: [id])
+  startAt          DateTime
+  endAt            DateTime
+  hours            Float
+  rateCents        Int
+  subtotalCents    Int
+  platformFeeCents Int
+  gstCents         Int
+  totalCents       Int
+  notes            String?
+  status           String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  payment          Payment?
+  review           Review?
+}
+
+model Payment {
+  id                    String    @id @default(cuid())
+  bookingId             String    @unique
+  booking               Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  provider              String
+  stripePaymentIntentId String?
+  stripeTransferId      String?
+  amountCents           Int
+  platformFeeCents      Int
+  caregiverPayoutCents  Int
+  status                String
+  heldAt                DateTime?
+  releasedAt            DateTime?
+  createdAt             DateTime  @default(now())
+}
+
+model Review {
+  id          String           @id @default(cuid())
+  bookingId   String           @unique
+  booking     Booking          @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  authorId    String
+  author      User             @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  caregiverId String
+  caregiver   CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  rating      Int
+  body        String
+  createdAt   DateTime         @default(now())
+}

@@ -1,0 +1,436 @@
+"use server";
+
+import bcrypt from "bcryptjs";
+import { AuthError } from "next-auth";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { signIn } from "@/auth";
+import { BOOKING_STATUS, ROLES } from "./constants";
+import { autoReleaseIfDue, holdPayment, refundPayment, releasePayment } from "./escrow";
+import { quoteBooking } from "./money";
+import { prisma } from "./prisma";
+import { requireRole, requireUser } from "./session";
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 80);
+}
+
+export async function loginAction(formData: FormData) {
+  const email = String(formData.get("email") ?? "");
+  const password = String(formData.get("password") ?? "");
+  const callbackUrl = String(formData.get("callbackUrl") ?? "/dashboard");
+  try {
+    await signIn("credentials", { email, password, redirectTo: callbackUrl });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      redirect(`/login?error=credentials&callbackUrl=${encodeURIComponent(callbackUrl)}`);
+    }
+    throw error;
+  }
+}
+
+export async function registerAction(formData: FormData) {
+  const name = String(formData.get("name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const password = String(formData.get("password") ?? "");
+  const role = String(formData.get("role") ?? ROLES.FAMILY);
+  if (!name || !email || password.length < 8) {
+    redirect("/register?error=invalid");
+  }
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    redirect("/register?error=exists");
+  }
+  const passwordHash = await bcrypt.hash(password, 10);
+  const user = await prisma.user.create({
+    data: {
+      name,
+      email,
+      passwordHash,
+      role: role === ROLES.CAREGIVER ? ROLES.CAREGIVER : ROLES.FAMILY,
+    },
+  });
+
+  if (user.role === ROLES.FAMILY) {
+    await prisma.familyProfile.create({ data: { userId: user.id } });
+  } else {
+    const city = await prisma.city.findFirst({
+      where: { slug: "sydney" },
+      include: { state: true },
+    });
+    if (!city) throw new Error("Locations not seeded");
+    await prisma.caregiverProfile.create({
+      data: {
+        userId: user.id,
+        slug: `${slugify(name)}-${city.slug}`,
+        headline: "New carer on CareProof",
+        bio: "Tell families about your experience, checks and the care you offer.",
+        hourlyRateCents: 4000,
+        yearsExperience: 1,
+        suburb: city.name,
+        cityId: city.id,
+      },
+    });
+  }
+
+  try {
+    await signIn("credentials", { email, password, redirectTo: "/dashboard" });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      redirect("/login?error=credentials");
+    }
+    throw error;
+  }
+}
+
+export async function createBookingAction(formData: FormData) {
+  const user = await requireRole(ROLES.FAMILY);
+  if (!user) redirect(`/login?callbackUrl=/caregiver/${formData.get("slug")}/book`);
+
+  const slug = String(formData.get("slug") ?? "");
+  const specialtyId = String(formData.get("specialtyId") ?? "");
+  const startAt = new Date(String(formData.get("startAt") ?? ""));
+  const hours = Number(formData.get("hours") ?? 0);
+  const notes = String(formData.get("notes") ?? "").trim();
+
+  const caregiver = await prisma.caregiverProfile.findUnique({
+    where: { slug },
+    include: { specialties: true },
+  });
+  if (!caregiver) throw new Error("Carer not found");
+  if (!specialtyId || Number.isNaN(startAt.getTime()) || hours < 1 || hours > 24) {
+    redirect(`/caregiver/${slug}/book?error=invalid`);
+  }
+
+  const quote = quoteBooking(caregiver.hourlyRateCents, hours);
+  const endAt = new Date(startAt.getTime() + hours * 60 * 60 * 1000);
+  const status = caregiver.instantBook
+    ? BOOKING_STATUS.AWAITING_PAYMENT
+    : BOOKING_STATUS.PENDING_ACCEPTANCE;
+
+  const booking = await prisma.booking.create({
+    data: {
+      familyId: user.id,
+      caregiverId: caregiver.id,
+      specialtyId,
+      startAt,
+      endAt,
+      notes: notes || null,
+      status,
+      hours: quote.hours,
+      rateCents: quote.rateCents,
+      subtotalCents: quote.subtotalCents,
+      platformFeeCents: quote.platformFeeCents,
+      gstCents: quote.gstCents,
+      totalCents: quote.totalCents,
+    },
+  });
+
+  if (caregiver.instantBook) {
+    await holdPayment(booking.id);
+    revalidatePath("/dashboard");
+    redirect(`/dashboard/bookings/${booking.id}?paid=1`);
+  }
+
+  revalidatePath("/dashboard");
+  redirect(`/dashboard/bookings/${booking.id}`);
+}
+
+export async function payBookingAction(formData: FormData) {
+  const user = await requireUser();
+  if (!user) redirect("/login");
+  const bookingId = String(formData.get("bookingId") ?? "");
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+  if (!booking || booking.familyId !== user.id) throw new Error("Not allowed");
+  await holdPayment(booking.id);
+  revalidatePath(`/dashboard/bookings/${booking.id}`);
+  redirect(`/dashboard/bookings/${booking.id}?paid=1`);
+}
+
+export async function acceptBookingAction(formData: FormData) {
+  const user = await requireRole(ROLES.CAREGIVER);
+  if (!user?.caregiverProfile) redirect("/login");
+  const bookingId = String(formData.get("bookingId") ?? "");
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+  if (!booking || booking.caregiverId !== user.caregiverProfile.id) {
+    throw new Error("Not allowed");
+  }
+  await prisma.booking.update({
+    where: { id: booking.id },
+    data: { status: BOOKING_STATUS.AWAITING_PAYMENT },
+  });
+  revalidatePath(`/dashboard/bookings/${booking.id}`);
+}
+
+export async function declineBookingAction(formData: FormData) {
+  const user = await requireRole(ROLES.CAREGIVER);
+  if (!user?.caregiverProfile) redirect("/login");
+  const bookingId = String(formData.get("bookingId") ?? "");
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+  if (!booking || booking.caregiverId !== user.caregiverProfile.id) {
+    throw new Error("Not allowed");
+  }
+  await prisma.booking.update({
+    where: { id: booking.id },
+    data: { status: BOOKING_STATUS.CANCELLED },
+  });
+  revalidatePath("/dashboard");
+}
+
+export async function startBookingAction(formData: FormData) {
+  const user = await requireUser();
+  if (!user) redirect("/login");
+  const bookingId = String(formData.get("bookingId") ?? "");
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { caregiver: true },
+  });
+  if (!booking) throw new Error("Not found");
+  const isParty =
+    booking.familyId === user.id || booking.caregiver.userId === user.id;
+  if (!isParty) throw new Error("Not allowed");
+  if (booking.status !== BOOKING_STATUS.ESCROW_HELD) throw new Error("Funds must be in escrow");
+  await prisma.booking.update({
+    where: { id: booking.id },
+    data: { status: BOOKING_STATUS.IN_PROGRESS },
+  });
+  revalidatePath(`/dashboard/bookings/${booking.id}`);
+}
+
+export async function confirmCompleteAction(formData: FormData) {
+  const user = await requireRole(ROLES.FAMILY);
+  if (!user) redirect("/login");
+  const bookingId = String(formData.get("bookingId") ?? "");
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+  if (!booking || booking.familyId !== user.id) throw new Error("Not allowed");
+  await prisma.booking.update({
+    where: { id: booking.id },
+    data: { status: BOOKING_STATUS.PENDING_RELEASE },
+  });
+  await releasePayment(booking.id);
+  revalidatePath(`/dashboard/bookings/${booking.id}`);
+  revalidatePath(`/caregiver/${booking.caregiverId}`);
+  redirect(`/dashboard/bookings/${booking.id}?released=1`);
+}
+
+export async function releaseNowAction(formData: FormData) {
+  const user = await requireUser();
+  if (!user) redirect("/login");
+  const bookingId = String(formData.get("bookingId") ?? "");
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { caregiver: true },
+  });
+  if (!booking) throw new Error("Not found");
+  const isFamily = booking.familyId === user.id;
+  if (!isFamily) throw new Error("Not allowed");
+  await releasePayment(booking.id);
+  revalidatePath(`/dashboard/bookings/${booking.id}`);
+}
+
+export async function disputeBookingAction(formData: FormData) {
+  const user = await requireUser();
+  if (!user) redirect("/login");
+  const bookingId = String(formData.get("bookingId") ?? "");
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { caregiver: true },
+  });
+  if (!booking) throw new Error("Not found");
+  const isParty =
+    booking.familyId === user.id || booking.caregiver.userId === user.id;
+  if (!isParty) throw new Error("Not allowed");
+  await prisma.booking.update({
+    where: { id: booking.id },
+    data: { status: BOOKING_STATUS.DISPUTED },
+  });
+  revalidatePath(`/dashboard/bookings/${booking.id}`);
+}
+
+export async function resolveDisputeAction(formData: FormData) {
+  const user = await requireRole(ROLES.FAMILY);
+  if (!user) redirect("/login");
+  const bookingId = String(formData.get("bookingId") ?? "");
+  const resolution = String(formData.get("resolution") ?? "release");
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+  if (!booking || booking.familyId !== user.id) throw new Error("Not allowed");
+  if (resolution === "refund") {
+    await refundPayment(booking.id);
+  } else {
+    await releasePayment(booking.id);
+  }
+  revalidatePath(`/dashboard/bookings/${booking.id}`);
+}
+
+export async function createCareRequestAction(formData: FormData) {
+  const user = await requireRole(ROLES.FAMILY);
+  if (!user) redirect("/login?callbackUrl=/post-a-job");
+
+  const title = String(formData.get("title") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  const specialtyId = String(formData.get("specialtyId") ?? "");
+  const cityId = String(formData.get("cityId") ?? "");
+  const budgetCents = Math.round(Number(formData.get("budget")) * 100);
+  const startDate = new Date(String(formData.get("startDate") ?? ""));
+  const hoursEstimate = Number(formData.get("hoursEstimate") ?? 0);
+
+  if (!title || !description || !specialtyId || !cityId || !budgetCents) {
+    redirect("/post-a-job?error=invalid");
+  }
+
+  let slug = slugify(title);
+  const clash = await prisma.careRequest.findUnique({ where: { slug } });
+  if (clash) slug = `${slug}-${Date.now().toString(36)}`;
+
+  const request = await prisma.careRequest.create({
+    data: {
+      slug,
+      familyId: user.id,
+      specialtyId,
+      cityId,
+      title,
+      description,
+      budgetType: "hourly",
+      budgetCents,
+      startDate,
+      hoursEstimate: hoursEstimate || null,
+      status: "open",
+    },
+  });
+
+  revalidatePath("/care-requests");
+  redirect(`/care-requests/${request.slug}`);
+}
+
+export async function createProposalAction(formData: FormData) {
+  const user = await requireRole(ROLES.CAREGIVER);
+  if (!user?.caregiverProfile) redirect("/login");
+  const slug = String(formData.get("slug") ?? "");
+  const coverLetter = String(formData.get("coverLetter") ?? "").trim();
+  const rateCents = Math.round(Number(formData.get("rate")) * 100);
+  const request = await prisma.careRequest.findUnique({ where: { slug } });
+  if (!request || request.status !== "open") throw new Error("Job is not open");
+  if (!coverLetter || !rateCents) redirect(`/care-requests/${slug}?error=invalid`);
+
+  await prisma.proposal.upsert({
+    where: {
+      careRequestId_caregiverId: {
+        careRequestId: request.id,
+        caregiverId: user.caregiverProfile.id,
+      },
+    },
+    create: {
+      careRequestId: request.id,
+      caregiverId: user.caregiverProfile.id,
+      coverLetter,
+      rateCents,
+    },
+    update: { coverLetter, rateCents, status: "pending" },
+  });
+
+  revalidatePath(`/care-requests/${slug}`);
+  redirect(`/care-requests/${slug}?proposed=1`);
+}
+
+export async function hireProposalAction(formData: FormData) {
+  const user = await requireRole(ROLES.FAMILY);
+  if (!user) redirect("/login");
+  const proposalId = String(formData.get("proposalId") ?? "");
+  const proposal = await prisma.proposal.findUnique({
+    where: { id: proposalId },
+    include: { careRequest: true, caregiver: true },
+  });
+  if (!proposal || proposal.careRequest.familyId !== user.id) {
+    throw new Error("Not allowed");
+  }
+
+  const hours = proposal.careRequest.hoursEstimate || 4;
+  const quote = quoteBooking(proposal.rateCents, hours);
+  const startAt = proposal.careRequest.startDate;
+  const endAt = new Date(startAt.getTime() + hours * 60 * 60 * 1000);
+
+  const booking = await prisma.booking.create({
+    data: {
+      familyId: user.id,
+      caregiverId: proposal.caregiverId,
+      careRequestId: proposal.careRequestId,
+      specialtyId: proposal.careRequest.specialtyId,
+      startAt,
+      endAt,
+      notes: proposal.coverLetter,
+      status: BOOKING_STATUS.AWAITING_PAYMENT,
+      hours: quote.hours,
+      rateCents: quote.rateCents,
+      subtotalCents: quote.subtotalCents,
+      platformFeeCents: quote.platformFeeCents,
+      gstCents: quote.gstCents,
+      totalCents: quote.totalCents,
+    },
+  });
+
+  await prisma.proposal.update({
+    where: { id: proposal.id },
+    data: { status: "accepted" },
+  });
+  await prisma.careRequest.update({
+    where: { id: proposal.careRequestId },
+    data: { status: "hired" },
+  });
+
+  await holdPayment(booking.id);
+  revalidatePath("/dashboard");
+  redirect(`/dashboard/bookings/${booking.id}?paid=1`);
+}
+
+export async function createReviewAction(formData: FormData) {
+  const user = await requireRole(ROLES.FAMILY);
+  if (!user) redirect("/login");
+  const bookingId = String(formData.get("bookingId") ?? "");
+  const rating = Number(formData.get("rating") ?? 0);
+  const body = String(formData.get("body") ?? "").trim();
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { review: true, caregiver: true },
+  });
+  if (!booking || booking.familyId !== user.id) throw new Error("Not allowed");
+  if (booking.status !== BOOKING_STATUS.RELEASED) {
+    throw new Error("Reviews are only available after payment is released");
+  }
+  if (booking.review) redirect(`/dashboard/bookings/${booking.id}`);
+  if (rating < 1 || rating > 5 || !body) {
+    redirect(`/dashboard/bookings/${booking.id}?error=review`);
+  }
+
+  await prisma.review.create({
+    data: {
+      bookingId: booking.id,
+      authorId: user.id,
+      caregiverId: booking.caregiverId,
+      rating,
+      body,
+    },
+  });
+
+  const reviews = await prisma.review.findMany({
+    where: { caregiverId: booking.caregiverId },
+  });
+  const avg = reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length;
+  await prisma.caregiverProfile.update({
+    where: { id: booking.caregiverId },
+    data: {
+      ratingAvg: Math.round(avg * 10) / 10,
+      reviewCount: reviews.length,
+    },
+  });
+
+  revalidatePath(`/caregiver/${booking.caregiver.slug}`);
+  revalidatePath(`/dashboard/bookings/${booking.id}`);
+}
+
+export async function runAutoReleaseAction(bookingId: string) {
+  await autoReleaseIfDue(bookingId);
+}
