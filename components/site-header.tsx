@@ -26,6 +26,18 @@ export async function SiteHeader() {
             </Link>
           ))}
         </nav>
+        <details className="relative md:hidden">
+          <summary className="cursor-pointer list-none rounded-full border border-line px-3 py-1.5 text-sm text-stone-700">
+            Menu
+          </summary>
+          <div className="absolute right-0 z-20 mt-2 w-48 rounded-xl border border-line bg-card p-3 text-sm shadow-lg">
+            {nav.map((item) => (
+              <Link key={item.href} href={item.href} className="block rounded-lg px-2 py-1.5 hover:bg-sage">
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        </details>
         <div className="flex items-center gap-3 text-sm">
           {session?.user ? (
             <>
