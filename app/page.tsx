@@ -144,9 +144,8 @@ export default async function HomePage() {
         <p className="text-sm font-medium uppercase tracking-wide text-clay">Date night · last-minute · overnight</p>
         <h2 className="mt-2 text-2xl font-semibold text-ink">Babysitters you can book like a ride</h2>
         <p className="mt-2 max-w-3xl text-stone-600">
-          Sittr showed Australian parents they can book a vetted sitter for a Friday night without an agency fee.
-          CareProof keeps that on-demand habit — and adds escrow, suburb SEO pages, and the same WWCC plus child first
-          aid (asthma and anaphylaxis) on every babysitting listing.
+          Book a vetted sitter for Friday night without an agency membership. CareProof adds escrow, suburb pages, and
+          WWCC plus child first aid (asthma and anaphylaxis) on every babysitting listing.
         </p>
         <ul className="mt-5 grid gap-3 text-sm sm:grid-cols-3">
           <li className="rounded-2xl bg-sage/70 p-4">
