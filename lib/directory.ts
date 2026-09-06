@@ -20,6 +20,7 @@ export function parseFilters(
     minRating: get("minRating") ? Number(get("minRating")) : undefined,
     minYears: get("minYears") ? Number(get("minYears")) : undefined,
     page: get("page") ? Math.max(1, Number(get("page"))) : 1,
+    sort: get("sort") === "rate" ? "rate" : get("sort") === "experience" ? "experience" : "rating",
   };
 }
 
@@ -49,6 +50,7 @@ export function filterCurrent(filters: {
   minRating?: number;
   minYears?: number;
   page?: number;
+  sort?: string;
 }) {
   return {
     q: filters.q,
@@ -62,5 +64,6 @@ export function filterCurrent(filters: {
     minRating: filters.minRating ? String(filters.minRating) : undefined,
     minYears: filters.minYears ? String(filters.minYears) : undefined,
     page: filters.page && filters.page > 1 ? String(filters.page) : undefined,
+    sort: filters.sort && filters.sort !== "rating" ? filters.sort : undefined,
   };
 }

@@ -129,9 +129,14 @@ export default async function DashboardPage() {
         </div>
         <div className="flex flex-wrap gap-3 text-sm">
           {isFamily ? (
-            <Link href="/post-a-job" className="rounded-full bg-teal px-4 py-2 font-medium text-white no-underline">
-              Post a care request
-            </Link>
+            <>
+              <Link href="/dashboard/household" className="rounded-full border border-teal px-4 py-2 font-medium text-teal no-underline">
+                Household
+              </Link>
+              <Link href="/post-a-job" className="rounded-full bg-teal px-4 py-2 font-medium text-white no-underline">
+                Post a care request
+              </Link>
+            </>
           ) : (
             <>
               <Link href="/dashboard/profile" className="rounded-full bg-teal px-4 py-2 font-medium text-white no-underline">

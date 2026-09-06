@@ -3,15 +3,26 @@ import { HIRE_GUIDES } from "@/lib/seo-content";
 import { siteUrl } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteUrl();
-  const [specialties, states, suburbs, carers, jobs] = await Promise.all([
+  const empty = { specialties: [], states: [], suburbs: [], carers: [], jobs: [] };
+  const { specialties, states, suburbs, carers, jobs } = await Promise.all([
     prisma.specialty.findMany(),
     prisma.state.findMany({ include: { cities: true } }),
     prisma.suburb.findMany({ include: { city: { include: { state: true } } } }),
     prisma.caregiverProfile.findMany({ select: { slug: true, lastActiveAt: true } }),
     prisma.careRequest.findMany({ select: { slug: true, createdAt: true } }),
-  ]);
+  ])
+    .then(([specialtyRows, stateRows, suburbRows, carerRows, jobRows]) => ({
+      specialties: specialtyRows,
+      states: stateRows,
+      suburbs: suburbRows,
+      carers: carerRows,
+      jobs: jobRows,
+    }))
+    .catch(() => empty);
 
   const staticRoutes = [
     "",

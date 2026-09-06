@@ -45,6 +45,14 @@ export function DirectoryFilters({
         </select>
       </label>
       <label className="block text-sm">
+        <span className="text-stone-600">Sort by</span>
+        <select name="sort" defaultValue={current.sort ?? "rating"} className="mt-1 w-full rounded-lg border border-line px-3 py-2">
+          <option value="rating">Highest rated</option>
+          <option value="rate">Lowest hourly rate</option>
+          <option value="experience">Most experience</option>
+        </select>
+      </label>
+      <label className="block text-sm">
         <span className="text-stone-600">Minimum years</span>
         <select name="minYears" defaultValue={current.minYears ?? ""} className="mt-1 w-full rounded-lg border border-line px-3 py-2">
           <option value="">Any</option>

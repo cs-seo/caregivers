@@ -71,6 +71,16 @@ export async function SiteFooter() {
                 Post a care request
               </Link>
             </li>
+            <li>
+              <Link className="hover:text-white" href="/privacy">
+                Privacy
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-white" href="/terms">
+                Terms
+              </Link>
+            </li>
           </ul>
         </div>
       </div>

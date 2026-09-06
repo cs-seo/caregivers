@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  secret: process.env.AUTH_SECRET,
+  secret: process.env.AUTH_SECRET ?? "careproof-preview-secret-change-in-production",
   trustHost: true,
   session: { strategy: "jwt" },
   pages: {

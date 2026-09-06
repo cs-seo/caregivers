@@ -36,6 +36,10 @@ Demo logins (password `CareProof123!`):
 4. Log in as the carer (`carer@careproof.com.au`) and edit `/dashboard/profile`.
 5. Join as a new carer at `/register` — you land on the profile checklist.
 
+## Vercel
+
+Preview builds no longer require `DATABASE_URL` at compile time. If it is missing, CareProof uses `prisma/demo.db` (copied to `/tmp` on Vercel so bookings can write). Set `AUTH_SECRET` and `NEXT_PUBLIC_SITE_URL` on the project for production.
+
 ## Payments
 
 Without `STRIPE_SECRET_KEY`, checkout writes to the in-app escrow ledger so hold/release still works. With Stripe keys, PaymentIntents and Connect transfers are created in AUD.

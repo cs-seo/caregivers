@@ -27,14 +27,22 @@ export function withTrust<T extends CaregiverCard>(profile: T) {
 }
 
 export async function getSpecialties() {
-  return prisma.specialty.findMany({ orderBy: { name: "asc" } });
+  try {
+    return await prisma.specialty.findMany({ orderBy: { name: "asc" } });
+  } catch {
+    return [];
+  }
 }
 
 export async function getStates() {
-  return prisma.state.findMany({
-    include: { cities: { orderBy: { name: "asc" } } },
-    orderBy: { name: "asc" },
-  });
+  try {
+    return await prisma.state.findMany({
+      include: { cities: { orderBy: { name: "asc" } } },
+      orderBy: { name: "asc" },
+    });
+  } catch {
+    return [];
+  }
 }
 
 export async function getSpecialty(slug: string) {
@@ -78,7 +86,14 @@ export type DirectoryFilters = {
   minYears?: number;
   availableNow?: boolean;
   page?: number;
+  sort?: "rating" | "rate" | "experience";
 };
+
+function caregiverOrderBy(filters: DirectoryFilters) {
+  if (filters.sort === "rate") return [{ hourlyRateCents: "asc" as const }, { ratingAvg: "desc" as const }];
+  if (filters.sort === "experience") return [{ yearsExperience: "desc" as const }, { ratingAvg: "desc" as const }];
+  return [{ ratingAvg: "desc" as const }, { completedJobs: "desc" as const }];
+}
 
 function caregiverWhere(filters: DirectoryFilters) {
   return {
@@ -116,7 +131,7 @@ export async function searchCaregivers(filters: DirectoryFilters, take = 60) {
   const caregivers = await prisma.caregiverProfile.findMany({
     where: caregiverWhere(filters),
     include: caregiverCardInclude,
-    orderBy: [{ ratingAvg: "desc" }, { completedJobs: "desc" }],
+    orderBy: caregiverOrderBy(filters),
     take,
   });
   return caregivers.map(withTrust);
@@ -129,7 +144,7 @@ export async function searchCaregiversPage(filters: DirectoryFilters, pageSize =
     prisma.caregiverProfile.findMany({
       where,
       include: caregiverCardInclude,
-      orderBy: [{ ratingAvg: "desc" }, { completedJobs: "desc" }],
+      orderBy: caregiverOrderBy(filters),
       skip: (page - 1) * pageSize,
       take: pageSize,
     }),

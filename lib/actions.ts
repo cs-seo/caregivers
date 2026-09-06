@@ -584,6 +584,41 @@ export async function addWorkHistoryAction(formData: FormData) {
   revalidatePath(`/caregiver/${user.caregiverProfile.slug}`);
 }
 
+export async function updateFamilyProfileAction(formData: FormData) {
+  const user = await requireRole(ROLES.FAMILY);
+  if (!user) redirect("/login");
+  const suburb = String(formData.get("suburb") ?? "").trim();
+  const cityId = String(formData.get("cityId") ?? "");
+  const bio = String(formData.get("bio") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim();
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { phone: phone || null },
+  });
+  if (user.familyProfile) {
+    await prisma.familyProfile.update({
+      where: { id: user.familyProfile.id },
+      data: {
+        suburb: suburb || null,
+        cityId: cityId || null,
+        bio: bio || null,
+      },
+    });
+  } else {
+    await prisma.familyProfile.create({
+      data: {
+        userId: user.id,
+        suburb: suburb || null,
+        cityId: cityId || null,
+        bio: bio || null,
+      },
+    });
+  }
+  revalidatePath("/dashboard/household");
+  redirect("/dashboard/household?saved=1");
+}
+
 export async function removeWorkHistoryAction(formData: FormData) {
   const user = await requireRole(ROLES.CAREGIVER);
   if (!user?.caregiverProfile) redirect("/login");

@@ -26,11 +26,13 @@ export function pageMeta({
       siteName: SITE_NAME,
       locale: "en_AU",
       type: "website",
+      images: [{ url: "/opengraph-image" }],
     },
     twitter: {
       card: "summary_large_image",
       title: fullTitle,
       description,
+      images: ["/opengraph-image"],
     },
   };
 }
