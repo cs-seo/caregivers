@@ -1,61 +1,64 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
+import {
+  computeVerification,
+  distanceKm,
+  getCaregivers,
+  type CaregiverWithVerification,
+} from '@/app/lib/caregivers';
+import { withLiveStatus } from '@/app/lib/presence';
 
-// Mock data for caregivers
-const mockCaregivers = [
-  {
-    id: 'c1',
-    name: 'Sarah Johnson',
-    status: 'online' as const,
-    location: 'Building A, Floor 2',
-    lastSeen: 'just now',
-  },
-  {
-    id: 'c2',
-    name: 'Michael Chen',
-    status: 'busy' as const,
-    location: 'Room 205',
-    lastSeen: '2 minutes ago',
-  },
-  {
-    id: 'c3',
-    name: 'Emma Williams',
-    status: 'offline' as const,
-    location: 'Off-site',
-    lastSeen: '1 hour ago',
-  },
-  {
-    id: 'c4',
-    name: 'David Martinez',
-    status: 'online' as const,
-    location: 'Main Reception',
-    lastSeen: 'just now',
-  },
-  {
-    id: 'c5',
-    name: 'Lisa Anderson',
-    status: 'busy' as const,
-    location: 'Conference Room',
-    lastSeen: '5 minutes ago',
-  },
-];
+export const dynamic = 'force-dynamic';
 
-export async function GET() {
-  // Simulate some dynamic status changes for demo purposes
-  const caregivers = mockCaregivers.map((caregiver) => {
-    // Randomly change status to simulate real-time updates
-    const statuses = ['online', 'busy', 'offline'] as const;
-    const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+/** Parses a latitude/longitude query param, rejecting anything out of range. */
+function parseCoordinate(
+  raw: string | null,
+  min: number,
+  max: number,
+): number | null {
+  if (raw === null || raw.trim() === '') {
+    return null;
+  }
+  const value = Number(raw);
+  if (!Number.isFinite(value) || value < min || value > max) {
+    return null;
+  }
+  return value;
+}
 
-    return {
+export async function GET(request: NextRequest) {
+  const { searchParams } = request.nextUrl;
+
+  // Validated, optional proximity origin. Invalid values are ignored rather
+  // than trusted, so a malformed query can never break sorting.
+  const lat = parseCoordinate(searchParams.get('lat'), -90, 90);
+  const lng = parseCoordinate(searchParams.get('lng'), -180, 180);
+  const hasOrigin = lat !== null && lng !== null;
+
+  const live = withLiveStatus(getCaregivers());
+
+  let caregivers: CaregiverWithVerification[] = live.map((caregiver) => {
+    const response: CaregiverWithVerification = {
       ...caregiver,
-      status: Math.random() > 0.3 ? caregiver.status : randomStatus,
+      verification: computeVerification(caregiver),
     };
+    if (hasOrigin) {
+      response.distanceKm = Number(
+        distanceKm({ lat, lng }, caregiver.location).toFixed(1),
+      );
+    }
+    return response;
   });
+
+  // Favor local people: when an origin is supplied, surface nearest first.
+  if (hasOrigin) {
+    caregivers = caregivers.sort(
+      (a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0),
+    );
+  }
 
   return NextResponse.json(caregivers, {
     headers: {
       'Cache-Control': 'no-store, must-revalidate',
-      'Content-Type': 'application/json',
     },
   });
 }
