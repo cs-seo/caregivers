@@ -42,6 +42,7 @@ export const CREDENTIAL_TYPES = {
   POLICE_CHECK: "police_check",
   AHPRA: "ahpra",
   FIRST_AID: "first_aid",
+  CHILD_FIRST_AID: "child_first_aid",
   AGED_CARE_SCREENING: "aged_care_screening",
 } as const;
 
@@ -50,7 +51,8 @@ export const CREDENTIAL_LABELS: Record<string, string> = {
   ndis_screening: "NDIS Worker Screening",
   police_check: "National Police Check",
   ahpra: "AHPRA registration",
-  first_aid: "Provide First Aid (HLTAID011)",
+  first_aid: "First aid (asthma & anaphylaxis)",
+  child_first_aid: "Child first aid (HLTAID012)",
   aged_care_screening: "Aged Care Worker Screening",
 };
 
@@ -72,6 +74,16 @@ export const BOOKING_STATUS_LABELS: Record<string, string> = {
   cancelled: "Cancelled",
   refunded: "Refunded",
 };
+
+export const BOOKING_OCCASIONS = [
+  { value: "date-night", label: "Date night" },
+  { value: "last-minute", label: "Last-minute sit" },
+  { value: "after-school", label: "After school" },
+  { value: "weekday", label: "Weekday day sit" },
+  { value: "overnight", label: "Overnight" },
+  { value: "holiday", label: "Holiday / visiting family" },
+  { value: "recurring", label: "Recurring booking" },
+] as const;
 
 export function siteUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";

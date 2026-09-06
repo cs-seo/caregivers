@@ -23,7 +23,7 @@ export default function TrustPage() {
           <li>National Police Checks</li>
           <li>AHPRA registration for nurses</li>
           <li>Aged Care Worker Screening</li>
-          <li>First aid (HLTAID011)</li>
+          <li>First aid including asthma and anaphylaxis (HLTAID011 / HLTAID012)</li>
           <li>ABN for independent contractors</li>
         </ul>
       </section>
@@ -39,6 +39,14 @@ export default function TrustPage() {
         <p className="mt-2 text-stone-700">
           Payment is collected from the family first. It sits as held until the family confirms, a dispute is resolved,
           or 72 hours pass after the scheduled end. Refunds return the held amount; they never silently skip the ledger.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-semibold">Babysitting and nanny sits</h2>
+        <p className="mt-2 text-stone-700">
+          For child care we treat a current WWCC (or Blue Card / WWVP / Ochre Card) and child first aid that covers
+          asthma and anaphylaxis as the floor, not a marketing badge. Date-night and last-minute sits use the same
+          escrow as weekday nanny days. Reviews stay locked until the booking is released.
         </p>
       </section>
       <section>

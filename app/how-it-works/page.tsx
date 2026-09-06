@@ -61,7 +61,8 @@ export default function HowItWorksPage() {
           <h2 className="text-xl font-semibold">3. Book in a few steps</h2>
           <p className="mt-2 text-stone-600">
             Instant Book pays into escrow immediately. Request to book waits for the carer. Job posts collect proposals
-            you can hire with one click.
+            you can hire with one click. For babysitting, pick a date night, last-minute sit, overnight or a recurring
+            Friday — the hourly rate does not rise with a second child.
           </p>
         </li>
         <li>

@@ -247,9 +247,9 @@ export const HIRE_GUIDES = [
     specialty: "babysitters",
     title: "How to find a babysitter near you",
     description:
-      "Book a WWCC babysitter for evenings and weekends. Compare rates and Instant Book in Australian suburbs.",
+      "Book a WWCC babysitter for date nights, last-minute sits and overnight care. Compare rates and Instant Book in Australian suburbs.",
     h1: "How to find a babysitter near you",
-    keywords: ["babysitter near me", "hire a babysitter", "WWCC babysitter"],
+    keywords: ["babysitter near me", "date night babysitter", "last minute babysitter", "WWCC babysitter"],
   },
   {
     slug: "in-home-aged-care",

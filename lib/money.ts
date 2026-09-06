@@ -27,3 +27,11 @@ export function quoteBooking(hourlyRateCents: number, hours: number) {
 export function formatHours(hours: number) {
   return `${hours} hour${hours === 1 ? "" : "s"}`;
 }
+
+export function quoteDaySit(hourlyRateCents: number) {
+  return quoteBooking(hourlyRateCents, 8);
+}
+
+export function quoteOvernightSit(hourlyRateCents: number) {
+  return quoteBooking(hourlyRateCents, 10);
+}

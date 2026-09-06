@@ -80,6 +80,17 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
         ))}
       </ul>
 
+      {guide.slug === "hire-a-babysitter" ? (
+        <>
+          <h2 className="mt-8 text-xl font-semibold">Date night, last-minute and overnight</h2>
+          <p className="mt-3 text-stone-700">
+            Australian parents already book sitters this way: a Friday date night, a same-day cancellation, or a hotel
+            stay while visiting. On CareProof those sits use Instant Book and escrow. The hourly rate is for the
+            household — no extra per sibling — and first aid on babysitting listings covers asthma and anaphylaxis.
+          </p>
+        </>
+      ) : null}
+
       <h2 className="mt-8 text-xl font-semibold">How booking works</h2>
       <p className="mt-3 text-stone-700">
         Instant Book pays into escrow immediately. Request-to-book waits for the carer to accept. Job posts collect

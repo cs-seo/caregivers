@@ -33,7 +33,7 @@ const specialties = [
     slug: "babysitters",
     name: "Babysitter",
     pluralName: "Babysitters",
-    description: "Casual and after-hours babysitters for evenings, weekends and date nights.",
+    description: "Date nights, last-minute sits, overnight and holiday babysitting with WWCC and child first aid.",
     seoTitle: "Babysitters across Australia",
     seoDescription:
       "Book babysitters with verified Working with Children Checks in cities and regional centres across Australia.",

@@ -96,7 +96,14 @@ export async function createBookingAction(formData: FormData) {
   const specialtyId = String(formData.get("specialtyId") ?? "");
   const startAt = new Date(String(formData.get("startAt") ?? ""));
   const hours = Number(formData.get("hours") ?? 0);
-  const notes = String(formData.get("notes") ?? "").trim();
+  const occasion = String(formData.get("occasion") ?? "").trim();
+  const children = String(formData.get("children") ?? "").trim();
+  const notesRaw = String(formData.get("notes") ?? "").trim();
+  const extras = [
+    occasion ? `Occasion: ${occasion.replace(/-/g, " ")}` : "",
+    children ? `Children: ${children}` : "",
+  ].filter(Boolean);
+  const notes = [extras.join(" · "), notesRaw].filter(Boolean).join("\n") || "";
 
   const caregiver = await prisma.caregiverProfile.findUnique({
     where: { slug },

@@ -110,6 +110,8 @@ export default async function HomePage() {
         </p>
         <ul className="mt-4 grid gap-2 text-sm sm:grid-cols-2 md:grid-cols-3">
           {[
+            ["/caregivers/babysitters/nsw/sydney/newtown", "Date-night babysitters in Newtown"],
+            ["/caregivers/babysitters/vic/melbourne/fitzroy", "Babysitters in Fitzroy"],
             ["/caregivers/nannies/nsw/sydney/bondi", "Nannies in Bondi"],
             ["/caregivers/aged-care/nsw/sydney/marrickville", "Aged care in Marrickville"],
             ["/caregivers/disability-support/vic/melbourne/brunswick", "NDIS support in Brunswick"],
@@ -136,6 +138,41 @@ export default async function HomePage() {
             Hiring guides
           </Link>
         </p>
+      </section>
+
+      <section className="rounded-3xl border border-line bg-card px-6 py-8">
+        <p className="text-sm font-medium uppercase tracking-wide text-clay">Date night · last-minute · overnight</p>
+        <h2 className="mt-2 text-2xl font-semibold text-ink">Babysitters you can book like a ride</h2>
+        <p className="mt-2 max-w-3xl text-stone-600">
+          Sittr showed Australian parents they can book a vetted sitter for a Friday night without an agency fee.
+          CareProof keeps that on-demand habit — and adds escrow, suburb SEO pages, and the same WWCC plus child first
+          aid (asthma and anaphylaxis) on every babysitting listing.
+        </p>
+        <ul className="mt-5 grid gap-3 text-sm sm:grid-cols-3">
+          <li className="rounded-2xl bg-sage/70 p-4">
+            <p className="font-semibold text-ink">One-off or recurring</p>
+            <p className="mt-1 text-stone-600">Date night tonight, or a standing Friday. No membership to browse.</p>
+          </li>
+          <li className="rounded-2xl bg-sage/70 p-4">
+            <p className="font-semibold text-ink">No extra per sibling</p>
+            <p className="mt-1 text-stone-600">The advertised hourly rate is for the household, not per child.</p>
+          </li>
+          <li className="rounded-2xl bg-sage/70 p-4">
+            <p className="font-semibold text-ink">Reviews after the sit</p>
+            <p className="mt-1 text-stone-600">Only families with a released escrow booking can leave a rating.</p>
+          </li>
+        </ul>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Link href="/caregivers/babysitters" className="rounded-full bg-teal px-5 py-2.5 text-sm font-medium text-white no-underline">
+            Browse babysitters
+          </Link>
+          <Link href="/caregivers/nannies" className="rounded-full border border-teal px-5 py-2.5 text-sm font-medium text-teal no-underline">
+            Find a regular nanny
+          </Link>
+          <Link href="/guides/hire-a-babysitter" className="text-sm font-medium text-teal">
+            How to book a sitter
+          </Link>
+        </div>
       </section>
 
       <section>
