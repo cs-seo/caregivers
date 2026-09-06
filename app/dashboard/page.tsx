@@ -126,6 +126,9 @@ export default async function DashboardPage() {
         })
       : null;
   const checklist = carerProfile ? profileChecklist(carerProfile) : null;
+  const shortlistCount = isFamily
+    ? await prisma.shortlist.count({ where: { familyId: user.id } })
+    : 0;
 
   const needsAction = bookings.filter((booking) => ACTION_STATUSES.has(booking.status));
   const active = bookings.filter((booking) => ACTIVE_STATUSES.has(booking.status));
@@ -143,6 +146,9 @@ export default async function DashboardPage() {
         <div className="flex flex-wrap gap-3 text-sm">
           {isFamily ? (
             <>
+              <Link href="/dashboard/shortlist" className="rounded-full border border-teal px-4 py-2 font-medium text-teal no-underline">
+                Shortlist
+              </Link>
               <Link href="/dashboard/household" className="rounded-full border border-teal px-4 py-2 font-medium text-teal no-underline">
                 Household
               </Link>
@@ -164,6 +170,20 @@ export default async function DashboardPage() {
           )}
         </div>
       </div>
+
+      {isFamily ? (
+        <section className="mt-6 rounded-2xl border border-line bg-card p-5">
+          <h2 className="font-semibold text-ink">Shortlist</h2>
+          <p className="mt-1 text-sm text-stone-600">
+            {shortlistCount === 0
+              ? "Save carers from the directory, then compare rates and checks before you book."
+              : `${shortlistCount} saved ${shortlistCount === 1 ? "carer" : "carers"} ready to compare.`}
+          </p>
+          <Link href={shortlistCount ? "/dashboard/shortlist" : "/caregivers"} className="mt-3 inline-block text-sm font-medium text-teal">
+            {shortlistCount ? "Open shortlist" : "Browse carers to save"}
+          </Link>
+        </section>
+      ) : null}
 
       {checklist && !checklist.ready ? (
         <section className="mt-6 rounded-2xl border border-clay/30 bg-orange-50 p-5">

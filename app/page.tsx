@@ -5,7 +5,8 @@ import { SearchForm } from "@/components/search-form";
 import { SITE_NAME, siteUrl } from "@/lib/constants";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
-import { caregiverCardInclude, getSpecialties, withTrust } from "@/lib/queries";
+import { caregiverCardInclude, getCityHubs, getRecentReviews, getShortlistedIds, getSpecialties, withTrust } from "@/lib/queries";
+import { requireUser } from "@/lib/session";
 import { pageMeta } from "@/lib/seo";
 
 export const metadata = pageMeta({
@@ -16,19 +17,24 @@ export const metadata = pageMeta({
 });
 
 export default async function HomePage() {
-  const [specialties, featured, stats] = await Promise.all([
+  const viewer = await requireUser();
+  const [specialties, featured, stats, hubs, reviews, savedIds] = await Promise.all([
     getSpecialties(),
     prisma.caregiverProfile.findMany({
       where: { reviewCount: { gt: 0 } },
       include: caregiverCardInclude,
       orderBy: { ratingAvg: "desc" },
-      take: 6,
+      take: 4,
     }),
     prisma.caregiverProfile.aggregate({
       _count: true,
       _avg: { hourlyRateCents: true },
     }),
+    getCityHubs(),
+    getRecentReviews(4),
+    getShortlistedIds(viewer?.role === "FAMILY" ? viewer.id : null),
   ]);
+  const canShortlist = viewer?.role === "FAMILY";
 
   return (
     <div className="space-y-16">
@@ -84,6 +90,15 @@ export default async function HomePage() {
             {stats._count} verified profiles · typical rate{" "}
             {formatAud(Math.round(stats._avg.hourlyRateCents ?? 0))}/hr
           </p>
+          <ul className="mt-5 flex flex-wrap gap-2 text-xs text-stone-600">
+            {["WWCC / Blue Card / Ochre Card", "NDIS Worker Screening", "AHPRA for nurses", "Escrow until care is done"].map(
+              (item) => (
+                <li key={item} className="rounded-full border border-line bg-card px-3 py-1">
+                  {item}
+                </li>
+              ),
+            )}
+          </ul>
         </div>
         <SearchForm />
       </section>
@@ -124,6 +139,52 @@ export default async function HomePage() {
       </section>
 
       <section>
+        <h2 className="text-2xl font-semibold text-ink">Built for Australian care</h2>
+        <div className="mt-5 grid gap-4 md:grid-cols-3">
+          <div className="rounded-2xl border border-line bg-card p-5">
+            <h3 className="font-semibold text-ink">My Aged Care packages</h3>
+            <p className="mt-2 text-sm text-stone-600">
+              Book in-home personal care, respite and nursing against a Home Care Package. Rates are inc GST so the
+              invoice matches what coordinators expect.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-line bg-card p-5">
+            <h3 className="font-semibold text-ink">NDIS plan-managed or self-managed</h3>
+            <p className="mt-2 text-sm text-stone-600">
+              Support workers list NDIS Worker Screening and shift notes. Escrow holds the session fee until the
+              booking is released — useful when a plan manager needs evidence.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-line bg-card p-5">
+            <h3 className="font-semibold text-ink">State checks, not a generic badge</h3>
+            <p className="mt-2 text-sm text-stone-600">
+              NSW WWCC, Queensland Blue Card, NT Ochre Card, ACT WWVP and Aged Care Worker Screening sit on the
+              profile with expiry dates.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-2xl font-semibold text-ink">Capital-city hubs</h2>
+        <p className="mt-2 text-sm text-stone-600">Live listings, not a brochure. Open a city then filter by suburb.</p>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 md:grid-cols-5">
+          {hubs.map((city) => (
+            <Link
+              key={city.id}
+              href={`/locations/${city.state.slug}/${city.slug}`}
+              className="rounded-2xl border border-line bg-card p-4 no-underline hover:border-teal"
+            >
+              <p className="font-semibold text-ink">{city.name}</p>
+              <p className="mt-1 text-sm text-stone-500">
+                {city._count.caregivers} carers · {city.state.abbrev}
+              </p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section>
         <h2 className="text-2xl font-semibold text-ink">Browse by care type</h2>
         <div className="mt-5 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
           {specialties.map((specialty) => (
@@ -148,10 +209,42 @@ export default async function HomePage() {
         </div>
         <div className="mt-5 grid gap-4">
           {featured.map((carer) => (
-            <CaregiverCardView key={carer.id} caregiver={withTrust(carer)} />
+            <CaregiverCardView
+              key={carer.id}
+              caregiver={withTrust(carer)}
+              shortlist={{
+                saved: savedIds.has(carer.id),
+                signedIn: Boolean(canShortlist),
+                next: "/",
+              }}
+            />
           ))}
         </div>
       </section>
+
+      {reviews.length > 0 ? (
+        <section>
+          <h2 className="text-2xl font-semibold text-ink">Reviews from released bookings</h2>
+          <p className="mt-2 text-sm text-stone-600">Families can only review after escrow is released.</p>
+          <ul className="mt-5 grid gap-4 md:grid-cols-2">
+            {reviews.map((review) => (
+              <li key={review.id} className="rounded-2xl border border-line bg-card p-5">
+                <p className="text-sm font-medium text-ink">
+                  {review.author.name} · {"★".repeat(review.rating)}
+                </p>
+                <p className="mt-2 text-sm text-stone-700">{review.body}</p>
+                <p className="mt-3 text-xs text-stone-500">
+                  <Link href={`/caregiver/${review.caregiver.slug}`} className="text-teal">
+                    {review.caregiver.user.name}
+                  </Link>
+                  {" · "}
+                  {review.caregiver.suburb}, {review.caregiver.city.name} {review.caregiver.city.state.abbrev}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <section className="grid gap-6 rounded-3xl bg-teal px-6 py-10 text-white md:grid-cols-3">
         <div>

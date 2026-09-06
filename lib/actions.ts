@@ -639,3 +639,32 @@ export async function removeWorkHistoryAction(formData: FormData) {
   revalidatePath("/dashboard/profile");
   revalidatePath(`/caregiver/${user.caregiverProfile.slug}`);
 }
+
+export async function toggleShortlistAction(formData: FormData) {
+  const next = String(formData.get("next") ?? "/dashboard/shortlist");
+  const user = await requireRole(ROLES.FAMILY);
+  if (!user) redirect(`/login?callbackUrl=${encodeURIComponent(next)}`);
+
+  const caregiverId = String(formData.get("caregiverId") ?? "");
+  const caregiver = await prisma.caregiverProfile.findUnique({
+    where: { id: caregiverId },
+    select: { id: true, slug: true },
+  });
+  if (!caregiver) redirect(next);
+
+  const existing = await prisma.shortlist.findUnique({
+    where: { familyId_caregiverId: { familyId: user.id, caregiverId: caregiver.id } },
+  });
+  if (existing) {
+    await prisma.shortlist.delete({ where: { id: existing.id } });
+  } else {
+    await prisma.shortlist.create({ data: { familyId: user.id, caregiverId: caregiver.id } });
+  }
+
+  revalidatePath(next);
+  revalidatePath("/dashboard/shortlist");
+  revalidatePath("/");
+  revalidatePath(`/caregiver/${caregiver.slug}`);
+  revalidatePath("/caregivers");
+  revalidatePath("/dashboard");
+}

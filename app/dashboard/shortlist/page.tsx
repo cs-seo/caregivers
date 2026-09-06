@@ -1,0 +1,113 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { Badge, CredentialBadges } from "@/components/badges";
+import { CaregiverCardView } from "@/components/caregiver-card";
+import { formatAud } from "@/lib/money";
+import { caregiverCardInclude, withTrust } from "@/lib/queries";
+import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/session";
+import { pageMeta } from "@/lib/seo";
+import { trustLabel } from "@/lib/trust";
+
+export const metadata = pageMeta({
+  title: "Your shortlist",
+  description: "Compare saved carers before you book.",
+  path: "/dashboard/shortlist",
+  noIndex: true,
+});
+
+export default async function ShortlistPage() {
+  const user = await requireRole("FAMILY");
+  if (!user) redirect("/login?callbackUrl=/dashboard/shortlist");
+
+  const saved = await prisma.shortlist.findMany({
+    where: { familyId: user.id },
+    orderBy: { createdAt: "desc" },
+    include: {
+      caregiver: { include: caregiverCardInclude },
+    },
+  });
+  const carers = saved.map((row) => withTrust(row.caregiver));
+
+  return (
+    <div>
+      <p className="text-sm">
+        <Link href="/dashboard" className="text-teal">
+          Back to dashboard
+        </Link>
+      </p>
+      <h1 className="mt-3 text-3xl font-semibold text-ink">Your shortlist</h1>
+      <p className="mt-2 max-w-2xl text-stone-600">
+        Save carers from the directory, compare rates and checks, then Instant Book the one who fits. This is the
+        family-side equivalent of an agency roster — yours to keep.
+      </p>
+
+      {carers.length === 0 ? (
+        <p className="mt-8 rounded-2xl border border-dashed border-line p-8 text-sm text-stone-600">
+          No saved carers yet.{" "}
+          <Link href="/caregivers" className="text-teal">
+            Browse the directory
+          </Link>{" "}
+          and tap Save to shortlist.
+        </p>
+      ) : (
+        <>
+          {carers.length > 1 ? (
+            <section className="mt-8 overflow-x-auto rounded-2xl border border-line bg-card">
+              <table className="min-w-full text-left text-sm">
+                <thead className="border-b border-line text-xs uppercase tracking-wide text-stone-500">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">Carer</th>
+                    <th className="px-4 py-3 font-medium">Rate</th>
+                    <th className="px-4 py-3 font-medium">Experience</th>
+                    <th className="px-4 py-3 font-medium">Checks</th>
+                    <th className="px-4 py-3 font-medium">Book</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {carers.map((carer) => (
+                    <tr key={carer.id} className="border-t border-line">
+                      <td className="px-4 py-3">
+                        <Link href={`/caregiver/${carer.slug}`} className="font-medium text-ink hover:text-teal">
+                          {carer.user.name}
+                        </Link>
+                        <p className="text-xs text-stone-500">
+                          {carer.suburb}, {carer.city.name}
+                        </p>
+                        <Badge tone="teal">{trustLabel(carer.trustScore)}</Badge>
+                      </td>
+                      <td className="px-4 py-3 font-medium text-teal">{formatAud(carer.hourlyRateCents)}/hr</td>
+                      <td className="px-4 py-3 text-stone-600">{carer.yearsExperience} yrs</td>
+                      <td className="px-4 py-3">
+                        <CredentialBadges credentials={carer.credentials} abn={carer.abn} />
+                      </td>
+                      <td className="px-4 py-3">
+                        <Link href={`/caregiver/${carer.slug}/book`} className="text-teal hover:underline">
+                          {carer.instantBook ? "Book now" : "Request"}
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+          ) : null}
+
+          <div className="mt-8 space-y-4">
+            {carers.map((carer) => (
+              <div key={carer.id} className="space-y-2">
+                <CaregiverCardView
+                  caregiver={carer}
+                  shortlist={{ saved: true, signedIn: true, next: "/dashboard/shortlist" }}
+                />
+                <Link href={`/caregiver/${carer.slug}/book`} className="inline-block text-sm text-teal">
+                  Book {carer.user.name}
+                </Link>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

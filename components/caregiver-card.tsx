@@ -1,14 +1,17 @@
 import Link from "next/link";
-import { initials } from "@/lib/format";
+import { initials, lastActiveLabel } from "@/lib/format";
 import { formatAud } from "@/lib/money";
 import { trustLabel } from "@/lib/trust";
 import type { CaregiverCard } from "@/lib/queries";
 import { Badge, CredentialBadges } from "./badges";
+import { ShortlistButton } from "./shortlist-button";
 
 export function CaregiverCardView({
   caregiver,
+  shortlist,
 }: {
   caregiver: CaregiverCard & { trustScore: number };
+  shortlist?: { saved: boolean; signedIn: boolean; next: string };
 }) {
   const specialtyNames = caregiver.specialties.map((s) => s.specialty.name).join(" · ");
   return (
@@ -51,6 +54,7 @@ export function CaregiverCardView({
             <Badge tone="teal">{trustLabel(caregiver.trustScore)}</Badge>
             {caregiver.instantBook ? <Badge tone="clay">Instant Book</Badge> : null}
             {caregiver.availableNow ? <Badge>Available now</Badge> : null}
+            <span className="text-xs text-stone-500">{lastActiveLabel(caregiver.lastActiveAt)}</span>
             {caregiver.reviewCount > 0 ? (
               <span className="text-xs text-stone-600">
                 {caregiver.ratingAvg.toFixed(1)} ★ · {caregiver.reviewCount} reviews · {caregiver.yearsExperience} yrs
@@ -59,6 +63,17 @@ export function CaregiverCardView({
               <span className="text-xs text-stone-600">{caregiver.yearsExperience} yrs experience</span>
             )}
           </div>
+          {shortlist ? (
+            <div className="mt-3">
+              <ShortlistButton
+                caregiverId={caregiver.id}
+                saved={shortlist.saved}
+                signedIn={shortlist.signedIn}
+                next={shortlist.next}
+                compact
+              />
+            </div>
+          ) : null}
         </div>
       </div>
     </article>

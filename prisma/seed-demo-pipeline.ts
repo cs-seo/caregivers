@@ -120,10 +120,32 @@ export async function seedDemoPipeline(prisma: PrismaClient) {
   return { created: 3, ids: [request.id, held.id, progress.id] };
 }
 
+export async function seedDemoShortlist(prisma: PrismaClient) {
+  const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
+  if (!family) return 0;
+  const slugs = [
+    "sarah-nguyen-aged-care-sydney",
+    "priya-nair-nanny-sydney",
+    "james-okafor-disability-support-sydney",
+  ];
+  const carers = await prisma.caregiverProfile.findMany({ where: { slug: { in: slugs } } });
+  let saved = 0;
+  for (const carer of carers) {
+    await prisma.shortlist.upsert({
+      where: { familyId_caregiverId: { familyId: family.id, caregiverId: carer.id } },
+      update: {},
+      create: { familyId: family.id, caregiverId: carer.id },
+    });
+    saved += 1;
+  }
+  return saved;
+}
+
 async function main() {
   const prisma = new PrismaClient();
   const result = await seedDemoPipeline(prisma);
-  console.log(`Demo pipeline bookings created: ${result.created}`);
+  const saved = await seedDemoShortlist(prisma);
+  console.log(`Demo pipeline bookings created: ${result.created}; shortlist ${saved}`);
   await prisma.$disconnect();
 }
 

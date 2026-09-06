@@ -7,7 +7,8 @@ import { SearchForm } from "@/components/search-form";
 import { emptyStateLinks, filterHref } from "@/lib/directory";
 import { formatAud } from "@/lib/money";
 import type { DirectoryFilters as Filters } from "@/lib/queries";
-import { directoryStats, searchCaregiversPage } from "@/lib/queries";
+import { directoryStats, getShortlistedIds, searchCaregiversPage } from "@/lib/queries";
+import { requireUser } from "@/lib/session";
 import { breadcrumbJsonLd } from "@/lib/seo";
 import { siteUrl } from "@/lib/constants";
 
@@ -33,11 +34,14 @@ export async function DirectoryResults({
   extras?: React.ReactNode;
 }) {
   const listFilters = nearbyNote ? { ...filters, suburb: undefined } : filters;
-  const [page, stats] = await Promise.all([
+  const viewer = await requireUser();
+  const [page, stats, savedIds] = await Promise.all([
     searchCaregiversPage(listFilters),
     directoryStats(listFilters),
+    getShortlistedIds(viewer?.role === "FAMILY" ? viewer.id : null),
   ]);
   const caregivers = page.caregivers;
+  const canShortlist = viewer?.role === "FAMILY";
 
   return (
     <div>
@@ -104,7 +108,17 @@ export async function DirectoryResults({
               </ul>
             </div>
           ) : (
-            caregivers.map((carer) => <CaregiverCardView key={carer.id} caregiver={carer} />)
+            caregivers.map((carer) => (
+              <CaregiverCardView
+                key={carer.id}
+                caregiver={carer}
+                shortlist={{
+                  saved: savedIds.has(carer.id),
+                  signedIn: Boolean(canShortlist),
+                  next: path,
+                }}
+              />
+            ))
           )}
           {page.pages > 1 ? (
             <nav className="flex items-center justify-between pt-2 text-sm">

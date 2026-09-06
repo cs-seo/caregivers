@@ -48,6 +48,30 @@ export function snippet(text: string, max = 90) {
   return `${trimmed.slice(0, max - 1).trimEnd()}…`;
 }
 
+export function lastActiveLabel(value: Date | string) {
+  const date = typeof value === "string" ? new Date(value) : value;
+  const hours = (Date.now() - date.getTime()) / 36e5;
+  if (hours < 12) return "Active today";
+  if (hours < 48) return "Active yesterday";
+  const days = Math.round(hours / 24);
+  if (days < 14) return `Active ${days} days ago`;
+  return `Last active ${formatDate(date)}`;
+}
+
+export function sydneyDateTimeLocal(daysFromNow: number, hour: number) {
+  const date = new Date(Date.now() + daysFromNow * 24 * 60 * 60 * 1000);
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Australia/Sydney",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const year = parts.find((part) => part.type === "year")?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
+  const day = parts.find((part) => part.type === "day")?.value;
+  return `${year}-${month}-${day}T${String(hour).padStart(2, "0")}:00`;
+}
+
 export function titleCaseSlug(slug: string) {
   return slug
     .split("-")

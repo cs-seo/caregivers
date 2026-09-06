@@ -4,9 +4,10 @@ import { Badge, CredentialDetails } from "@/components/badges";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { CaregiverCardView } from "@/components/caregiver-card";
 import { JsonLd } from "@/components/json-ld";
-import { formatDate, initials, monthYear } from "@/lib/format";
+import { ShortlistButton } from "@/components/shortlist-button";
+import { formatDate, initials, lastActiveLabel, monthYear } from "@/lib/format";
 import { formatAud } from "@/lib/money";
-import { getCaregiverBySlug, similarCaregivers } from "@/lib/queries";
+import { getCaregiverBySlug, getShortlistedIds, similarCaregivers } from "@/lib/queries";
 import { requireUser } from "@/lib/session";
 import { breadcrumbJsonLd, pageMeta } from "@/lib/seo";
 import { siteUrl } from "@/lib/constants";
@@ -34,12 +35,16 @@ export default async function CaregiverProfilePage({
   const [carer, viewer] = await Promise.all([getCaregiverBySlug(slug), requireUser()]);
   if (!carer) notFound();
   const isOwner = viewer?.caregiverProfile?.id === carer.id;
-  const similar = await similarCaregivers(
-    carer.id,
-    carer.cityId,
-    carer.specialties.map((s) => s.specialtyId),
-  );
+  const [similar, savedIds] = await Promise.all([
+    similarCaregivers(
+      carer.id,
+      carer.cityId,
+      carer.specialties.map((s) => s.specialtyId),
+    ),
+    getShortlistedIds(viewer?.role === "FAMILY" ? viewer.id : null),
+  ]);
   const primary = carer.specialties[0]?.specialty;
+  const canShortlist = viewer?.role === "FAMILY";
 
   return (
     <div>
@@ -140,6 +145,7 @@ export default async function CaregiverProfilePage({
                 <Badge tone="teal">{trustLabel(carer.trustScore)} · {carer.trustScore}/100</Badge>
                 {carer.instantBook ? <Badge tone="clay">Instant Book</Badge> : null}
                 {carer.availableNow ? <Badge>Available now</Badge> : null}
+                <span className="text-sm text-stone-500">{lastActiveLabel(carer.lastActiveAt)}</span>
                 {carer.reviewCount > 0 ? (
                   <span className="text-sm text-stone-600">
                     {carer.ratingAvg.toFixed(1)} ★ ({carer.reviewCount})
@@ -222,12 +228,21 @@ export default async function CaregiverProfilePage({
               : "Request to book — the carer accepts, then you fund escrow."}
           </p>
           {carer.availabilityNote ? <p className="mt-3 text-sm text-stone-700">{carer.availabilityNote}</p> : null}
+          <p className="mt-2 text-xs text-stone-500">{lastActiveLabel(carer.lastActiveAt)}</p>
           <Link
             href={`/caregiver/${carer.slug}/book`}
             className="mt-4 block rounded-xl bg-teal py-3 text-center font-semibold text-white no-underline hover:bg-teal-deep"
           >
             {carer.instantBook ? "Book now" : "Request to book"}
           </Link>
+          <div className="mt-3">
+            <ShortlistButton
+              caregiverId={carer.id}
+              saved={savedIds.has(carer.id)}
+              signedIn={Boolean(canShortlist)}
+              next={`/caregiver/${carer.slug}`}
+            />
+          </div>
           <p className="mt-3 text-xs text-stone-500">
             Specialties: {carer.specialties.map((s) => s.specialty.name).join(", ")}
           </p>
@@ -239,7 +254,15 @@ export default async function CaregiverProfilePage({
           <h2 className="text-xl font-semibold text-ink">Similar carers</h2>
           <div className="mt-4 space-y-4">
             {similar.map((item) => (
-              <CaregiverCardView key={item.id} caregiver={item} />
+              <CaregiverCardView
+                key={item.id}
+                caregiver={item}
+                shortlist={{
+                  saved: savedIds.has(item.id),
+                  signedIn: Boolean(canShortlist),
+                  next: `/caregiver/${carer.slug}`,
+                }}
+              />
             ))}
           </div>
         </section>

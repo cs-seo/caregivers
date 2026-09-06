@@ -57,6 +57,11 @@ export async function SiteFooter() {
               </Link>
             </li>
             <li>
+              <Link className="hover:text-white" href="/dashboard/shortlist">
+                Family shortlist
+              </Link>
+            </li>
+            <li>
               <Link className="hover:text-white" href="/locations">
                 Cities and suburbs
               </Link>

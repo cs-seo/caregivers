@@ -37,11 +37,21 @@ export async function SiteHeader() {
                 {item.label}
               </Link>
             ))}
+            {session?.user?.role === "FAMILY" ? (
+              <Link href="/dashboard/shortlist" className="block rounded-lg px-2 py-1.5 hover:bg-sage">
+                Shortlist
+              </Link>
+            ) : null}
           </div>
         </details>
         <div className="flex items-center gap-3 text-sm">
           {session?.user ? (
             <>
+              {session.user.role === "FAMILY" ? (
+                <Link href="/dashboard/shortlist" className="hidden text-stone-700 hover:text-teal sm:inline">
+                  Shortlist
+                </Link>
+              ) : null}
               <Link href="/dashboard" className="text-stone-700 hover:text-teal">
                 Dashboard
               </Link>

@@ -221,3 +221,39 @@ export async function similarCaregivers(profileId: string, cityId: string, speci
   });
   return results.map(withTrust);
 }
+
+export async function getShortlistedIds(familyId?: string | null) {
+  if (!familyId) return new Set<string>();
+  const rows = await prisma.shortlist.findMany({
+    where: { familyId },
+    select: { caregiverId: true },
+  });
+  return new Set(rows.map((row) => row.caregiverId));
+}
+
+export async function getCityHubs() {
+  const slugs = ["sydney", "melbourne", "brisbane", "perth", "adelaide", "canberra", "hobart", "darwin", "gold-coast", "newcastle"];
+  return prisma.city.findMany({
+    where: { slug: { in: slugs } },
+    include: { state: true, _count: { select: { caregivers: true } } },
+    orderBy: { name: "asc" },
+  });
+}
+
+export async function getRecentReviews(take = 4) {
+  return prisma.review.findMany({
+    take,
+    orderBy: { createdAt: "desc" },
+    include: {
+      author: { select: { name: true } },
+      caregiver: {
+        select: {
+          slug: true,
+          suburb: true,
+          user: { select: { name: true } },
+          city: { include: { state: true } },
+        },
+      },
+    },
+  });
+}

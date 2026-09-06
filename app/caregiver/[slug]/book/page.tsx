@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { BookingForm } from "@/components/booking-form";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { auth } from "@/auth";
+import { lastActiveLabel, sydneyDateTimeLocal } from "@/lib/format";
+import { formatAud } from "@/lib/money";
 import { getCaregiverBySlug } from "@/lib/queries";
 import { pageMeta } from "@/lib/seo";
 import Link from "next/link";
@@ -40,8 +42,11 @@ export default async function BookPage({
       />
       <h1 className="text-3xl font-semibold text-ink">Book {carer.user.name}</h1>
       <p className="mt-2 text-stone-600">
-        Three fields, then escrow. {carer.instantBook ? "Instant Book confirms immediately." : "The carer will accept before you pay."}
+        {carer.suburb}, {carer.city.name} · {formatAud(carer.hourlyRateCents)}/hr inc GST.{" "}
+        {carer.instantBook ? "Instant Book confirms immediately." : "The carer will accept before you pay."}
       </p>
+      {carer.availabilityNote ? <p className="mt-3 rounded-xl bg-sage p-3 text-sm text-stone-700">{carer.availabilityNote}</p> : null}
+      <p className="mt-2 text-xs text-stone-500">{lastActiveLabel(carer.lastActiveAt)}</p>
       {query.error ? (
         <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">Please check the date, hours and care type.</p>
       ) : null}
@@ -66,6 +71,7 @@ export default async function BookPage({
             hourlyRateCents={carer.hourlyRateCents}
             instantBook={carer.instantBook}
             specialties={carer.specialties.map((s) => ({ id: s.specialty.id, name: s.specialty.name }))}
+            defaultStart={sydneyDateTimeLocal(1, 9)}
           />
         </div>
       )}

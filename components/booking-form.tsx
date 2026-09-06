@@ -6,11 +6,13 @@ export function BookingForm({
   specialties,
   hourlyRateCents,
   instantBook,
+  defaultStart,
 }: {
   slug: string;
   specialties: { id: string; name: string }[];
   hourlyRateCents: number;
   instantBook: boolean;
+  defaultStart?: string;
 }) {
   const sample = quoteBooking(hourlyRateCents, 4);
   return (
@@ -32,6 +34,7 @@ export function BookingForm({
           type="datetime-local"
           name="startAt"
           required
+          defaultValue={defaultStart}
           className="mt-1 w-full rounded-xl border border-line px-3 py-2.5"
         />
       </label>

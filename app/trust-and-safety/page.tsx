@@ -41,6 +41,30 @@ export default function TrustPage() {
           or 72 hours pass after the scheduled end. Refunds return the held amount; they never silently skip the ledger.
         </p>
       </section>
+      <section>
+        <h2 className="text-xl font-semibold">Australian checks, by name</h2>
+        <p className="mt-2 text-stone-700">
+          A generic “police checked” badge is not enough. CareProof stores the document families actually ask for in
+          each state: WWCC in NSW, Victoria, SA, Tasmania and WA; Blue Card in Queensland; WWVP in the ACT; Ochre Card
+          in the Northern Territory; plus NDIS Worker Screening, Aged Care Worker Screening and AHPRA for nurses.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-semibold">My Aged Care and NDIS invoices</h2>
+        <p className="mt-2 text-stone-700">
+          Independent carers list an ABN where they have one. The family receipt shows the care rate, the 10% CareProof
+          fee on top, and GST already included in the advertised rate. That is the split coordinators and plan managers
+          need when they reconcile a Home Care Package or a self-managed NDIS plan.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-semibold">Why not pay the carer directly?</h2>
+        <p className="mt-2 text-stone-700">
+          Cash or a private transfer leaves both sides exposed: the family has no hold if the shift does not happen,
+          and the carer has no proof they will be paid. Escrow is the default on CareProof. Reviews are only accepted
+          after a released booking, so ratings stay tied to work that actually ran.
+        </p>
+      </section>
     </div>
   );
 }

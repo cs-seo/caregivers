@@ -23,6 +23,7 @@ model User {
   familyRequests   CareRequest[]
   reviewsAuthored  Review[]       @relation("ReviewAuthor")
   messages         Message[]
+  shortlists       Shortlist[]
 }
 
 model FamilyProfile {
@@ -115,6 +116,7 @@ model CaregiverProfile {
   bookings    Booking[]
   proposals   Proposal[]
   reviews     Review[]
+  shortlistedBy Shortlist[]
 }
 
 model CaregiverSpecialty {
@@ -238,6 +240,17 @@ model Payment {
   heldAt                DateTime?
   releasedAt            DateTime?
   createdAt             DateTime  @default(now())
+}
+
+model Shortlist {
+  id          String           @id @default(cuid())
+  familyId    String
+  family      User             @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  caregiverId String
+  caregiver   CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  createdAt   DateTime         @default(now())
+
+  @@unique([familyId, caregiverId])
 }
 
 model Review {
