@@ -196,6 +196,18 @@ export default async function CarerProfileEditorPage({
             Available now
           </label>
         </div>
+        <label className="block text-sm">
+          Availability note (optional)
+          <textarea
+            name="availabilityNote"
+            rows={2}
+            maxLength={240}
+            defaultValue={profile.availabilityNote ?? ""}
+            placeholder="Weekday mornings around your suburb. Overnight with 48 hours’ notice."
+            className="mt-1 w-full rounded-lg border border-line px-3 py-2"
+          />
+          <span className="mt-1 block text-xs text-stone-500">Shown on your public profile and directory cards. 240 characters max.</span>
+        </label>
         <button className="rounded-xl bg-teal px-5 py-2.5 font-medium text-white" type="submit">
           Save profile
         </button>

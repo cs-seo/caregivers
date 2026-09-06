@@ -13,6 +13,7 @@ export type FeaturedCarer = {
   abn?: string;
   instantBook: boolean;
   availableNow: boolean;
+  availabilityNote?: string;
   specialties: string[];
   credentials: { type: string; issuingState?: string; number?: string; months: number }[];
   work: {
@@ -42,6 +43,7 @@ export const featuredCarers: FeaturedCarer[] = [
     abn: "84 123 456 781",
     instantBook: true,
     availableNow: true,
+    availabilityNote: "Weekday mornings in Marrickville and the inner west. Overnight respite with 48 hours’ notice.",
     specialties: ["aged-care", "nursing", "personal-care", "respite"],
     credentials: [
       { type: "ahpra", number: "NMW0002184412", months: 18 },
@@ -84,6 +86,7 @@ export const featuredCarers: FeaturedCarer[] = [
     abn: "37 991 204 118",
     instantBook: true,
     availableNow: true,
+    availabilityNote: "After school and weekends around Bondi and the eastern suburbs. School-holiday cover with a week’s notice.",
     specialties: ["nannies", "after-school-care", "babysitters"],
     credentials: [
       { type: "wwcc", issuingState: "nsw", number: "WWC1234567E", months: 30 },
@@ -117,6 +120,7 @@ export const featuredCarers: FeaturedCarer[] = [
     abn: "51 204 883 019",
     instantBook: false,
     availableNow: true,
+    availabilityNote: "Community access and weekend social shifts around Parramatta. Mid-week evenings with 24 hours’ notice.",
     specialties: ["disability-support", "special-needs", "personal-care"],
     credentials: [
       { type: "ndis_screening", issuingState: "nsw", months: 28 },
@@ -150,6 +154,7 @@ export const featuredCarers: FeaturedCarer[] = [
     city: "sydney",
     instantBook: true,
     availableNow: false,
+    availabilityNote: "Standing weekday visits in Leichhardt and the inner west. New clients usually need a week’s notice.",
     specialties: ["companion-care", "housekeeping", "aged-care"],
     credentials: [
       { type: "aged_care_screening", issuingState: "nsw", months: 16 },
@@ -182,6 +187,7 @@ export const featuredCarers: FeaturedCarer[] = [
     abn: "22 448 110 903",
     instantBook: true,
     availableNow: true,
+    availabilityNote: "Overnight sits and weekday personal care around Hamilton and Newcastle. Same-week respite when the roster is open.",
     specialties: ["aged-care", "personal-care", "respite"],
     credentials: [
       { type: "aged_care_screening", issuingState: "nsw", months: 22 },
@@ -214,6 +220,7 @@ export const featuredCarers: FeaturedCarer[] = [
     city: "melbourne",
     instantBook: true,
     availableNow: true,
+    availabilityNote: "Weekday after-school and most weekends around Brunswick. Overnight babysitting with two days’ notice.",
     specialties: ["nannies", "babysitters", "after-school-care"],
     credentials: [
       { type: "wwcc", issuingState: "vic", number: "0183-229-441", months: 26 },

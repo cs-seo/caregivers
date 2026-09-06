@@ -35,6 +35,9 @@ export function CaregiverCardView({
             </p>
           </div>
           <p className="mt-2 line-clamp-2 text-sm text-stone-700">{caregiver.headline}</p>
+          {caregiver.availabilityNote ? (
+            <p className="mt-2 line-clamp-2 text-sm text-stone-600">{caregiver.availabilityNote}</p>
+          ) : null}
           <p className="mt-2 text-xs text-stone-500">{specialtyNames}</p>
           {caregiver.workHistory[0] ? (
             <p className="mt-1 text-xs text-stone-500">

@@ -470,6 +470,7 @@ export async function updateCaregiverProfileAction(formData: FormData) {
   const specialtyIds = formData.getAll("specialtyId").map(String).filter(Boolean);
   const instantBook = formData.get("instantBook") === "1";
   const availableNow = formData.get("availableNow") === "1";
+  const availabilityNote = String(formData.get("availabilityNote") ?? "").trim().slice(0, 240);
 
   if (!headline || !bio || !suburb || !cityId || hourlyRateAud < 20 || yearsExperience < 0) {
     redirect("/dashboard/profile?error=invalid");
@@ -491,6 +492,7 @@ export async function updateCaregiverProfileAction(formData: FormData) {
         yearsExperience: Math.round(yearsExperience),
         instantBook,
         availableNow,
+        availabilityNote: availabilityNote || null,
         lastActiveAt: new Date(),
       },
     });

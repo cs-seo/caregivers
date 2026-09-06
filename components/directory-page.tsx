@@ -1,9 +1,10 @@
+import Link from "next/link";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { CaregiverCardView } from "@/components/caregiver-card";
 import { DirectoryFilters } from "@/components/directory-filters";
 import { JsonLd } from "@/components/json-ld";
 import { SearchForm } from "@/components/search-form";
-import { filterHref } from "@/lib/directory";
+import { emptyStateLinks, filterHref } from "@/lib/directory";
 import { formatAud } from "@/lib/money";
 import type { DirectoryFilters as Filters } from "@/lib/queries";
 import { directoryStats, searchCaregiversPage } from "@/lib/queries";
@@ -90,9 +91,18 @@ export async function DirectoryResults({
         <DirectoryFilters action={filterAction} current={current} />
         <div className="space-y-4">
           {caregivers.length === 0 ? (
-            <p className="rounded-2xl border border-dashed border-line p-8 text-stone-500">
-              No carers match these filters yet. Try a nearby city or another specialty.
-            </p>
+            <div className="rounded-2xl border border-dashed border-line p-8">
+              <p className="text-stone-600">No carers match these filters yet. Widen the search or post a request.</p>
+              <ul className="mt-4 space-y-2 text-sm">
+                {emptyStateLinks(filters).map((link) => (
+                  <li key={link.href}>
+                    <Link href={link.href} className="text-teal hover:underline">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ) : (
             caregivers.map((carer) => <CaregiverCardView key={carer.id} caregiver={carer} />)
           )}

@@ -99,9 +99,10 @@ model CaregiverProfile {
   cityId          String
   city            City     @relation(fields: [cityId], references: [id])
   abn             String?
-  instantBook     Boolean  @default(false)
-  availableNow    Boolean  @default(false)
-  lastActiveAt    DateTime @default(now())
+  instantBook      Boolean  @default(false)
+  availableNow     Boolean  @default(false)
+  availabilityNote String?
+  lastActiveAt     DateTime @default(now())
   ratingAvg       Float    @default(0)
   reviewCount     Int      @default(0)
   completedJobs   Int      @default(0)

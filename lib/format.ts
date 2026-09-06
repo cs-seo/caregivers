@@ -42,6 +42,12 @@ export function initials(name: string) {
     .join("");
 }
 
+export function snippet(text: string, max = 90) {
+  const trimmed = text.replace(/\s+/g, " ").trim();
+  if (trimmed.length <= max) return trimmed;
+  return `${trimmed.slice(0, max - 1).trimEnd()}…`;
+}
+
 export function titleCaseSlug(slug: string) {
   return slug
     .split("-")

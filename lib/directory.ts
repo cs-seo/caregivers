@@ -67,3 +67,30 @@ export function filterCurrent(filters: {
     sort: filters.sort && filters.sort !== "rating" ? filters.sort : undefined,
   };
 }
+
+export function emptyStateLinks(filters: DirectoryFilters) {
+  const links: { href: string; label: string }[] = [];
+  const { specialty, state, city, suburb } = filters;
+  if (specialty && state && city && suburb) {
+    links.push({
+      href: `/caregivers/${specialty}/${state}/${city}`,
+      label: "See carers across this city",
+    });
+  }
+  if (specialty && state && city) {
+    links.push({
+      href: `/caregivers/${specialty}/${state}`,
+      label: "See this specialty across the state",
+    });
+  }
+  if (specialty) {
+    links.push({
+      href: `/caregivers/${specialty}`,
+      label: "Browse this specialty Australia-wide",
+    });
+  }
+  links.push({ href: "/caregivers", label: "Browse all verified carers" });
+  links.push({ href: "/locations", label: "Explore cities and suburbs" });
+  links.push({ href: "/post-a-job", label: "Post a care request" });
+  return [...new Map(links.map((link) => [link.href, link])).values()];
+}

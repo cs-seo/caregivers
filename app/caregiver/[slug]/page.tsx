@@ -158,6 +158,13 @@ export default async function CaregiverProfilePage({
             <CredentialDetails credentials={carer.credentials} abn={carer.abn} />
           </section>
 
+          {carer.availabilityNote ? (
+            <section className="mt-8">
+              <h2 className="text-xl font-semibold text-ink">Availability</h2>
+              <p className="mt-2 text-stone-700">{carer.availabilityNote}</p>
+            </section>
+          ) : null}
+
           <section className="mt-8">
             <h2 className="text-xl font-semibold text-ink">About</h2>
             <p className="mt-2 whitespace-pre-line text-stone-700">{carer.bio}</p>
@@ -214,6 +221,7 @@ export default async function CaregiverProfilePage({
               ? "Instant Book — pay into escrow now and the carer is confirmed."
               : "Request to book — the carer accepts, then you fund escrow."}
           </p>
+          {carer.availabilityNote ? <p className="mt-3 text-sm text-stone-700">{carer.availabilityNote}</p> : null}
           <Link
             href={`/caregiver/${carer.slug}/book`}
             className="mt-4 block rounded-xl bg-teal py-3 text-center font-semibold text-white no-underline hover:bg-teal-deep"

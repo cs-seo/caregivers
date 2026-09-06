@@ -34,6 +34,11 @@ export async function insertCarer(
           abn: carer.abn,
           instantBook: carer.instantBook,
           availableNow: carer.availableNow,
+          availabilityNote:
+            carer.availabilityNote ||
+            (carer.availableNow
+              ? `Weekday afternoons and most weekends around ${carer.suburb}.`
+              : `Book a few days ahead — usually free mid-week around ${carer.suburb}.`),
           lastActiveAt: new Date(),
           verifiedHours,
           specialties: {

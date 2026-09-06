@@ -145,6 +145,7 @@ function rowToCarer(row: Record<string, string>, index: number): GeneratedCarer 
     abn: row.abn || undefined,
     instantBook: truthy(row.instantBook),
     availableNow: row.availableNow ? truthy(row.availableNow) : true,
+    availabilityNote: row.availabilityNote?.trim() || undefined,
     specialties: specialties.length ? specialties : ["companion-care"],
     credentials: credentialTypes.map((type) => ({
       type: slugifySuburb(type).replace(/-/g, "_"),

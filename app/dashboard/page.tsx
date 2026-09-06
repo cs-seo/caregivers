@@ -1,8 +1,9 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { Badge } from "@/components/badges";
 import { BOOKING_STATUS, BOOKING_STATUS_LABELS } from "@/lib/constants";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, plural, snippet } from "@/lib/format";
 import { formatAud } from "@/lib/money";
 import { profileChecklist } from "@/lib/profile";
 import { prisma } from "@/lib/prisma";
@@ -41,16 +42,18 @@ function BookingList({
     caregiver: { user: { name: string } };
     family: { name: string };
     payment: { status: string } | null;
+    messages: { body: string }[];
+    _count: { messages: number };
   }[];
   isFamily: boolean;
-  empty: string;
+  empty: ReactNode;
 }) {
   return (
     <section className="mt-8">
       <h2 className="text-xl font-semibold">{title}</h2>
       <ul className="mt-4 space-y-3">
         {bookings.length === 0 ? (
-          <li className="text-sm text-stone-500">{empty}</li>
+          <li className="rounded-2xl border border-dashed border-line bg-card p-5 text-sm text-stone-600">{empty}</li>
         ) : (
           bookings.map((booking) => (
             <li key={booking.id} className="rounded-2xl border border-line bg-card p-4">
@@ -67,6 +70,14 @@ function BookingList({
                 {formatAud(booking.totalCents)} family total · carer payout {formatAud(booking.subtotalCents)}
                 {booking.payment ? ` · payment ${booking.payment.status}` : ""}
               </p>
+              {booking._count.messages > 0 ? (
+                <p className="mt-2 text-sm text-stone-500">
+                  {plural(booking._count.messages, "message")}
+                  {booking.messages[0] ? ` · “${snippet(booking.messages[0].body)}”` : ""}
+                </p>
+              ) : (
+                <p className="mt-2 text-sm text-stone-400">No messages yet</p>
+              )}
             </li>
           ))
         )}
@@ -87,6 +98,8 @@ export default async function DashboardPage() {
       family: { select: { name: true } },
       specialty: true,
       payment: true,
+      messages: { orderBy: { createdAt: "desc" }, take: 1, select: { body: true } },
+      _count: { select: { messages: true } },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -175,15 +188,78 @@ export default async function DashboardPage() {
         title="Needs action"
         bookings={needsAction}
         isFamily={isFamily}
-        empty={isFamily ? "Nothing waiting on you." : "No booking requests to accept."}
+        empty={
+          isFamily ? (
+            <>
+              Nothing waiting on you.{" "}
+              <Link href="/caregivers" className="text-teal">
+                Browse verified carers
+              </Link>{" "}
+              or{" "}
+              <Link href="/post-a-job" className="text-teal">
+                post a care request
+              </Link>
+              .
+            </>
+          ) : (
+            <>
+              No booking requests to accept.{" "}
+              <Link href="/care-requests" className="text-teal">
+                Browse open jobs
+              </Link>{" "}
+              or{" "}
+              <Link href="/dashboard/profile" className="text-teal">
+                keep your profile current
+              </Link>
+              .
+            </>
+          )
+        }
       />
       <BookingList
         title="Active care"
         bookings={active}
         isFamily={isFamily}
-        empty="No bookings in escrow or in progress."
+        empty={
+          isFamily ? (
+            <>
+              No bookings in escrow or in progress.{" "}
+              <Link href="/caregivers" className="text-teal">
+                Find a carer
+              </Link>{" "}
+              when you are ready to book.
+            </>
+          ) : (
+            <>
+              No bookings in escrow or in progress. Open jobs are on{" "}
+              <Link href="/care-requests" className="text-teal">
+                the care request board
+              </Link>
+              .
+            </>
+          )
+        }
       />
-      <BookingList title="History" bookings={history} isFamily={isFamily} empty="No completed bookings yet." />
+      <BookingList
+        title="History"
+        bookings={history}
+        isFamily={isFamily}
+        empty={
+          isFamily ? (
+            <>
+              No completed bookings yet. Released bookings and reviews will land here after care.
+            </>
+          ) : (
+            <>
+              No completed bookings yet. Keep checks and work history up to date on{" "}
+              <Link href="/dashboard/profile" className="text-teal">
+                your profile
+              </Link>
+              .
+            </>
+          )
+        }
+      />
 
       <section className="mt-10">
         <h2 className="text-xl font-semibold">{isFamily ? "Your care requests" : "Your proposals"}</h2>

@@ -79,6 +79,19 @@ function locations() {
   return rows;
 }
 
+function defaultAvailabilityNote(
+  template: FeaturedCarer,
+  place: { suburb: string; city: string },
+  availableNow: boolean,
+) {
+  if (template.availabilityNote) {
+    return relocate(template.availabilityNote, template, place.suburb, place.city);
+  }
+  return availableNow
+    ? `Weekday afternoons and most weekends around ${place.suburb}.`
+    : `Book a few days ahead — usually free mid-week around ${place.suburb}.`;
+}
+
 function relocate(text: string, from: FeaturedCarer, toSuburb: string, toCity: string) {
   const fromCity = titleCaseSlug(from.city);
   const toCityName = titleCaseSlug(toCity);
@@ -156,6 +169,7 @@ export function generateCarers(count = 480, templates: FeaturedCarer[] = feature
 
     const jitter = range(rand, -200, 300);
     const yearsJitter = range(rand, -1, 2);
+    const availableNow = rand() > 0.25;
 
     carers.push({
       email,
@@ -172,7 +186,8 @@ export function generateCarers(count = 480, templates: FeaturedCarer[] = feature
         ? `${range(rand, 11, 99)} ${range(rand, 100, 999)} ${range(rand, 100, 999)} ${range(rand, 100, 999)}`
         : undefined,
       instantBook: template.instantBook,
-      availableNow: rand() > 0.25,
+      availableNow,
+      availabilityNote: defaultAvailabilityNote(template, place, availableNow),
       specialties: [...template.specialties],
       credentials: template.credentials.map((credential) => ({
         type: credential.type,
