@@ -126,17 +126,21 @@ export async function directoryStats(
       ...(filters.city ? { city: { slug: filters.city } } : {}),
       ...(filters.suburb ? { suburb: { contains: filters.suburb } } : {}),
   };
-  const [count, agg] = await Promise.all([
+  const [count, agg, reviewed] = await Promise.all([
     prisma.caregiverProfile.count({ where }),
     prisma.caregiverProfile.aggregate({
       where,
-      _avg: { hourlyRateCents: true, ratingAvg: true },
+      _avg: { hourlyRateCents: true },
+    }),
+    prisma.caregiverProfile.aggregate({
+      where: { ...where, reviewCount: { gt: 0 } },
+      _avg: { ratingAvg: true },
     }),
   ]);
   return {
     count,
     avgRateCents: Math.round(agg._avg.hourlyRateCents ?? 0),
-    avgRating: agg._avg.ratingAvg ?? 0,
+    avgRating: reviewed._avg.ratingAvg ?? 0,
   };
 }
 
