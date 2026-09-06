@@ -66,7 +66,7 @@ export async function registerAction(formData: FormData) {
     await prisma.caregiverProfile.create({
       data: {
         userId: user.id,
-        slug: `${slugify(name)}-${city.slug}`,
+        slug: `${slugify(name)}-${city.slug}-${Date.now().toString(36)}`,
         headline: "New carer on CareProof",
         bio: "Tell families about your experience, checks and the care you offer.",
         hourlyRateCents: 4000,
@@ -77,8 +77,9 @@ export async function registerAction(formData: FormData) {
     });
   }
 
+  const afterSignup = user.role === ROLES.CAREGIVER ? "/dashboard/profile?welcome=1" : "/dashboard";
   try {
-    await signIn("credentials", { email, password, redirectTo: "/dashboard" });
+    await signIn("credentials", { email, password, redirectTo: afterSignup });
   } catch (error) {
     if (error instanceof AuthError) {
       redirect("/login?error=credentials");
@@ -433,4 +434,171 @@ export async function createReviewAction(formData: FormData) {
 
 export async function runAutoReleaseAction(bookingId: string) {
   await autoReleaseIfDue(bookingId);
+}
+
+export async function sendMessageAction(formData: FormData) {
+  const user = await requireUser();
+  if (!user) redirect("/login");
+  const bookingId = String(formData.get("bookingId") ?? "");
+  const body = String(formData.get("body") ?? "").trim();
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { caregiver: true },
+  });
+  if (!booking) throw new Error("Not found");
+  const isParty = booking.familyId === user.id || booking.caregiver.userId === user.id;
+  if (!isParty) throw new Error("Not allowed");
+  if (!body) redirect(`/dashboard/bookings/${booking.id}?error=message`);
+
+  await prisma.message.create({
+    data: { bookingId: booking.id, senderId: user.id, body },
+  });
+  revalidatePath(`/dashboard/bookings/${booking.id}`);
+}
+
+export async function updateCaregiverProfileAction(formData: FormData) {
+  const user = await requireRole(ROLES.CAREGIVER);
+  if (!user?.caregiverProfile) redirect("/login");
+
+  const headline = String(formData.get("headline") ?? "").trim();
+  const bio = String(formData.get("bio") ?? "").trim();
+  const suburb = String(formData.get("suburb") ?? "").trim();
+  const cityId = String(formData.get("cityId") ?? "");
+  const abn = String(formData.get("abn") ?? "").trim();
+  const hourlyRateAud = Number(formData.get("hourlyRateAud") ?? 0);
+  const yearsExperience = Number(formData.get("yearsExperience") ?? 0);
+  const specialtyIds = formData.getAll("specialtyId").map(String).filter(Boolean);
+  const instantBook = formData.get("instantBook") === "1";
+  const availableNow = formData.get("availableNow") === "1";
+
+  if (!headline || !bio || !suburb || !cityId || hourlyRateAud < 20 || yearsExperience < 0) {
+    redirect("/dashboard/profile?error=invalid");
+  }
+
+  const city = await prisma.city.findUnique({ where: { id: cityId } });
+  if (!city) redirect("/dashboard/profile?error=invalid");
+
+  await prisma.$transaction(async (tx) => {
+    await tx.caregiverProfile.update({
+      where: { id: user.caregiverProfile!.id },
+      data: {
+        headline,
+        bio,
+        suburb,
+        cityId,
+        abn: abn || null,
+        hourlyRateCents: Math.round(hourlyRateAud * 100),
+        yearsExperience: Math.round(yearsExperience),
+        instantBook,
+        availableNow,
+        lastActiveAt: new Date(),
+      },
+    });
+    await tx.caregiverSpecialty.deleteMany({ where: { caregiverId: user.caregiverProfile!.id } });
+    if (specialtyIds.length) {
+      await tx.caregiverSpecialty.createMany({
+        data: specialtyIds.map((specialtyId) => ({
+          caregiverId: user.caregiverProfile!.id,
+          specialtyId,
+        })),
+      });
+    }
+  });
+
+  revalidatePath("/dashboard/profile");
+  revalidatePath(`/caregiver/${user.caregiverProfile.slug}`);
+  revalidatePath("/caregivers");
+  redirect("/dashboard/profile?saved=1");
+}
+
+export async function addCredentialAction(formData: FormData) {
+  const user = await requireRole(ROLES.CAREGIVER);
+  if (!user?.caregiverProfile) redirect("/login");
+  const type = String(formData.get("type") ?? "");
+  const number = String(formData.get("number") ?? "").trim();
+  const issuingState = String(formData.get("issuingState") ?? "").trim();
+  const expiresAtRaw = String(formData.get("expiresAt") ?? "");
+  if (!type) redirect("/dashboard/profile?error=credential");
+
+  await prisma.credential.create({
+    data: {
+      caregiverId: user.caregiverProfile.id,
+      type,
+      number: number || null,
+      issuingState: issuingState || null,
+      expiresAt: expiresAtRaw ? new Date(expiresAtRaw) : null,
+      verified: false,
+    },
+  });
+  revalidatePath("/dashboard/profile");
+  revalidatePath(`/caregiver/${user.caregiverProfile.slug}`);
+}
+
+export async function removeCredentialAction(formData: FormData) {
+  const user = await requireRole(ROLES.CAREGIVER);
+  if (!user?.caregiverProfile) redirect("/login");
+  const id = String(formData.get("credentialId") ?? "");
+  await prisma.credential.deleteMany({
+    where: { id, caregiverId: user.caregiverProfile.id },
+  });
+  revalidatePath("/dashboard/profile");
+  revalidatePath(`/caregiver/${user.caregiverProfile.slug}`);
+}
+
+export async function addWorkHistoryAction(formData: FormData) {
+  const user = await requireRole(ROLES.CAREGIVER);
+  if (!user?.caregiverProfile) redirect("/login");
+  const employer = String(formData.get("employer") ?? "").trim();
+  const title = String(formData.get("title") ?? "").trim();
+  const duties = String(formData.get("duties") ?? "").trim();
+  const hours = Number(formData.get("hours") ?? 0);
+  const startDate = new Date(String(formData.get("startDate") ?? ""));
+  const endRaw = String(formData.get("endDate") ?? "");
+  if (!employer || !title || !duties || Number.isNaN(startDate.getTime())) {
+    redirect("/dashboard/profile?error=work");
+  }
+
+  await prisma.workHistory.create({
+    data: {
+      caregiverId: user.caregiverProfile.id,
+      employer,
+      title,
+      duties,
+      hours: Number.isFinite(hours) ? Math.max(0, Math.round(hours)) : 0,
+      startDate,
+      endDate: endRaw ? new Date(endRaw) : null,
+      verification: "unverified",
+    },
+  });
+
+  const hoursSum = await prisma.workHistory.aggregate({
+    where: { caregiverId: user.caregiverProfile.id },
+    _sum: { hours: true },
+  });
+  await prisma.caregiverProfile.update({
+    where: { id: user.caregiverProfile.id },
+    data: { verifiedHours: hoursSum._sum.hours ?? 0 },
+  });
+
+  revalidatePath("/dashboard/profile");
+  revalidatePath(`/caregiver/${user.caregiverProfile.slug}`);
+}
+
+export async function removeWorkHistoryAction(formData: FormData) {
+  const user = await requireRole(ROLES.CAREGIVER);
+  if (!user?.caregiverProfile) redirect("/login");
+  const id = String(formData.get("workId") ?? "");
+  await prisma.workHistory.deleteMany({
+    where: { id, caregiverId: user.caregiverProfile.id },
+  });
+  const hoursSum = await prisma.workHistory.aggregate({
+    where: { caregiverId: user.caregiverProfile.id },
+    _sum: { hours: true },
+  });
+  await prisma.caregiverProfile.update({
+    where: { id: user.caregiverProfile.id },
+    data: { verifiedHours: hoursSum._sum.hours ?? 0 },
+  });
+  revalidatePath("/dashboard/profile");
+  revalidatePath(`/caregiver/${user.caregiverProfile.slug}`);
 }

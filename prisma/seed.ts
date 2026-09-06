@@ -4,6 +4,7 @@ import { featuredCarers } from "./data/featured-carers";
 import { generateCarers } from "./data/generate-carers";
 import { SUBURBS_BY_CITY, slugifySuburb } from "./data/suburbs";
 import { insertCarer } from "./insert-carer";
+import { seedDemoPipeline } from "./seed-demo-pipeline";
 
 const prisma = new PrismaClient();
 const DEMO_PASSWORD = "CareProof123!";
@@ -700,8 +701,9 @@ async function main() {
     await refreshAggregates(profile.id);
   }
 
+  const pipeline = await seedDemoPipeline(prisma);
   console.log(
-    `Seeded ${carerProfiles.length} featured carers + ${generatedCount} generated profiles, ${familyUsers.length} families, ${requests.length} jobs, ${suburbCount} suburbs.`,
+    `Seeded ${carerProfiles.length} featured carers + ${generatedCount} generated profiles, ${familyUsers.length} families, ${requests.length} jobs, ${suburbCount} suburbs, ${pipeline.created} live demo bookings.`,
   );
   console.log("Demo logins: family@careproof.com.au / carer@careproof.com.au / CareProof123!");
 }

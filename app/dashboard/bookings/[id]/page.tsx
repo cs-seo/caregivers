@@ -9,6 +9,7 @@ import {
   disputeBookingAction,
   payBookingAction,
   resolveDisputeAction,
+  sendMessageAction,
   startBookingAction,
 } from "@/lib/actions";
 import { BOOKING_STATUS, BOOKING_STATUS_LABELS } from "@/lib/constants";
@@ -46,6 +47,7 @@ export default async function BookingDetailPage({
       specialty: true,
       payment: true,
       review: true,
+      messages: { include: { sender: { select: { id: true, name: true } } }, orderBy: { createdAt: "asc" } },
     },
   });
   if (!booking) notFound();
@@ -173,6 +175,40 @@ export default async function BookingDetailPage({
           </>
         ) : null}
       </div>
+
+      <section className="mt-10">
+        <h2 className="font-semibold text-ink">Messages</h2>
+        <p className="mt-1 text-xs text-stone-500">Only you and the other party on this booking can see this thread.</p>
+        {query.error === "message" ? <p className="mt-2 text-sm text-clay">Write a short message before sending.</p> : null}
+        <ul className="mt-4 space-y-3">
+          {booking.messages.length === 0 ? (
+            <li className="text-sm text-stone-500">No messages yet. Confirm times, access or handover notes here.</li>
+          ) : (
+            booking.messages.map((message) => (
+              <li key={message.id} className="rounded-2xl border border-line bg-card p-4">
+                <p className="text-sm font-medium text-ink">
+                  {message.sender.id === user.id ? "You" : message.sender.name}
+                </p>
+                <p className="mt-1 text-sm text-stone-700 whitespace-pre-line">{message.body}</p>
+                <p className="mt-2 text-xs text-stone-500">{formatDateTime(message.createdAt)}</p>
+              </li>
+            ))
+          )}
+        </ul>
+        <form action={sendMessageAction} className="mt-4 space-y-3">
+          <input type="hidden" name="bookingId" value={booking.id} />
+          <textarea
+            name="body"
+            required
+            rows={3}
+            placeholder="Ask about parking, keys, or the handover."
+            className="w-full rounded-lg border border-line px-3 py-2"
+          />
+          <button className="rounded-lg bg-teal px-4 py-2 text-sm font-medium text-white" type="submit">
+            Send message
+          </button>
+        </form>
+      </section>
 
       {isFamily && booking.status === BOOKING_STATUS.RELEASED && !booking.review ? (
         <form action={createReviewAction} className="mt-8 space-y-3 rounded-2xl border border-line bg-card p-5">

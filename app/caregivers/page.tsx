@@ -1,6 +1,6 @@
 import { DirectoryResults } from "@/components/directory-page";
 import { FaqBlock, LinkGrid } from "@/components/seo-landing";
-import { parseFilters } from "@/lib/directory";
+import { filterCurrent, parseFilters } from "@/lib/directory";
 import { getSpecialties, getStates } from "@/lib/queries";
 import { pageMeta } from "@/lib/seo";
 
@@ -22,18 +22,7 @@ export default async function CaregiversPage({
     getStates(),
   ]);
   const filters = parseFilters(params);
-  const current = {
-    q: filters.q,
-    specialty: filters.specialty,
-    state: filters.state,
-    city: filters.city,
-    instantBook: filters.instantBook ? "1" : undefined,
-    availableNow: filters.availableNow ? "1" : undefined,
-    wwcc: filters.wwcc ? "1" : undefined,
-    ndis: filters.ndis ? "1" : undefined,
-    minRating: filters.minRating ? String(filters.minRating) : undefined,
-    minYears: filters.minYears ? String(filters.minYears) : undefined,
-  };
+  const current = filterCurrent(filters);
 
   return (
     <DirectoryResults

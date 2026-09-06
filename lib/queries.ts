@@ -77,42 +77,71 @@ export type DirectoryFilters = {
   minRating?: number;
   minYears?: number;
   availableNow?: boolean;
+  page?: number;
 };
+
+function caregiverWhere(filters: DirectoryFilters) {
+  return {
+    ...(filters.q
+      ? {
+          OR: [
+            { user: { name: { contains: filters.q } } },
+            { headline: { contains: filters.q } },
+            { suburb: { contains: filters.q } },
+          ],
+        }
+      : {}),
+    ...(filters.specialty
+      ? { specialties: { some: { specialty: { slug: filters.specialty } } } }
+      : {}),
+    ...(filters.state ? { city: { state: { slug: filters.state } } } : {}),
+    ...(filters.city ? { city: { slug: filters.city } } : {}),
+    ...(filters.suburb ? { suburb: { contains: filters.suburb } } : {}),
+    ...(filters.instantBook ? { instantBook: true } : {}),
+    ...(filters.availableNow ? { availableNow: true } : {}),
+    ...(filters.minRating ? { ratingAvg: { gte: filters.minRating } } : {}),
+    ...(filters.minYears ? { yearsExperience: { gte: filters.minYears } } : {}),
+    ...(filters.wwcc
+      ? { credentials: { some: { type: "wwcc", verified: true } } }
+      : {}),
+    ...(filters.ndis
+      ? { credentials: { some: { type: "ndis_screening", verified: true } } }
+      : {}),
+  };
+}
+
+export const DIRECTORY_PAGE_SIZE = 12;
 
 export async function searchCaregivers(filters: DirectoryFilters, take = 60) {
   const caregivers = await prisma.caregiverProfile.findMany({
-    where: {
-      ...(filters.q
-        ? {
-            OR: [
-              { user: { name: { contains: filters.q } } },
-              { headline: { contains: filters.q } },
-              { suburb: { contains: filters.q } },
-            ],
-          }
-        : {}),
-      ...(filters.specialty
-        ? { specialties: { some: { specialty: { slug: filters.specialty } } } }
-        : {}),
-      ...(filters.state ? { city: { state: { slug: filters.state } } } : {}),
-      ...(filters.city ? { city: { slug: filters.city } } : {}),
-      ...(filters.suburb ? { suburb: { contains: filters.suburb } } : {}),
-      ...(filters.instantBook ? { instantBook: true } : {}),
-      ...(filters.availableNow ? { availableNow: true } : {}),
-      ...(filters.minRating ? { ratingAvg: { gte: filters.minRating } } : {}),
-      ...(filters.minYears ? { yearsExperience: { gte: filters.minYears } } : {}),
-      ...(filters.wwcc
-        ? { credentials: { some: { type: "wwcc", verified: true } } }
-        : {}),
-      ...(filters.ndis
-        ? { credentials: { some: { type: "ndis_screening", verified: true } } }
-        : {}),
-    },
+    where: caregiverWhere(filters),
     include: caregiverCardInclude,
     orderBy: [{ ratingAvg: "desc" }, { completedJobs: "desc" }],
     take,
   });
   return caregivers.map(withTrust);
+}
+
+export async function searchCaregiversPage(filters: DirectoryFilters, pageSize = DIRECTORY_PAGE_SIZE) {
+  const page = Math.max(1, filters.page ?? 1);
+  const where = caregiverWhere(filters);
+  const [rows, total] = await Promise.all([
+    prisma.caregiverProfile.findMany({
+      where,
+      include: caregiverCardInclude,
+      orderBy: [{ ratingAvg: "desc" }, { completedJobs: "desc" }],
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.caregiverProfile.count({ where }),
+  ]);
+  return {
+    caregivers: rows.map(withTrust),
+    total,
+    page,
+    pageSize,
+    pages: Math.max(1, Math.ceil(total / pageSize)),
+  };
 }
 
 export async function directoryStats(

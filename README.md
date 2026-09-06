@@ -4,19 +4,21 @@ Verified carers directory for Australia. Families search by specialty and city, 
 
 ## Features
 
-- SEO URLs: `/caregivers/{specialty}/{state}/{city}` and `/caregiver/{slug}`
-- Instant Book and request-to-book (Upwork-style)
+- SEO URLs: `/caregivers/{specialty}/{state}/{city}/{suburb}` and `/caregiver/{slug}`
+- Instant Book and request-to-book
 - Care requests + proposals + hire
 - Escrow ledger (demo by default; Stripe Connect when keys are set)
 - WWCC, NDIS, AHPRA and employer-confirmed work history
 - Reviews only after a released booking
+- Carers edit their own public profile from `/dashboard/profile`
+- Booking message thread between family and carer
 
 ## Setup
 
 ```bash
 cp .env.example .env
 npm install
-npx prisma migrate dev --name init
+npx prisma migrate dev
 npm run db:seed
 npm run dev
 ```
@@ -25,6 +27,14 @@ Demo logins (password `CareProof123!`):
 
 - Family: `family@careproof.com.au`
 - Carer: `carer@careproof.com.au`
+
+## Five-minute demo
+
+1. Open `/caregivers/nannies/nsw/sydney/bondi` — Priya Nair plus nearby clones from her profile.
+2. Log in as the family. Dashboard shows a request waiting on James, escrow with Sarah, and after-school care in progress with Priya.
+3. Open Sarah’s booking and use the message thread.
+4. Log in as the carer (`carer@careproof.com.au`) and edit `/dashboard/profile`.
+5. Join as a new carer at `/register` — you land on the profile checklist.
 
 ## Payments
 

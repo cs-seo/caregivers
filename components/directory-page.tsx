@@ -3,9 +3,10 @@ import { CaregiverCardView } from "@/components/caregiver-card";
 import { DirectoryFilters } from "@/components/directory-filters";
 import { JsonLd } from "@/components/json-ld";
 import { SearchForm } from "@/components/search-form";
+import { filterHref } from "@/lib/directory";
 import { formatAud } from "@/lib/money";
 import type { DirectoryFilters as Filters } from "@/lib/queries";
-import { directoryStats, searchCaregivers } from "@/lib/queries";
+import { directoryStats, searchCaregiversPage } from "@/lib/queries";
 import { breadcrumbJsonLd } from "@/lib/seo";
 import { siteUrl } from "@/lib/constants";
 
@@ -30,10 +31,12 @@ export async function DirectoryResults({
   nearbyNote?: string;
   extras?: React.ReactNode;
 }) {
-  const [caregivers, stats] = await Promise.all([
-    nearbyNote ? searchCaregivers({ ...filters, suburb: undefined }) : searchCaregivers(filters),
-    directoryStats(nearbyNote ? { ...filters, suburb: undefined } : filters),
+  const listFilters = nearbyNote ? { ...filters, suburb: undefined } : filters;
+  const [page, stats] = await Promise.all([
+    searchCaregiversPage(listFilters),
+    directoryStats(listFilters),
   ]);
+  const caregivers = page.caregivers;
 
   return (
     <div>
@@ -76,6 +79,9 @@ export async function DirectoryResults({
         {stats.count} carers
         {stats.avgRateCents ? ` · average ${formatAud(stats.avgRateCents)}/hr` : ""}
         {stats.avgRating ? ` · ${stats.avgRating.toFixed(1)} average rating` : ""}
+        {page.pages > 1
+          ? ` · showing ${(page.page - 1) * page.pageSize + 1}–${Math.min(page.page * page.pageSize, page.total)}`
+          : ""}
       </p>
       <div className="mt-6">
         <SearchForm specialty={filters.specialty} state={filters.state} city={filters.city} />
@@ -90,6 +96,27 @@ export async function DirectoryResults({
           ) : (
             caregivers.map((carer) => <CaregiverCardView key={carer.id} caregiver={carer} />)
           )}
+          {page.pages > 1 ? (
+            <nav className="flex items-center justify-between pt-2 text-sm">
+              {page.page > 1 ? (
+                <a className="text-teal" href={filterHref(path, current, { page: String(page.page - 1) })}>
+                  Previous
+                </a>
+              ) : (
+                <span className="text-stone-400">Previous</span>
+              )}
+              <span className="text-stone-500">
+                Page {page.page} of {page.pages}
+              </span>
+              {page.page < page.pages ? (
+                <a className="text-teal" href={filterHref(path, current, { page: String(page.page + 1) })}>
+                  Next
+                </a>
+              ) : (
+                <span className="text-stone-400">Next</span>
+              )}
+            </nav>
+          ) : null}
         </div>
       </div>
       {extras}

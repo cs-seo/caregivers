@@ -7,6 +7,7 @@ import { JsonLd } from "@/components/json-ld";
 import { formatDate, initials, monthYear } from "@/lib/format";
 import { formatAud } from "@/lib/money";
 import { getCaregiverBySlug, similarCaregivers } from "@/lib/queries";
+import { requireUser } from "@/lib/session";
 import { breadcrumbJsonLd, pageMeta } from "@/lib/seo";
 import { siteUrl } from "@/lib/constants";
 import { trustLabel } from "@/lib/trust";
@@ -30,8 +31,9 @@ export default async function CaregiverProfilePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const carer = await getCaregiverBySlug(slug);
+  const [carer, viewer] = await Promise.all([getCaregiverBySlug(slug), requireUser()]);
   if (!carer) notFound();
+  const isOwner = viewer?.caregiverProfile?.id === carer.id;
   const similar = await similarCaregivers(
     carer.id,
     carer.cityId,
@@ -111,6 +113,13 @@ export default async function CaregiverProfilePage({
             </div>
             <div>
               <h1 className="text-3xl font-semibold text-ink">{carer.user.name}</h1>
+              {isOwner ? (
+                <p className="mt-1 text-sm">
+                  <Link href="/dashboard/profile" className="text-teal">
+                    Edit your profile
+                  </Link>
+                </p>
+              ) : null}
               <p className="mt-1 text-stone-600">{carer.headline}</p>
               <p className="mt-1 text-sm text-stone-500">
                 {primary ? (

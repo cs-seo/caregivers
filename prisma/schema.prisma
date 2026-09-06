@@ -22,6 +22,7 @@ model User {
   familyBookings   Booking[]      @relation("FamilyBookings")
   familyRequests   CareRequest[]
   reviewsAuthored  Review[]       @relation("ReviewAuthor")
+  messages         Message[]
 }
 
 model FamilyProfile {
@@ -209,6 +210,17 @@ model Booking {
   updatedAt        DateTime  @updatedAt
   payment          Payment?
   review           Review?
+  messages         Message[]
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  bookingId String
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  body      String
+  createdAt DateTime @default(now())
 }
 
 model Payment {

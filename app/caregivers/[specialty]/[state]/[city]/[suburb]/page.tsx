@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { DirectoryResults } from "@/components/directory-page";
 import { FaqBlock, LinkGrid, RelatedSpecialties } from "@/components/seo-landing";
-import { parseFilters } from "@/lib/directory";
+import { filterCurrent, parseFilters } from "@/lib/directory";
 import { landingDescription, landingFaqs, landingH1, landingIntro, landingTitle } from "@/lib/seo-content";
 import { directoryStats, getSpecialties, getSpecialty, getSuburb } from "@/lib/queries";
 import { pageMeta } from "@/lib/seo";
@@ -71,12 +71,7 @@ export default async function SuburbDirectoryPage({
       ]}
       filters={filters}
       filterAction={`/caregivers/${spec.slug}/${place.city.state.slug}/${place.city.slug}/${place.slug}`}
-      current={{
-        q: filters.q,
-        instantBook: filters.instantBook ? "1" : undefined,
-        wwcc: filters.wwcc ? "1" : undefined,
-        ndis: filters.ndis ? "1" : undefined,
-      }}
+      current={filterCurrent(filters)}
       path={`/caregivers/${spec.slug}/${place.city.state.slug}/${place.city.slug}/${place.slug}`}
       extras={
         <>
