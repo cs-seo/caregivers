@@ -1,6 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { generateCarers } from "./data/generate-carers";
 import { SUBURBS_BY_CITY, slugifySuburb } from "./data/suburbs";
+import { insertCarer } from "./insert-carer";
 
 const prisma = new PrismaClient();
 const DEMO_PASSWORD = "CareProof123!";
@@ -1444,6 +1446,18 @@ async function main() {
     carerProfiles.push(created);
   }
 
+  const handmadeEmails = new Set(carers.map((carer) => carer.email));
+  let generatedCount = 0;
+  for (const carer of generateCarers(480)) {
+    if (handmadeEmails.has(carer.email)) continue;
+    try {
+      await insertCarer(prisma, carer, passwordHash, specBySlug, cityId(carer.state, carer.city));
+      generatedCount += 1;
+    } catch {
+      // Skip location mismatches from the generator.
+    }
+  }
+
   const sarah = carerProfiles.find((u) => u.email === "carer@careproof.com.au")!.caregiverProfile!;
   const priya = carerProfiles.find((u) => u.email === "priya.nair@careproof.com.au")!.caregiverProfile!;
   const maya = carerProfiles.find((u) => u.email === "maya.chen@careproof.com.au")!.caregiverProfile!;
@@ -1739,7 +1753,7 @@ async function main() {
   await refreshAggregates(william.id);
 
   console.log(
-    `Seeded ${carerProfiles.length} carers, ${familyUsers.length} families, ${requests.length} jobs, ${suburbCount} suburbs.`,
+    `Seeded ${carerProfiles.length} featured carers + ${generatedCount} generated profiles, ${familyUsers.length} families, ${requests.length} jobs, ${suburbCount} suburbs.`,
   );
   console.log("Demo logins: family@careproof.com.au / carer@careproof.com.au / CareProof123!");
 }

@@ -10,6 +10,8 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed-locations": "tsx prisma/seed-locations.ts",
+    "db:seed-profiles": "tsx prisma/seed-profiles.ts",
+    "db:import-csv": "tsx prisma/import-csv.ts",
     "db:reset": "prisma migrate reset --force",
     "postinstall": "prisma generate"
   },
