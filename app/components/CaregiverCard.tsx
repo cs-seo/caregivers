@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { CaregiverWithVerification } from '@/app/lib/caregivers';
+import LocalBadge from './LocalBadge';
 import StatusDot from './StatusDot';
 import VerificationBadge from './VerificationBadge';
 
@@ -22,7 +23,8 @@ export default function CaregiverCard({ caregiver }: CaregiverCardProps) {
               {caregiver.name}
             </h3>
             <p className="mt-0.5 text-sm text-gray-600 dark:text-gray-400">
-              {location.area}, {location.city}, {location.region}
+              {location.area}, {location.city} {location.region}{' '}
+              {location.postcode}
             </p>
           </div>
           <VerificationBadge
@@ -30,6 +32,15 @@ export default function CaregiverCard({ caregiver }: CaregiverCardProps) {
             score={verification.score}
           />
         </div>
+
+        {caregiver.localityTier && caregiver.localityTier !== 'other' && (
+          <div className="mt-3">
+            <LocalBadge
+              tier={caregiver.localityTier}
+              region={location.region}
+            />
+          </div>
+        )}
 
         <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-600 dark:text-gray-400">
           <StatusDot status={caregiver.status} />

@@ -2,26 +2,32 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { CaregiverWithVerification } from '@/app/lib/caregivers';
+import {
+  distanceKm,
+  getLocalities,
+  type AustralianRegion,
+  type CaregiverWithVerification,
+} from '@/app/lib/caregivers';
 import CaregiverCard from '@/app/components/CaregiverCard';
 
 const POLL_INTERVAL_MS = 4000;
-const LOCAL_RADIUS_KM = 30;
+// Sensible default for an Australian metro area (Greater Sydney and Greater
+// Melbourne both span well beyond this, but 25 km keeps "local" meaningful).
+const LOCAL_RADIUS_KM = 25;
 
-// Preset localities let end users favor local caregivers without granting
-// geolocation permission. Coordinates approximate each city center.
-const LOCALITIES = [
-  { id: 'sf', label: 'San Francisco', lat: 37.7749, lng: -122.4194 },
-  { id: 'berkeley', label: 'Berkeley', lat: 37.8715, lng: -122.273 },
-  { id: 'oakland', label: 'Oakland', lat: 37.8044, lng: -122.2712 },
-  { id: 'palo-alto', label: 'Palo Alto', lat: 37.4419, lng: -122.143 },
-  { id: 'san-jose', label: 'San Jose', lat: 37.3382, lng: -121.8863 },
-] as const;
+// The pickable suburbs are derived from the caregiver roster so the two never
+// drift apart. Users can favour local caregivers without granting geolocation.
+const LOCALITIES = getLocalities();
 
 interface Origin {
   lat: number;
   lng: number;
   label: string;
+  /** Postcode of the chosen suburb, used for local-to-local matching. */
+  postcode?: string;
+  region?: AustralianRegion;
+  /** Id of the matching preset locality, used to sync the dropdown. */
+  localityId?: string;
 }
 
 export default function CaregiversPage() {
@@ -44,6 +50,8 @@ export default function CaregiversPage() {
     if (current) {
       params.set('lat', String(current.lat));
       params.set('lng', String(current.lng));
+      if (current.postcode) params.set('postcode', current.postcode);
+      if (current.region) params.set('region', current.region);
     }
     const url = params.toString()
       ? `/api/caregivers?${params.toString()}`
@@ -96,15 +104,27 @@ export default function CaregiversPage() {
     }
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        const { latitude, longitude } = position.coords;
+        // Snap to the nearest known suburb so we can still apply the
+        // local-to-local (suburb/state) precedence, while keeping the real
+        // coordinates for accurate distance.
+        const nearest = [...LOCALITIES].sort(
+          (a, b) =>
+            distanceKm({ lat: latitude, lng: longitude }, a) -
+            distanceKm({ lat: latitude, lng: longitude }, b),
+        )[0];
         setOrigin({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-          label: 'your location',
+          lat: latitude,
+          lng: longitude,
+          label: nearest ? `your location (near ${nearest.area})` : 'your location',
+          postcode: nearest?.postcode,
+          region: nearest?.region,
+          localityId: nearest?.id,
         });
       },
       () => {
         setGeoError(
-          'Could not access your location. Pick a nearby area instead.',
+          'Could not access your location. Pick a nearby suburb instead.',
         );
       },
     );
@@ -122,7 +142,10 @@ export default function CaregiversPage() {
       setOrigin({
         lat: locality.lat,
         lng: locality.lng,
-        label: locality.label,
+        label: `${locality.area} ${locality.region} ${locality.postcode}`,
+        postcode: locality.postcode,
+        region: locality.region,
+        localityId: locality.id,
       });
     }
   };
@@ -138,8 +161,9 @@ export default function CaregiversPage() {
       return false;
     }
     if (normalizedQuery === '') return true;
+    const { area, city, region, postcode } = caregiver.location;
     const haystack =
-      `${caregiver.name} ${caregiver.location.area} ${caregiver.location.city} ${caregiver.location.region}`.toLowerCase();
+      `${caregiver.name} ${area} ${city} ${region} ${postcode}`.toLowerCase();
     return haystack.includes(normalizedQuery);
   });
 
@@ -160,7 +184,9 @@ export default function CaregiversPage() {
             Live Caregivers
           </h1>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Local caregivers for local people. Every profile shows its
+            Australian locals caring for Australian locals. Choose your suburb
+            and we&apos;ll surface caregivers local to you first — same suburb,
+            then nearby, then across your state. Every profile shows its
             verification level so you can choose with confidence.
           </p>
         </header>
@@ -179,14 +205,15 @@ export default function CaregiversPage() {
               </label>
               <select
                 id={selectId}
-                value={LOCALITIES.find((l) => l.label === origin?.label)?.id ?? ''}
+                value={origin?.localityId ?? ''}
                 onChange={(event) => handleLocalityChange(event.target.value)}
                 className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
               >
-                <option value="">Anywhere</option>
+                <option value="">Anywhere in Australia</option>
                 {LOCALITIES.map((locality) => (
                   <option key={locality.id} value={locality.id}>
-                    {locality.label}
+                    {locality.area}, {locality.city} {locality.region}{' '}
+                    {locality.postcode}
                   </option>
                 ))}
               </select>
@@ -205,14 +232,14 @@ export default function CaregiversPage() {
                 htmlFor={searchId}
                 className="text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                Search by name or area
+                Search by name, suburb or postcode
               </label>
               <input
                 id={searchId}
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="e.g. Oakland"
+                placeholder="e.g. Bondi or 2026"
                 className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black placeholder:text-gray-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
               />
             </div>
@@ -227,14 +254,14 @@ export default function CaregiversPage() {
                 onChange={(event) => setLocalOnly(event.target.checked)}
                 className="h-4 w-4 rounded border-gray-300 disabled:opacity-50"
               />
-              Local only (within {LOCAL_RADIUS_KM} km)
+              Local only (within {LOCAL_RADIUS_KM} kilometres)
             </label>
             {origin ? (
               <p
                 className="text-sm text-gray-600 dark:text-gray-400"
                 role="status"
               >
-                Showing caregivers nearest to{' '}
+                Showing caregivers local to{' '}
                 <span className="font-medium text-gray-900 dark:text-gray-200">
                   {origin.label}
                 </span>{' '}
@@ -242,7 +269,7 @@ export default function CaregiversPage() {
               </p>
             ) : (
               <p className="text-sm text-gray-500 dark:text-gray-500">
-                Choose an area to sort by proximity.
+                Choose a suburb to see local caregivers first.
               </p>
             )}
           </div>

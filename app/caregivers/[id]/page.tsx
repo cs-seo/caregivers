@@ -67,7 +67,8 @@ export default async function CaregiverProfilePage({
                 {caregiver.name}
               </h1>
               <p className="mt-1 text-gray-600 dark:text-gray-400">
-                {location.area}, {location.city}, {location.region}
+                {location.area}, {location.city} {location.region}{' '}
+                {location.postcode}
               </p>
               <div className="mt-3">
                 <StatusDot status={caregiver.status} />

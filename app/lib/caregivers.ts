@@ -32,11 +32,36 @@ export interface Certification {
   expiresYear?: number;
 }
 
+/** Australian state / territory abbreviation. */
+export type AustralianRegion =
+  | 'NSW'
+  | 'VIC'
+  | 'QLD'
+  | 'WA'
+  | 'SA'
+  | 'TAS'
+  | 'ACT'
+  | 'NT';
+
+export const AUSTRALIAN_REGIONS: readonly AustralianRegion[] = [
+  'NSW',
+  'VIC',
+  'QLD',
+  'WA',
+  'SA',
+  'TAS',
+  'ACT',
+  'NT',
+];
+
 export interface CaregiverLocation {
-  /** Neighborhood / district within the city. */
+  /** Suburb / neighbourhood within the city. */
   area: string;
   city: string;
-  region: string;
+  /** State / territory abbreviation. */
+  region: AustralianRegion;
+  /** Australian 4-digit postcode. */
+  postcode: string;
   /** WGS84 latitude in decimal degrees. */
   lat: number;
   /** WGS84 longitude in decimal degrees. */
@@ -89,26 +114,49 @@ export interface VerificationSummary {
   checks: VerificationChecks;
 }
 
+/**
+ * How local a caregiver is relative to a chosen origin, in precedence order.
+ * The guiding principle is "locals like to deal with locals": we prefer a
+ * shared suburb, then a shared postcode district, then a shared state.
+ */
+export type LocalityTier = 'same-suburb' | 'same-area' | 'same-state' | 'other';
+
+/** Lower rank sorts first (more local). */
+export const LOCALITY_TIER_RANK: Record<LocalityTier, number> = {
+  'same-suburb': 0,
+  'same-area': 1,
+  'same-state': 2,
+  other: 3,
+};
+
 /** Shape returned by the caregivers API and consumed by the client UI. */
 export interface CaregiverWithVerification extends LiveCaregiver {
   verification: VerificationSummary;
   /** Straight-line distance (km) from a requested origin, when provided. */
   distanceKm?: number;
+  /** Local-to-local tier relative to the chosen origin, when provided. */
+  localityTier?: LocalityTier;
 }
 
 // Stable mock data. Deliberately spans the full verification spectrum and
-// several distinct localities so proximity sorting/filtering is meaningful.
+// several distinct Australian localities across NSW, VIC and QLD so the
+// local-vs-distant distinction is meaningful.
+//
+// PRODUCTION NOTE: Suburb coordinates and postcodes would come from a geocoding
+// / address-validation service (e.g. against the Australia Post PAF), not be
+// hard-coded here.
 const caregivers: Caregiver[] = [
   {
     id: 'c1',
     name: 'Sarah Johnson',
     bio: 'Experienced elder-care specialist focused on dementia and post-operative recovery support.',
     location: {
-      area: 'Mission District',
-      city: 'San Francisco',
-      region: 'CA',
-      lat: 37.7599,
-      lng: -122.4148,
+      area: 'Bondi',
+      city: 'Sydney',
+      region: 'NSW',
+      postcode: '2026',
+      lat: -33.8915,
+      lng: 151.2767,
     },
     yearsExperience: 12,
     rating: 4.9,
@@ -118,29 +166,30 @@ const caregivers: Caregiver[] = [
     backgroundCheck: { status: 'passed', date: '2026-06-14' },
     certifications: [
       {
-        name: 'Certified Nursing Assistant (CNA)',
-        issuer: 'California Department of Public Health',
+        name: 'Certificate III in Individual Support (Ageing)',
+        issuer: 'TAFE NSW',
         issuedYear: 2015,
         expiresYear: 2028,
       },
       {
-        name: 'CPR & First Aid',
-        issuer: 'American Red Cross',
+        name: 'Provide First Aid (HLTAID011)',
+        issuer: 'St John Ambulance Australia',
         issuedYear: 2024,
-        expiresYear: 2026,
+        expiresYear: 2027,
       },
     ],
   },
   {
     id: 'c2',
     name: 'Michael Chen',
-    bio: 'Home health aide supporting mobility, medication reminders, and daily living activities.',
+    bio: 'Home care worker supporting mobility, medication reminders, and daily living activities.',
     location: {
-      area: 'SoMa',
-      city: 'San Francisco',
-      region: 'CA',
-      lat: 37.7785,
-      lng: -122.4056,
+      area: 'Newtown',
+      city: 'Sydney',
+      region: 'NSW',
+      postcode: '2042',
+      lat: -33.8983,
+      lng: 151.1794,
     },
     yearsExperience: 6,
     rating: 4.6,
@@ -150,8 +199,8 @@ const caregivers: Caregiver[] = [
     backgroundCheck: { status: 'passed', date: '2026-04-02' },
     certifications: [
       {
-        name: 'Home Health Aide (HHA)',
-        issuer: 'National Association for Home Care',
+        name: 'Certificate IV in Ageing Support',
+        issuer: 'TAFE NSW',
         issuedYear: 2020,
       },
     ],
@@ -159,13 +208,14 @@ const caregivers: Caregiver[] = [
   {
     id: 'c3',
     name: 'Emma Williams',
-    bio: 'Companion caregiver newly onboarded to the platform; references pending review.',
+    bio: 'Companion carer newly onboarded to the platform; references pending review.',
     location: {
-      area: 'Berkeley Hills',
-      city: 'Berkeley',
-      region: 'CA',
-      lat: 37.8801,
-      lng: -122.2578,
+      area: 'Parramatta',
+      city: 'Sydney',
+      region: 'NSW',
+      postcode: '2150',
+      lat: -33.8136,
+      lng: 151.0034,
     },
     yearsExperience: 2,
     rating: 4.1,
@@ -177,14 +227,15 @@ const caregivers: Caregiver[] = [
   },
   {
     id: 'c4',
-    name: 'David Martinez',
-    bio: 'Certified caregiver specializing in physical therapy support and fall-risk management.',
+    name: 'David Nguyen',
+    bio: 'Certified carer specialising in physiotherapy support and fall-risk management.',
     location: {
-      area: 'Downtown',
-      city: 'Oakland',
-      region: 'CA',
-      lat: 37.8044,
-      lng: -122.2712,
+      area: 'Fitzroy',
+      city: 'Melbourne',
+      region: 'VIC',
+      postcode: '3065',
+      lat: -37.7963,
+      lng: 144.9789,
     },
     yearsExperience: 9,
     rating: 4.8,
@@ -194,8 +245,8 @@ const caregivers: Caregiver[] = [
     backgroundCheck: { status: 'passed', date: '2026-05-21' },
     certifications: [
       {
-        name: 'Certified Nursing Assistant (CNA)',
-        issuer: 'California Department of Public Health',
+        name: 'Certificate III in Individual Support (Ageing)',
+        issuer: 'TAFE Victoria',
         issuedYear: 2017,
         expiresYear: 2027,
       },
@@ -206,11 +257,12 @@ const caregivers: Caregiver[] = [
     name: 'Lisa Anderson',
     bio: 'Overnight care provider. Identity confirmed; background check did not clear on last run.',
     location: {
-      area: 'Palo Alto',
-      city: 'Palo Alto',
-      region: 'CA',
-      lat: 37.4419,
-      lng: -122.143,
+      area: 'St Kilda',
+      city: 'Melbourne',
+      region: 'VIC',
+      postcode: '3182',
+      lat: -37.8676,
+      lng: 144.981,
     },
     yearsExperience: 4,
     rating: 3.9,
@@ -220,23 +272,24 @@ const caregivers: Caregiver[] = [
     backgroundCheck: { status: 'failed', date: '2026-03-10' },
     certifications: [
       {
-        name: 'CPR & First Aid',
-        issuer: 'American Heart Association',
+        name: 'Provide First Aid (HLTAID011)',
+        issuer: 'Australian Red Cross',
         issuedYear: 2023,
-        expiresYear: 2025,
+        expiresYear: 2026,
       },
     ],
   },
   {
     id: 'c6',
     name: 'James Okafor',
-    bio: 'Prospective caregiver awaiting identity and background verification.',
+    bio: 'Prospective carer awaiting identity and background verification.',
     location: {
-      area: 'North San Jose',
-      city: 'San Jose',
-      region: 'CA',
-      lat: 37.4064,
-      lng: -121.9447,
+      area: 'Fortitude Valley',
+      city: 'Brisbane',
+      region: 'QLD',
+      postcode: '4006',
+      lat: -27.457,
+      lng: 153.035,
     },
     yearsExperience: 1,
     rating: 0,
@@ -256,6 +309,78 @@ export function getCaregivers(): Caregiver[] {
 /** Looks up a single caregiver by id, or `undefined` if not found. */
 export function getCaregiverById(id: string): Caregiver | undefined {
   return caregivers.find((c) => c.id === id);
+}
+
+/** A pickable locality, derived from the distinct suburbs in the roster. */
+export interface Locality {
+  /** Postcode, used as the stable id for the picker. */
+  id: string;
+  area: string;
+  city: string;
+  region: AustralianRegion;
+  postcode: string;
+  lat: number;
+  lng: number;
+}
+
+/**
+ * Builds the list of suburbs offered by the locality picker directly from the
+ * caregiver data, so the two never drift apart. One entry per distinct
+ * postcode, sorted by state then suburb for a tidy dropdown.
+ */
+export function getLocalities(): Locality[] {
+  const byPostcode = new Map<string, Locality>();
+  for (const { location } of caregivers) {
+    if (byPostcode.has(location.postcode)) continue;
+    byPostcode.set(location.postcode, {
+      id: location.postcode,
+      area: location.area,
+      city: location.city,
+      region: location.region,
+      postcode: location.postcode,
+      lat: location.lat,
+      lng: location.lng,
+    });
+  }
+  return [...byPostcode.values()].sort(
+    (a, b) => a.region.localeCompare(b.region) || a.area.localeCompare(b.area),
+  );
+}
+
+/** The postcode "district" is the first two digits (e.g. 2026 → "20"). */
+function postcodeDistrict(postcode: string): string {
+  return postcode.slice(0, 2);
+}
+
+export interface LocalityMatch {
+  postcode?: string;
+  region?: AustralianRegion;
+}
+
+/**
+ * Classifies how local a caregiver is relative to a chosen origin, honouring
+ * the "locals like to deal with locals" precedence: same suburb (postcode)
+ * first, then same postcode district / adjacent suburbs, then same state,
+ * then everything else.
+ */
+export function classifyLocality(
+  origin: LocalityMatch,
+  location: CaregiverLocation,
+): LocalityTier {
+  if (origin.postcode && location.postcode === origin.postcode) {
+    return 'same-suburb';
+  }
+  if (
+    origin.postcode &&
+    postcodeDistrict(location.postcode) === postcodeDistrict(origin.postcode) &&
+    (origin.region === undefined || location.region === origin.region)
+  ) {
+    return 'same-area';
+  }
+  if (origin.region && location.region === origin.region) {
+    return 'same-state';
+  }
+  return 'other';
 }
 
 /**
@@ -300,7 +425,7 @@ function toRadians(degrees: number): number {
 }
 
 /**
- * Great-circle distance in kilometers between two coordinates (haversine).
+ * Great-circle distance in kilometres between two coordinates (haversine).
  *
  * PRODUCTION NOTE: A real system would geocode a user's typed address via a
  * geocoding provider and likely use routing/travel-time distance rather than
