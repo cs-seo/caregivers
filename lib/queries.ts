@@ -123,7 +123,8 @@ export async function directoryStats(
       ? { specialties: { some: { specialty: { slug: filters.specialty } } } }
       : {}),
     ...(filters.state ? { city: { state: { slug: filters.state } } } : {}),
-    ...(filters.city ? { city: { slug: filters.city } } : {}),
+      ...(filters.city ? { city: { slug: filters.city } } : {}),
+      ...(filters.suburb ? { suburb: { contains: filters.suburb } } : {}),
   };
   const [count, agg] = await Promise.all([
     prisma.caregiverProfile.count({ where }),

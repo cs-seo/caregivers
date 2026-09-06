@@ -100,16 +100,47 @@ function credentialNumber(type: string, rand: () => number) {
   return undefined;
 }
 
+function placesNearTemplate(
+  places: { state: string; city: string; suburb: string }[],
+  template: FeaturedCarer,
+) {
+  const sameCity = places.filter((place) => place.state === template.state && place.city === template.city);
+  const unique = [...new Map(sameCity.map((place) => [place.suburb, place])).values()];
+  const home = unique.find((place) => place.suburb === template.suburb);
+  const clustered = unique.filter(
+    (place) =>
+      place.suburb === template.suburb ||
+      place.suburb.startsWith(`${template.suburb} `),
+  );
+  const rest = unique.filter((place) => !clustered.includes(place));
+  const lead = home ? [home, home, home, ...clustered.filter((place) => place !== home)] : clustered;
+  return [...lead, ...rest];
+}
+
 export function generateCarers(count = 480, templates: FeaturedCarer[] = featuredCarers): GeneratedCarer[] {
   const places = locations();
   const usedSlugs = new Set<string>();
   const usedEmails = new Set(templates.map((item) => item.email));
   const carers: GeneratedCarer[] = [];
+  const assignments: { template: FeaturedCarer; place: { state: string; city: string; suburb: string } }[] = [];
+
+  for (const template of templates) {
+    const nearby = placesNearTemplate(places, template).slice(0, 8);
+    for (const place of nearby) assignments.push({ template, place });
+  }
+  let extra = 0;
+  while (assignments.length < count) {
+    const template = templates[extra % templates.length];
+    assignments.push({
+      template,
+      place: places[(extra * 13 + 7) % places.length],
+    });
+    extra += 1;
+  }
 
   for (let i = 0; i < count; i += 1) {
     const rand = mulberry32(20_000 + i * 97);
-    const template = templates[i % templates.length];
-    const place = places[(i * 13 + 7) % places.length];
+    const { template, place } = assignments[i];
     const first = FIRST[i % FIRST.length];
     const last = LAST[(i * 11) % LAST.length];
     const name = `${first} ${last}`;
