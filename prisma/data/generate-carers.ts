@@ -1,9 +1,13 @@
 /**
- * Synthetic demo carers for local SEO and marketplace testing.
- * Do not treat these as real people. Import consented/owned data with
- * `npm run db:import-csv` instead of scraping other marketplaces.
+ * Rebuild directory fill from the handmade featured profiles.
+ * Each generated carer is a relocated variation of an existing profile —
+ * same specialties, checks, work-history shape and voice, new person/place.
  */
+import type { FeaturedCarer } from "./featured-carers";
+import { featuredCarers } from "./featured-carers";
 import { SUBURBS_BY_CITY, slugifySuburb } from "./suburbs";
+
+export type GeneratedCarer = FeaturedCarer;
 
 const FIRST = [
   "Aisha", "Amelia", "Ava", "Bianca", "Caitlin", "Chloe", "Daisy", "Elena", "Emily", "Eva",
@@ -12,12 +16,12 @@ const FIRST = [
   "Tara", "Zara", "Aaron", "Adam", "Ben", "Callum", "Daniel", "Ethan", "Finn", "Harry",
   "Jack", "James", "Liam", "Lucas", "Marcus", "Noah", "Oliver", "Owen", "Ryan", "Sam",
   "Tom", "Will", "Yusuf", "Chen", "Mei", "Hiro", "Kenji", "Fatima", "Hassan", "Noor",
-  "Sanjay", "Anika", "Diego", "Lucia", "Mateo", "Freya", "Ingrid", "Soren",
+  "Sanjay", "Anika", "Diego", "Lucia", "Mateo", "Ingrid", "Soren",
 ];
 
 const LAST = [
   "Nguyen", "Chen", "Patel", "Williams", "Brown", "Taylor", "Anderson", "Thomas", "White",
-  "Martin", "Walker", "Harris", "Clark", "Lewis", "Robinson", "Walker", "Young", "Allen",
+  "Martin", "Walker", "Harris", "Clark", "Lewis", "Robinson", "Young", "Allen",
   "King", "Wright", "Scott", "Green", "Baker", "Adams", "Nelson", "Hill", "Campbell",
   "Mitchell", "Roberts", "Carter", "Phillips", "Evans", "Turner", "Parker", "Collins",
   "Edwards", "Stewart", "Morris", "Murphy", "Cook", "Rogers", "Morgan", "Peterson",
@@ -25,92 +29,6 @@ const LAST = [
   "Okafor", "Mensah", "Abebe", "Kim", "Park", "Sato", "Tanaka", "Rossi", "Bianchi", "Costa",
   "Silva", "Santos", "Kowalski", "Novak", "Horvat", "Papadopoulos", "Ibrahim", "Yilmaz",
 ];
-
-const EMPLOYERS: Record<string, string[]> = {
-  "aged-care": ["Bupa Aged Care", "HammondCare", "Ozcare", "Uniting", "Resthaven", "Brightwater", "Mecwacare", "Private family"],
-  nannies: ["Private family", "The Walsh family", "The Chen family", "The Ibrahim family"],
-  babysitters: ["Local families", "Private family"],
-  "disability-support": ["Northcott", "Scope Australia", "Endeavour Foundation", "Ability Centre", "Baptcare"],
-  "special-needs": ["Aspect", "Northcott", "Private family"],
-  housekeeping: ["Private households", "Domestic agency"],
-  "companion-care": ["Helping Hand", "Italian Forum", "Private family"],
-  nursing: ["Silver Chain", "Hospital in the Home", "Alfred Health", "Royal Hobart Hospital"],
-  respite: ["Mecwacare", "Carers Australia partner", "Private family"],
-  "after-school-care": ["Private family", "OOSH program", "Local primary school"],
-  "personal-care": ["Warrigal", "Community Services", "Private family"],
-};
-
-const RELATED: Record<string, string[]> = {
-  "aged-care": ["personal-care", "companion-care", "respite"],
-  nannies: ["babysitters", "after-school-care"],
-  babysitters: ["nannies", "after-school-care"],
-  "disability-support": ["special-needs", "personal-care"],
-  "special-needs": ["disability-support", "after-school-care"],
-  housekeeping: ["companion-care"],
-  "companion-care": ["aged-care", "respite"],
-  nursing: ["aged-care", "personal-care"],
-  respite: ["aged-care", "companion-care"],
-  "after-school-care": ["nannies", "babysitters"],
-  "personal-care": ["aged-care", "disability-support"],
-};
-
-const RATES: Record<string, [number, number]> = {
-  "aged-care": [4400, 6200],
-  nannies: [3800, 5200],
-  babysitters: [3200, 4400],
-  "disability-support": [4800, 6200],
-  "special-needs": [5000, 6400],
-  housekeeping: [3400, 4400],
-  "companion-care": [3600, 4800],
-  nursing: [6400, 8600],
-  respite: [4600, 6200],
-  "after-school-care": [3600, 4800],
-  "personal-care": [4200, 5600],
-};
-
-const PRIMARY_CYCLE = [
-  "nannies",
-  "aged-care",
-  "disability-support",
-  "babysitters",
-  "after-school-care",
-  "personal-care",
-  "companion-care",
-  "nannies",
-  "aged-care",
-  "housekeeping",
-  "respite",
-  "nursing",
-  "special-needs",
-];
-
-export type GeneratedCarer = {
-  email: string;
-  name: string;
-  slug: string;
-  headline: string;
-  bio: string;
-  hourlyRateCents: number;
-  yearsExperience: number;
-  suburb: string;
-  state: string;
-  city: string;
-  abn?: string;
-  instantBook: boolean;
-  availableNow: boolean;
-  specialties: string[];
-  credentials: { type: string; issuingState?: string; months: number }[];
-  work: {
-    employer: string;
-    title: string;
-    start: string;
-    end?: string;
-    duties: string;
-    verification: string;
-    hours: number;
-  }[];
-  phone: string;
-};
 
 function mulberry32(seed: number) {
   return function rand() {
@@ -122,12 +40,15 @@ function mulberry32(seed: number) {
   };
 }
 
-function pick<T>(rand: () => number, list: T[]) {
-  return list[Math.floor(rand() * list.length)];
-}
-
 function range(rand: () => number, min: number, max: number) {
   return min + Math.floor(rand() * (max - min + 1));
+}
+
+function titleCaseSlug(slug: string) {
+  return slug
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 function locations() {
@@ -158,73 +79,43 @@ function locations() {
   return rows;
 }
 
-function credentialsFor(specialty: string, state: string, rand: () => number) {
-  const months = range(rand, 8, 30);
-  if (specialty === "nursing") {
-    return [
-      { type: "ahpra", months },
-      { type: "first_aid", months: range(rand, 8, 24) },
-      { type: "aged_care_screening", issuingState: state, months },
-    ];
+function relocate(text: string, from: FeaturedCarer, toSuburb: string, toCity: string) {
+  const fromCity = titleCaseSlug(from.city);
+  const toCityName = titleCaseSlug(toCity);
+  let out = text;
+  if (from.suburb) {
+    out = out.replace(new RegExp(from.suburb.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"), toSuburb);
   }
-  if (["nannies", "babysitters", "after-school-care"].includes(specialty)) {
-    return [
-      { type: "wwcc", issuingState: state, months },
-      { type: "first_aid", months: range(rand, 6, 20) },
-    ];
-  }
-  if (["disability-support", "special-needs"].includes(specialty)) {
-    return [
-      { type: "ndis_screening", issuingState: state, months },
-      { type: "wwcc", issuingState: state, months },
-      { type: "first_aid", months: range(rand, 8, 18) },
-    ];
-  }
-  if (specialty === "housekeeping") {
-    return [{ type: "police_check", months }];
-  }
-  return [
-    { type: "aged_care_screening", issuingState: state, months },
-    { type: "police_check", months: range(rand, 6, 18) },
-    { type: "first_aid", months: range(rand, 8, 22) },
-  ];
+  out = out.replace(new RegExp(`${fromCity}'s [^.,]+`, "gi"), toSuburb);
+  out = out.replace(new RegExp(`Greater ${fromCity}`, "gi"), toCityName);
+  out = out.replace(new RegExp(fromCity, "gi"), toCityName);
+  return out;
 }
 
-function titleFor(specialty: string) {
-  const titles: Record<string, string> = {
-    "aged-care": "Aged care worker",
-    nannies: "Nanny",
-    babysitters: "Babysitter",
-    "disability-support": "Disability support worker",
-    "special-needs": "Special needs carer",
-    housekeeping: "Housekeeper",
-    "companion-care": "Companion carer",
-    nursing: "Registered nurse",
-    respite: "Respite carer",
-    "after-school-care": "After-school carer",
-    "personal-care": "Personal care assistant",
-  };
-  return titles[specialty] ?? "Carer";
+function credentialNumber(type: string, rand: () => number) {
+  if (type === "ahpra") return `NMW000${range(rand, 2000000, 2999999)}`;
+  if (type === "wwcc") return `WWC${range(rand, 1000000, 9999999)}E`;
+  if (type === "ndis_screening") return `NDIS${range(rand, 100000, 999999)}`;
+  if (type === "police_check") return `NPC${range(rand, 10000000, 99999999)}`;
+  return undefined;
 }
 
-export function generateCarers(count = 480): GeneratedCarer[] {
+export function generateCarers(count = 480, templates: FeaturedCarer[] = featuredCarers): GeneratedCarer[] {
   const places = locations();
   const usedSlugs = new Set<string>();
-  const usedEmails = new Set<string>();
+  const usedEmails = new Set(templates.map((item) => item.email));
   const carers: GeneratedCarer[] = [];
 
   for (let i = 0; i < count; i += 1) {
-    const rand = mulberry32(10_000 + i * 97);
+    const rand = mulberry32(20_000 + i * 97);
+    const template = templates[i % templates.length];
+    const place = places[(i * 13 + 7) % places.length];
     const first = FIRST[i % FIRST.length];
-    const last = LAST[(i * 7) % LAST.length];
-    const place = places[(i * 11) % places.length];
-    const primary = PRIMARY_CYCLE[i % PRIMARY_CYCLE.length];
-    const extras = RELATED[primary] ?? [];
-    const specialties = [primary];
-    if (rand() > 0.35 && extras[0]) specialties.push(extras[0]);
-    if (rand() > 0.75 && extras[1]) specialties.push(extras[1]);
+    const last = LAST[(i * 11) % LAST.length];
+    const name = `${first} ${last}`;
+    const primary = template.specialties[0] ?? "companion-care";
 
-    let slug = `${first}-${last}-${primary}-${slugifySuburb(place.suburb)}`.toLowerCase();
+    let slug = `${slugifySuburb(name)}-${primary}-${slugifySuburb(place.suburb)}`;
     if (usedSlugs.has(slug)) slug = `${slug}-${i}`;
     usedSlugs.add(slug);
 
@@ -232,45 +123,38 @@ export function generateCarers(count = 480): GeneratedCarer[] {
     if (usedEmails.has(email)) email = `carer.${i}@careproof.com.au`;
     usedEmails.add(email);
 
-    const years = range(rand, 2, 16);
-    const [minRate, maxRate] = RATES[primary];
-    const hourlyRateCents = range(rand, minRate, maxRate);
-    const title = titleFor(primary);
-    const employer = pick(rand, EMPLOYERS[primary] ?? ["Private family"]);
-    const startYear = 2026 - years;
-    const hours = years * range(rand, 600, 1100);
-    const hasAbn = rand() > 0.45;
+    const jitter = range(rand, -200, 300);
+    const yearsJitter = range(rand, -1, 2);
 
     carers.push({
       email,
-      name: `${first} ${last}`,
+      name,
       slug,
-      headline: `${title} in ${place.suburb}, ${place.city.replace(/-/g, " ")}`,
-      bio: `I have ${years} years’ experience as a ${title.toLowerCase()} and work with families around ${place.suburb}. I keep clear notes, arrive on time, and am happy to start with a trial booking on CareProof.`,
-      hourlyRateCents,
-      yearsExperience: years,
+      headline: relocate(template.headline, template, place.suburb, place.city),
+      bio: relocate(template.bio, template, place.suburb, place.city),
+      hourlyRateCents: Math.max(3200, template.hourlyRateCents + jitter),
+      yearsExperience: Math.max(2, template.yearsExperience + yearsJitter),
       suburb: place.suburb,
       state: place.state,
       city: place.city,
-      abn: hasAbn ? `${range(rand, 11, 99)} ${range(rand, 100, 999)} ${range(rand, 100, 999)} ${range(rand, 100, 999)}` : undefined,
-      instantBook: rand() > 0.35,
-      availableNow: rand() > 0.4,
-      specialties,
-      credentials: credentialsFor(primary, place.state, rand),
-      work: [
-        {
-          employer: employer.includes("family") || employer.includes("household")
-            ? `${employer} in ${place.suburb}`
-            : employer,
-          title,
-          start: `${startYear}-03-01`,
-          end: rand() > 0.55 ? `${2025}-11-30` : undefined,
-          duties: `Ongoing ${title.toLowerCase()} support for local clients, including weekday and weekend cover.`,
-          verification: rand() > 0.3 ? "employer_confirmed" : "document",
-          hours,
-        },
-      ],
-      phone: `04${String(range(rand, 10, 99))}${String(range(rand, 100, 999))}${String(range(rand, 100, 999))}`,
+      abn: template.abn
+        ? `${range(rand, 11, 99)} ${range(rand, 100, 999)} ${range(rand, 100, 999)} ${range(rand, 100, 999)}`
+        : undefined,
+      instantBook: template.instantBook,
+      availableNow: rand() > 0.25,
+      specialties: [...template.specialties],
+      credentials: template.credentials.map((credential) => ({
+        type: credential.type,
+        issuingState: credential.issuingState ? place.state : undefined,
+        number: credentialNumber(credential.type, rand) ?? credential.number,
+        months: credential.months,
+      })),
+      work: template.work.map((role) => ({
+        ...role,
+        employer: relocate(role.employer, template, place.suburb, place.city),
+        duties: relocate(role.duties, template, place.suburb, place.city),
+      })),
+      phone: `04${String(range(rand, 10, 99))} ${String(range(rand, 100, 999))} ${String(range(rand, 100, 999))}`,
     });
   }
 

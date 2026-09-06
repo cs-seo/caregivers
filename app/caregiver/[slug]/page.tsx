@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Badge, CredentialBadges } from "@/components/badges";
+import { Badge, CredentialDetails } from "@/components/badges";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { CaregiverCardView } from "@/components/caregiver-card";
 import { JsonLd } from "@/components/json-ld";
@@ -146,9 +146,7 @@ export default async function CaregiverProfilePage({
               CareProof records credentials as first-class documents with expiry dates. Reviews can only be left after
               a released escrow booking.
             </p>
-            <div className="mt-3">
-              <CredentialBadges credentials={carer.credentials} abn={carer.abn} />
-            </div>
+            <CredentialDetails credentials={carer.credentials} abn={carer.abn} />
           </section>
 
           <section className="mt-8">

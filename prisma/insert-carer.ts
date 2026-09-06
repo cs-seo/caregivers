@@ -45,6 +45,7 @@ export async function insertCarer(
             create: carer.credentials.map((credential) => ({
               type: credential.type,
               issuingState: credential.issuingState,
+              number: credential.number,
               expiresAt: addMonths(credential.months),
               verified: true,
               verifiedAt: new Date("2025-11-01"),

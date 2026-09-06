@@ -38,3 +38,49 @@ export function CredentialBadges({
     </div>
   );
 }
+
+export function CredentialDetails({
+  credentials,
+  abn,
+}: {
+  credentials: {
+    type: string;
+    verified: boolean;
+    number?: string | null;
+    issuingState?: string | null;
+    expiresAt?: Date | string | null;
+  }[];
+  abn?: string | null;
+}) {
+  return (
+    <ul className="mt-3 space-y-2">
+      {credentials
+        .filter((credential) => credential.verified)
+        .map((credential) => (
+          <li
+            key={`${credential.type}-${credential.number ?? ""}`}
+            className="rounded-xl border border-line bg-card px-4 py-3 text-sm"
+          >
+            <p className="font-medium text-ink">{credentialLabel(credential.type)}</p>
+            <p className="mt-1 text-stone-600">
+              {credential.number ? `No. ${credential.number}` : "Verified document on file"}
+              {credential.issuingState ? ` · ${credential.issuingState.toUpperCase()}` : ""}
+              {credential.expiresAt
+                ? ` · expires ${new Date(credential.expiresAt).toLocaleDateString("en-AU", {
+                    month: "short",
+                    year: "numeric",
+                    timeZone: "Australia/Sydney",
+                  })}`
+                : ""}
+            </p>
+          </li>
+        ))}
+      {abn ? (
+        <li className="rounded-xl border border-line bg-card px-4 py-3 text-sm">
+          <p className="font-medium text-ink">ABN</p>
+          <p className="mt-1 text-stone-600">{abn}</p>
+        </li>
+      ) : null}
+    </ul>
+  );
+}

@@ -3,7 +3,7 @@ import { initials } from "@/lib/format";
 import { formatAud } from "@/lib/money";
 import { trustLabel } from "@/lib/trust";
 import type { CaregiverCard } from "@/lib/queries";
-import { Badge } from "./badges";
+import { Badge, CredentialBadges } from "./badges";
 
 export function CaregiverCardView({
   caregiver,
@@ -36,6 +36,14 @@ export function CaregiverCardView({
           </div>
           <p className="mt-2 line-clamp-2 text-sm text-stone-700">{caregiver.headline}</p>
           <p className="mt-2 text-xs text-stone-500">{specialtyNames}</p>
+          {caregiver.workHistory[0] ? (
+            <p className="mt-1 text-xs text-stone-500">
+              {caregiver.workHistory[0].title} · {caregiver.workHistory[0].employer}
+            </p>
+          ) : null}
+          <div className="mt-3">
+            <CredentialBadges credentials={caregiver.credentials} abn={caregiver.abn} />
+          </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <Badge tone="teal">{trustLabel(caregiver.trustScore)}</Badge>
             {caregiver.instantBook ? <Badge tone="clay">Instant Book</Badge> : null}
