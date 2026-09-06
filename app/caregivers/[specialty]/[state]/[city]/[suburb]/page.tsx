@@ -44,7 +44,13 @@ export default async function SuburbDirectoryPage({
     city: place.city.slug,
     suburb: place.name,
   };
-  const exactStats = await directoryStats(filters);
+  const locationFilters = {
+    specialty: spec.slug,
+    state: place.city.state.slug,
+    city: place.city.slug,
+    suburb: place.name,
+  };
+  const exactStats = await directoryStats(locationFilters);
   const nearby = exactStats.count === 0;
   const stats = nearby
     ? await directoryStats({ specialty: spec.slug, state: place.city.state.slug, city: place.city.slug })

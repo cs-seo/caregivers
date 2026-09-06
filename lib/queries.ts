@@ -159,17 +159,8 @@ export async function searchCaregiversPage(filters: DirectoryFilters, pageSize =
   };
 }
 
-export async function directoryStats(
-  filters: Pick<DirectoryFilters, "specialty" | "state" | "city" | "suburb">,
-) {
-  const where = {
-    ...(filters.specialty
-      ? { specialties: { some: { specialty: { slug: filters.specialty } } } }
-      : {}),
-    ...(filters.state ? { city: { state: { slug: filters.state } } } : {}),
-      ...(filters.city ? { city: { slug: filters.city } } : {}),
-      ...(filters.suburb ? { suburb: { contains: filters.suburb } } : {}),
-  };
+export async function directoryStats(filters: DirectoryFilters) {
+  const where = caregiverWhere(filters);
   const [count, agg, reviewed] = await Promise.all([
     prisma.caregiverProfile.count({ where }),
     prisma.caregiverProfile.aggregate({
