@@ -6,16 +6,26 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { InviteButton } from "@/components/invite-button";
 import { JobMessageThread } from "@/components/job-message-thread";
 import {
+  counterProposalAction,
   createProposalAction,
   declineInviteAction,
   hireProposalAction,
   passOnProposalAction,
+  respondToCounterAction,
   updateInviteNoteAction,
   withdrawInviteAction,
   withdrawProposalAction,
 } from "@/lib/actions";
 import { BOOKING_STATUS_LABELS } from "@/lib/constants";
-import { canPassOnProposal, canWithdrawProposal, proposalStatusLabel, proposalStatusTone } from "@/lib/job-hire";
+import {
+  canCounterProposal,
+  canPassOnProposal,
+  canRespondToCounter,
+  canWithdrawProposal,
+  hasPendingCounter,
+  proposalStatusLabel,
+  proposalStatusTone,
+} from "@/lib/job-hire";
 import {
   INVITE_NOTE_LIMIT,
   INVITE_STATUS,
@@ -64,7 +74,16 @@ export default async function CareRequestPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ proposed?: string; updated?: string; sent?: string; passed?: string; error?: string }>;
+  searchParams: Promise<{
+    proposed?: string;
+    updated?: string;
+    sent?: string;
+    passed?: string;
+    countered?: string;
+    accepted?: string;
+    kept?: string;
+    error?: string;
+  }>;
 }) {
   const [{ slug }, query, session] = await Promise.all([params, searchParams, auth()]);
   const job = await prisma.careRequest.findUnique({
@@ -395,30 +414,76 @@ export default async function CareRequestPage({
                   {proposal.familyNote ? (
                     <p className="mt-2 text-sm text-stone-600">You wrote: “{proposal.familyNote}”</p>
                   ) : null}
+                  {hasPendingCounter(proposal) ? (
+                    <p className="mt-2 text-sm text-teal-deep">
+                      Suggested {formatAud(proposal.counterRateCents ?? 0)}/hr
+                      {proposal.counterNote ? ` — “${proposal.counterNote}”` : ""}. Waiting for their reply.
+                    </p>
+                  ) : null}
                   {canPassOnProposal(proposal, job, session?.user?.id ?? "") ? (
-                    <div className="mt-3 flex flex-wrap items-end gap-4">
-                      <form action={hireProposalAction}>
-                        <input type="hidden" name="proposalId" value={proposal.id} />
-                        <button className="rounded-lg bg-teal px-4 py-2 text-sm font-medium text-white" type="submit">
-                          Hire and pay into escrow
-                        </button>
-                      </form>
-                      <form action={passOnProposalAction} className="min-w-[16rem] flex-1 space-y-2">
-                        <input type="hidden" name="proposalId" value={proposal.id} />
-                        <label className="block text-xs text-stone-500">
-                          Optional note if you pass
-                          <textarea
-                            name="familyNote"
-                            rows={2}
-                            maxLength={INVITE_NOTE_LIMIT}
-                            placeholder="Rate, hours, or why this is not the right fit."
-                            className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm text-ink"
-                          />
-                        </label>
-                        <button className="text-sm text-stone-500 hover:text-ink" type="submit">
-                          Pass on this proposal
-                        </button>
-                      </form>
+                    <div className="mt-3 space-y-3">
+                      <div className="flex flex-wrap items-end gap-4">
+                        <form action={hireProposalAction}>
+                          <input type="hidden" name="proposalId" value={proposal.id} />
+                          <button className="rounded-lg bg-teal px-4 py-2 text-sm font-medium text-white" type="submit">
+                            Hire and pay into escrow
+                          </button>
+                        </form>
+                        <form action={passOnProposalAction} className="min-w-[16rem] flex-1 space-y-2">
+                          <input type="hidden" name="proposalId" value={proposal.id} />
+                          <label className="block text-xs text-stone-500">
+                            Optional note if you pass
+                            <textarea
+                              name="familyNote"
+                              rows={2}
+                              maxLength={INVITE_NOTE_LIMIT}
+                              placeholder="Rate, hours, or why this is not the right fit."
+                              className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm text-ink"
+                            />
+                          </label>
+                          <button className="text-sm text-stone-500 hover:text-ink" type="submit">
+                            Pass on this proposal
+                          </button>
+                        </form>
+                      </div>
+                      {canCounterProposal(proposal, job, session?.user?.id ?? "") ? (
+                        <form action={counterProposalAction} className="rounded-xl border border-line p-3 space-y-2">
+                          <input type="hidden" name="proposalId" value={proposal.id} />
+                          <p className="text-sm font-medium text-ink">
+                            {hasPendingCounter(proposal) ? "Update suggested rate" : "Suggest a different rate"}
+                          </p>
+                          <label className="block text-xs text-stone-500">
+                            Hourly rate (AUD)
+                            <input
+                              name="counterRate"
+                              type="number"
+                              min={20}
+                              step={1}
+                              required
+                              defaultValue={
+                                proposal.counterRateCents
+                                  ? Math.round(proposal.counterRateCents / 100)
+                                  : Math.round(proposal.rateCents / 100)
+                              }
+                              className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm text-ink"
+                            />
+                          </label>
+                          <label className="block text-xs text-stone-500">
+                            Optional note
+                            <textarea
+                              name="counterNote"
+                              rows={2}
+                              maxLength={INVITE_NOTE_LIMIT}
+                              defaultValue={proposal.counterNote ?? ""}
+                              placeholder="Why this rate, or what the sit still needs."
+                              className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm text-ink"
+                            />
+                          </label>
+                          <button className="text-sm font-medium text-teal hover:underline" type="submit">
+                            Send suggested rate
+                          </button>
+                        </form>
+                      ) : null}
                     </div>
                   ) : (
                     <p className="mt-2">
@@ -445,7 +510,11 @@ export default async function CareRequestPage({
         {query.updated ? <p className="mb-3 text-sm text-teal">Proposal updated.</p> : null}
         {query.sent ? <p className="mb-3 text-sm text-teal">Message sent.</p> : null}
         {query.passed ? <p className="mb-3 text-sm text-teal">Proposal passed on. The request stays open.</p> : null}
+        {query.countered ? <p className="mb-3 text-sm text-teal">Suggested rate sent.</p> : null}
+        {query.accepted ? <p className="mb-3 text-sm text-teal">You accepted the suggested rate.</p> : null}
+        {query.kept ? <p className="mb-3 text-sm text-teal">You kept your original rate.</p> : null}
         {query.error === "message" ? <p className="mb-3 text-sm text-clay">Write a short message before sending.</p> : null}
+        {query.error === "counter" ? <p className="mb-3 text-sm text-clay">Enter an hourly rate of at least $20.</p> : null}
         {isCarer && ownInvite?.status === INVITE_STATUS.PENDING && job.status === "open" ? (
           <p className="mb-3 rounded-xl bg-sage px-3 py-2 text-sm text-teal-deep">
             {job.family.name} invited you to apply
@@ -520,6 +589,30 @@ export default async function CareRequestPage({
             You declined this invite
             {ownInvite.reply ? `: “${ownInvite.reply}”` : "."}
           </p>
+        ) : null}
+        {isCarer && ownProposal && canRespondToCounter(ownProposal, carer!.id, job.status) ? (
+          <div className="mt-3 rounded-xl bg-sage px-3 py-3 text-sm text-teal-deep">
+            <p>
+              {job.family.name} suggested {formatAud(ownProposal.counterRateCents ?? 0)}/hr
+              {ownProposal.counterNote ? `: “${ownProposal.counterNote}”` : "."}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-3">
+              <form action={respondToCounterAction}>
+                <input type="hidden" name="proposalId" value={ownProposal.id} />
+                <input type="hidden" name="accept" value="1" />
+                <button className="font-medium text-teal hover:underline" type="submit">
+                  Accept {formatAud(ownProposal.counterRateCents ?? 0)}/hr
+                </button>
+              </form>
+              <form action={respondToCounterAction}>
+                <input type="hidden" name="proposalId" value={ownProposal.id} />
+                <input type="hidden" name="accept" value="0" />
+                <button className="text-stone-500 hover:text-ink" type="submit">
+                  Keep {formatAud(ownProposal.rateCents)}/hr
+                </button>
+              </form>
+            </div>
+          </div>
         ) : null}
         {isCarer && ownProposal?.status === "declined" && job.status === "open" ? (
           <p className="mt-3 text-sm text-stone-600">

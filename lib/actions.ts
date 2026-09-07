@@ -21,7 +21,13 @@ import { isSafeReviewReturnPath, sanitizeReviewReply, hasReviewReply } from "./r
 import { directoryStats } from "./queries";
 import { filtersFromSearchHref, isSafeSearchHref, MAX_SAVED_SEARCHES } from "./saved-search";
 import { requireRole, requireUser } from "./session";
-import { canPassOnProposal, canWithdrawProposal, markRequestHired } from "./job-hire";
+import {
+  canCounterProposal,
+  canPassOnProposal,
+  canRespondToCounter,
+  canWithdrawProposal,
+  markRequestHired,
+} from "./job-hire";
 import {
   INVITE_STATUS,
   canCreateInvite,
@@ -572,7 +578,7 @@ export async function createProposalAction(formData: FormData) {
       coverLetter,
       rateCents,
     },
-    update: { coverLetter, rateCents, status: "pending" },
+    update: { coverLetter, rateCents, status: "pending", counterRateCents: null, counterNote: null },
   });
   await prisma.careRequestInvite.updateMany({
     where: {
@@ -738,7 +744,7 @@ export async function passOnProposalAction(formData: FormData) {
   const familyNote = sanitizeInviteNote(String(formData.get("familyNote") ?? ""));
   await prisma.proposal.update({
     where: { id: proposal.id },
-    data: { status: "declined", familyNote: familyNote || null },
+    data: { status: "declined", familyNote: familyNote || null, counterRateCents: null, counterNote: null },
   });
   await prisma.careRequestInvite.updateMany({
     where: {
@@ -752,6 +758,56 @@ export async function passOnProposalAction(formData: FormData) {
   revalidatePath(`/care-requests/${proposal.careRequest.slug}`);
   revalidatePath("/care-requests");
   redirect(`/care-requests/${proposal.careRequest.slug}?passed=1`);
+}
+
+export async function counterProposalAction(formData: FormData) {
+  const user = await requireRole(ROLES.FAMILY);
+  if (!user) redirect("/login");
+  const proposalId = String(formData.get("proposalId") ?? "");
+  const counterRateCents = Math.round(Number(formData.get("counterRate")) * 100);
+  const counterNote = sanitizeInviteNote(String(formData.get("counterNote") ?? ""));
+  const proposal = await prisma.proposal.findUnique({
+    where: { id: proposalId },
+    include: { careRequest: { select: { slug: true, familyId: true, status: true } } },
+  });
+  if (!proposal || !canCounterProposal(proposal, proposal.careRequest, user.id)) {
+    redirect(proposal ? `/care-requests/${proposal.careRequest.slug}` : "/dashboard");
+  }
+  if (!counterRateCents || counterRateCents < 2000) {
+    redirect(`/care-requests/${proposal.careRequest.slug}?error=counter`);
+  }
+
+  await prisma.proposal.update({
+    where: { id: proposal.id },
+    data: { counterRateCents, counterNote: counterNote || null },
+  });
+  revalidatePath("/dashboard");
+  revalidatePath(`/care-requests/${proposal.careRequest.slug}`);
+  redirect(`/care-requests/${proposal.careRequest.slug}?countered=1`);
+}
+
+export async function respondToCounterAction(formData: FormData) {
+  const user = await requireRole(ROLES.CAREGIVER);
+  if (!user?.caregiverProfile) redirect("/login");
+  const proposalId = String(formData.get("proposalId") ?? "");
+  const accept = String(formData.get("accept") ?? "") === "1";
+  const proposal = await prisma.proposal.findUnique({
+    where: { id: proposalId },
+    include: { careRequest: { select: { slug: true, status: true } } },
+  });
+  if (!proposal || !canRespondToCounter(proposal, user.caregiverProfile.id, proposal.careRequest.status)) {
+    redirect(proposal ? `/care-requests/${proposal.careRequest.slug}` : "/dashboard");
+  }
+
+  await prisma.proposal.update({
+    where: { id: proposal.id },
+    data: accept
+      ? { rateCents: proposal.counterRateCents ?? proposal.rateCents, counterRateCents: null, counterNote: null }
+      : { counterRateCents: null, counterNote: null },
+  });
+  revalidatePath("/dashboard");
+  revalidatePath(`/care-requests/${proposal.careRequest.slug}`);
+  redirect(`/care-requests/${proposal.careRequest.slug}?${accept ? "accepted" : "kept"}=1`);
 }
 
 export async function hireProposalAction(formData: FormData) {

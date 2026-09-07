@@ -58,6 +58,36 @@ export function canPassOnProposal(
   );
 }
 
+export function hasPendingCounter(proposal: { status: string; counterRateCents?: number | null } | null) {
+  return Boolean(
+    proposal && proposal.status === PROPOSAL_STATUS.PENDING && proposal.counterRateCents != null,
+  );
+}
+
+export function canCounterProposal(
+  proposal: { status: string } | null,
+  job: { familyId: string; status: string } | null,
+  familyId: string,
+) {
+  return canPassOnProposal(proposal, job, familyId);
+}
+
+export function canRespondToCounter(
+  proposal: { caregiverId: string; status: string; counterRateCents?: number | null } | null,
+  caregiverId: string,
+  jobStatus: string,
+) {
+  return Boolean(hasPendingCounter(proposal) && proposal?.caregiverId === caregiverId && jobStatus === "open");
+}
+
+export function counterBanner(items: { title: string; familyName: string; rateLabel: string }[]) {
+  if (!items.length) return null;
+  if (items.length === 1) {
+    return `${items[0].familyName} suggested ${items[0].rateLabel}/hr on ${items[0].title}.`;
+  }
+  return `${items.length} families suggested a different rate.`;
+}
+
 export function notHiredBanner(
   items: { title: string; familyName: string }[],
 ) {

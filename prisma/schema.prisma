@@ -226,9 +226,11 @@ model Proposal {
   caregiver     CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
   coverLetter   String
   rateCents     Int
-  status        String           @default("pending")
-  familyNote    String?
-  createdAt     DateTime         @default(now())
+  status           String           @default("pending")
+  familyNote       String?
+  counterRateCents Int?
+  counterNote      String?
+  createdAt        DateTime         @default(now())
 
   @@unique([careRequestId, caregiverId])
 }

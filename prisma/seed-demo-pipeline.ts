@@ -696,6 +696,7 @@ export async function seedDemoJobMessages(prisma: PrismaClient) {
 const ELENA_NORWOOD_NOTE = "Could you cover two overnight sits in Norwood this month?";
 const ELENA_NORWOOD_REPLY = "I only work mornings in Leichhardt that week — overnight Adelaide is too far.";
 const CHLOE_NORWOOD_NOTE = "We need someone who can stay both nights this month.";
+const LARA_COUNTER_NOTE = "Two nights is a long sit — $38 works if you can do both.";
 
 export async function seedDemoPassOn(prisma: PrismaClient) {
   const elena = await prisma.caregiverProfile.findUnique({
@@ -704,10 +705,13 @@ export async function seedDemoPassOn(prisma: PrismaClient) {
   const chloe = await prisma.caregiverProfile.findUnique({
     where: { slug: "chloe-bennett-aged-care-adelaide" },
   });
+  const lara = await prisma.caregiverProfile.findUnique({
+    where: { slug: "lara-schmidt-companion-care-adelaide" },
+  });
   const job = await prisma.careRequest.findUnique({
     where: { slug: "overnight-respite-adelaide" },
   });
-  if (!elena || !chloe || !job || job.status !== "open") return 0;
+  if (!elena || !chloe || !lara || !job || job.status !== "open") return 0;
 
   let changed = 0;
   const invite = await prisma.careRequestInvite.findUnique({
@@ -751,6 +755,30 @@ export async function seedDemoPassOn(prisma: PrismaClient) {
     await prisma.proposal.update({
       where: { id: proposal.id },
       data: { status: "declined", familyNote: proposal.familyNote ?? CHLOE_NORWOOD_NOTE },
+    });
+    changed += 1;
+  }
+
+  const laraProposal = await prisma.proposal.findUnique({
+    where: { careRequestId_caregiverId: { careRequestId: job.id, caregiverId: lara.id } },
+  });
+  if (!laraProposal) {
+    await prisma.proposal.create({
+      data: {
+        careRequestId: job.id,
+        caregiverId: lara.id,
+        coverLetter: "I am in Glenelg and can do companion overnight sits. Aged care screening is current.",
+        rateCents: 4200,
+        status: "pending",
+        counterRateCents: 3800,
+        counterNote: LARA_COUNTER_NOTE,
+      },
+    });
+    changed += 1;
+  } else if (laraProposal.status === "pending" && laraProposal.counterRateCents == null) {
+    await prisma.proposal.update({
+      where: { id: laraProposal.id },
+      data: { counterRateCents: 3800, counterNote: laraProposal.counterNote ?? LARA_COUNTER_NOTE },
     });
     changed += 1;
   }

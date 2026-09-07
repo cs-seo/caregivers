@@ -12,7 +12,10 @@ import {
 } from "@/lib/dashboard-groups";
 import { formatDateTime, plural, snippet } from "@/lib/format";
 import {
+  canRespondToCounter,
   canWithdrawProposal,
+  counterBanner,
+  hasPendingCounter,
   notHiredBanner,
   passedOnBanner,
   proposalStatusLabel,
@@ -314,6 +317,15 @@ export default async function DashboardPage({
     }));
   const notHiredCopy = notHiredBanner(notHiredJobs);
   const passedOnCopy = passedOnBanner(passedOnJobs);
+  const counterJobs = carerProposals
+    .filter((proposal) => canRespondToCounter(proposal, user.caregiverProfile?.id ?? "", proposal.careRequest.status))
+    .map((proposal) => ({
+      title: proposal.careRequest.title,
+      familyName: proposal.careRequest.family.name,
+      slug: proposal.careRequest.slug,
+      rateLabel: formatAud(proposal.counterRateCents ?? 0),
+    }));
+  const counterCopy = counterBanner(counterJobs);
   const heldCents = bookings
     .filter((booking) => escrowStatuses.has(booking.status))
     .reduce((sum, booking) => sum + (isFamily ? booking.totalCents : booking.subtotalCents), 0);
@@ -407,6 +419,14 @@ export default async function DashboardPage({
           {passedOnCopy}{" "}
           <Link href={`/care-requests/${passedOnJobs[0].slug}`} className="font-medium text-teal">
             {passedOnJobs.length === 1 ? "Open the request" : "Open the first request"}
+          </Link>
+        </p>
+      ) : null}
+      {counterCopy && counterJobs[0] ? (
+        <p className="mt-4 rounded-xl bg-sage p-3 text-sm text-teal-deep">
+          {counterCopy}{" "}
+          <Link href={`/care-requests/${counterJobs[0].slug}`} className="font-medium text-teal">
+            {counterJobs.length === 1 ? "Open the request" : "Open the first request"}
           </Link>
         </p>
       ) : null}
@@ -906,6 +926,7 @@ export default async function DashboardPage({
                 </Link>
                 <span className="ml-2 text-sm text-stone-500">
                   {proposalStatusLabel(proposal.status, proposal.careRequest.status)}
+                  {hasPendingCounter(proposal) ? ` · suggested ${formatAud(proposal.counterRateCents ?? 0)}/hr` : ""}
                 </span>
                 {unreadJobByRequest.get(proposal.careRequestId) ? (
                   <span className="ml-2 text-sm font-medium text-clay">

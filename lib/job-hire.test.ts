@@ -6,6 +6,10 @@ import {
   requestStatusLabel,
   canWithdrawProposal,
   canPassOnProposal,
+  canCounterProposal,
+  canRespondToCounter,
+  counterBanner,
+  hasPendingCounter,
   notHiredBanner,
   passedOnBanner,
   PROPOSAL_STATUS,
@@ -41,6 +45,43 @@ test("canPassOnProposal is only the family on an open pending proposal", () => {
   assert.equal(canPassOnProposal({ status: "pending" }, job, "other"), false);
   assert.equal(canPassOnProposal({ status: "declined" }, job, "alex"), false);
   assert.equal(canPassOnProposal({ status: "pending" }, { familyId: "alex", status: "hired" }, "alex"), false);
+});
+
+test("hasPendingCounter is only a live suggested rate on a pending proposal", () => {
+  assert.equal(hasPendingCounter({ status: "pending", counterRateCents: 3800 }), true);
+  assert.equal(hasPendingCounter({ status: "pending", counterRateCents: null }), false);
+  assert.equal(hasPendingCounter({ status: "declined", counterRateCents: 3800 }), false);
+});
+
+test("canRespondToCounter is only the proposing carer on an open request", () => {
+  const countered = { caregiverId: "lara", status: "pending", counterRateCents: 3800 };
+  assert.equal(canRespondToCounter(countered, "lara", "open"), true);
+  assert.equal(canRespondToCounter(countered, "chloe", "open"), false);
+  assert.equal(canRespondToCounter(countered, "lara", "hired"), false);
+  assert.equal(canRespondToCounter({ caregiverId: "lara", status: "pending" }, "lara", "open"), false);
+});
+
+test("canCounterProposal matches pass-on: family, open, pending", () => {
+  const job = { familyId: "alex", status: "open" };
+  assert.equal(canCounterProposal({ status: "pending" }, job, "alex"), true);
+  assert.equal(canCounterProposal({ status: "declined" }, job, "alex"), false);
+});
+
+test("counterBanner names the family, rate and request", () => {
+  assert.equal(counterBanner([]), null);
+  assert.equal(
+    counterBanner([
+      { title: "Overnight respite in Norwood this month", familyName: "Alex Martin", rateLabel: "$38.00" },
+    ]),
+    "Alex Martin suggested $38.00/hr on Overnight respite in Norwood this month.",
+  );
+  assert.equal(
+    counterBanner([
+      { title: "Overnight respite in Norwood this month", familyName: "Alex Martin", rateLabel: "$38.00" },
+      { title: "Weekday aged care", familyName: "Alex Martin", rateLabel: "$60.00" },
+    ]),
+    "2 families suggested a different rate.",
+  );
 });
 
 test("notHiredBanner names the family and the request", () => {
