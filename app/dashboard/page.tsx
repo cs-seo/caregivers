@@ -341,7 +341,9 @@ export default async function DashboardPage({
                   <Badge tone={comingUpKind(booking) === "now" ? "clay" : "sage"}>
                     {comingUpLabel[comingUpKind(booking)]}
                   </Badge>
-                  {hasHandover(booking) ? <Badge tone="sage">Handover ready</Badge> : null}
+                  {hasHandover(booking) && !(isFamily && canFillFromHousehold(booking, user.familyProfile)) ? (
+                    <Badge tone="sage">Handover ready</Badge>
+                  ) : null}
                   {isFamily && canFillFromHousehold(booking, user.familyProfile) ? (
                     <form action={applyHouseholdHandoverAction}>
                       <input type="hidden" name="bookingId" value={booking.id} />
