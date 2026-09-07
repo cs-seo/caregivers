@@ -50,7 +50,7 @@ import {
   searchAlertLabel,
 } from "@/lib/saved-search";
 import { comingUpBookings, comingUpKind } from "@/lib/coming-up";
-import { canFillFromHousehold, hasHandover } from "@/lib/handover";
+import { canFillFromHousehold, handoverGapSummary, isHandoverComplete } from "@/lib/handover";
 import { canWriteReview, reviewsDueLabel } from "@/lib/reviews";
 import { unreadCountsByBooking } from "@/lib/messages";
 import { australianFinancialYear, statementTotals, toStatementRows } from "@/lib/statement";
@@ -603,9 +603,11 @@ export default async function DashboardPage({
                   <Badge tone={comingUpKind(booking) === "now" ? "clay" : "sage"}>
                     {comingUpLabel[comingUpKind(booking)]}
                   </Badge>
-                  {hasHandover(booking) && !(isFamily && canFillFromHousehold(booking, user.familyProfile)) ? (
+                  {isHandoverComplete(booking) ? (
                     <Badge tone="sage">Handover ready</Badge>
-                  ) : null}
+                  ) : (
+                    <Badge tone="clay">{handoverGapSummary(booking)}</Badge>
+                  )}
                   {isFamily && canFillFromHousehold(booking, user.familyProfile) ? (
                     <form action={applyHouseholdHandoverAction}>
                       <input type="hidden" name="bookingId" value={booking.id} />
@@ -615,7 +617,7 @@ export default async function DashboardPage({
                     </form>
                   ) : null}
                   <Link href={`/dashboard/bookings/${booking.id}#handover`} className="text-sm text-teal">
-                    {isFamily && !hasHandover(booking) ? "Add handover" : "Handover"}
+                    {isFamily && !isHandoverComplete(booking) ? "Add handover" : "Handover"}
                   </Link>
                 </div>
               </li>

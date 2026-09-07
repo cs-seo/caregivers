@@ -1,5 +1,14 @@
 import { applyHouseholdHandoverAction, updateBookingHandoverAction } from "@/lib/actions";
-import { HANDOVER_LIMITS, canFillFromHousehold, hasHandover, type HandoverSource } from "@/lib/handover";
+import {
+  HANDOVER_LIMITS,
+  canFillFromHousehold,
+  handoverGapSummary,
+  hasHandover,
+  isHandoverComplete,
+  joinHandoverGaps,
+  missingHandoverLabels,
+  type HandoverSource,
+} from "@/lib/handover";
 
 export function HandoverCard({
   bookingId,
@@ -19,6 +28,8 @@ export function HandoverCard({
   household?: HandoverSource | null;
 }) {
   const ready = hasHandover(fields);
+  const complete = isHandoverComplete(fields);
+  const missing = missingHandoverLabels(fields);
   const canFill = isFamily && canFillFromHousehold(fields, household);
   return (
     <section id="handover" className="mt-6 rounded-2xl border border-line bg-card p-5">
@@ -28,6 +39,13 @@ export function HandoverCard({
           ? "Keys, parking, allergies and who to call. The carer sees this before they travel. It stays off the public calendar."
           : "What the family left for this sit. Confirm anything missing on the thread."}
       </p>
+      {!complete ? (
+        <p className="mt-3 text-sm text-clay">
+          {isFamily
+            ? `${handoverGapSummary(fields)}. Add ${joinHandoverGaps(missing)} before the carer travels.`
+            : `Family hasn’t added ${joinHandoverGaps(missing)} yet. Ask on the thread if you need them.`}
+        </p>
+      ) : null}
       {copied ? (
         <p className="mt-3 rounded-xl bg-sage p-3 text-sm">
           Copied household defaults onto empty fields. Edit anything that is sit-specific.

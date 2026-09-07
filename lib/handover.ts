@@ -60,6 +60,37 @@ export function handoverGaps(source?: HandoverSource | null) {
   };
 }
 
+const GAP_LABELS = {
+  access: "access",
+  care: "care notes",
+  emergency: "emergency",
+} as const;
+
+export function missingHandoverLabels(source?: HandoverSource | null) {
+  const gaps = handoverGaps(source);
+  return (Object.keys(GAP_LABELS) as (keyof typeof GAP_LABELS)[])
+    .filter((key) => gaps[key])
+    .map((key) => GAP_LABELS[key]);
+}
+
+export function isHandoverComplete(source?: HandoverSource | null) {
+  return missingHandoverLabels(source).length === 0;
+}
+
+export function joinHandoverGaps(labels: string[]) {
+  if (labels.length === 0) return "";
+  if (labels.length === 1) return labels[0];
+  if (labels.length === 2) return `${labels[0]} and ${labels[1]}`;
+  return `${labels.slice(0, -1).join(", ")} and ${labels[labels.length - 1]}`;
+}
+
+export function handoverGapSummary(source?: HandoverSource | null) {
+  const missing = missingHandoverLabels(source);
+  if (missing.length === 0) return "Handover ready";
+  if (missing.length === 3) return "Handover · missing all notes";
+  return `Handover · missing ${joinHandoverGaps(missing)}`;
+}
+
 export function fillEmptyHandover(target?: HandoverSource | null, source?: HandoverSource | null): HandoverFields {
   const current = readHandover(target);
   const fill = readHandover(source);

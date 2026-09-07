@@ -55,7 +55,7 @@ const faqs = [
   },
   {
     q: "How do I prepare for an upcoming sit?",
-    a: "The dashboard Coming up list shows sits in progress or starting in the next 7 days. Open Handover to save keys, parking, allergies and an emergency contact on that sit. Household defaults copy onto new bookings. On an existing sit with empty fields, choose Use household defaults — notes already typed stay. From Household you can copy onto every empty upcoming sit. These notes stay off the public calendar subscribe feed.",
+    a: "The dashboard Coming up list shows sits in progress or starting in the next 7 days. Each sit shows whether handover is ready or which notes are still missing — access, care notes or emergency. Open Handover to save keys, parking, allergies and an emergency contact on that sit. Household defaults copy onto new bookings. On an existing sit with empty fields, choose Use household defaults — notes already typed stay. From Household you can copy onto every empty upcoming sit. These notes stay off the public calendar subscribe feed.",
   },
 ];
 

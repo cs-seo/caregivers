@@ -4,10 +4,14 @@ import {
   canFillFromHousehold,
   fillEmptyHandover,
   handoverFromForm,
+  handoverGapSummary,
   handoverGaps,
   handoverToDb,
   handoverWouldChange,
   hasHandover,
+  isHandoverComplete,
+  joinHandoverGaps,
+  missingHandoverLabels,
   readHandover,
 } from "./handover";
 
@@ -31,6 +35,33 @@ test("handoverGaps flags missing access, care and emergency", () => {
     care: true,
     emergency: true,
   });
+});
+
+test("handoverGapSummary lists what a sit still needs", () => {
+  assert.deepEqual(missingHandoverLabels({ handoverAccess: "School gate" }), ["care notes", "emergency"]);
+  assert.equal(joinHandoverGaps(["care notes", "emergency"]), "care notes and emergency");
+  assert.equal(
+    handoverGapSummary({ handoverAccess: "School gate" }),
+    "Handover · missing care notes and emergency",
+  );
+  assert.equal(handoverGapSummary({}), "Handover · missing all notes");
+  assert.equal(
+    handoverGapSummary({
+      handoverAccess: "gate",
+      handoverCare: "inhaler",
+      handoverEmergency: "Alex 0400 111 222",
+    }),
+    "Handover ready",
+  );
+  assert.equal(isHandoverComplete({ handoverAccess: "gate" }), false);
+  assert.equal(
+    isHandoverComplete({
+      handoverAccess: "gate",
+      handoverCare: "inhaler",
+      handoverEmergency: "Alex 0400 111 222",
+    }),
+    true,
+  );
 });
 
 test("handoverFromForm caps length and handoverToDb stores nulls", () => {

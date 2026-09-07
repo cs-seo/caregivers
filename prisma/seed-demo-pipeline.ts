@@ -415,7 +415,21 @@ export async function seedDemoHandover(prisma: PrismaClient) {
     });
   }
 
-  return (sarahSit ? 1 : 0) + priyaWeeks.length;
+  const priyaProgress = await prisma.booking.findFirst({
+    where: { familyId: family.id, notes: { startsWith: "DEMO_PIPELINE: after-school cover" } },
+  });
+  if (priyaProgress) {
+    await prisma.booking.update({
+      where: { id: priyaProgress.id },
+      data: {
+        handoverAccess: "School gate on Livingstone Rd",
+        handoverCare: null,
+        handoverEmergency: null,
+      },
+    });
+  }
+
+  return (sarahSit ? 1 : 0) + priyaWeeks.length + (priyaProgress ? 1 : 0);
 }
 
 export async function seedDemoInvoiceNumbers(prisma: PrismaClient) {
