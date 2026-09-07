@@ -31,7 +31,10 @@ import {
   carerDisputePauseBanner,
   carerDisputePauseHint,
   disputePauseBanner,
+  disputedHeldCents,
   familyDisputePauseHint,
+  heldEscrowCaption,
+  heldEscrowCents,
   isAutoReleasePaused,
 } from "@/lib/escrow";
 import { formatAud } from "@/lib/money";
@@ -330,11 +333,6 @@ export default async function DashboardPage({
     : carerDisputePauseBanner(disputedItems);
   const comingUp = comingUpBookings(bookings).slice(0, 4);
   const comingUpLabel = { now: "Happening now", soon: "Starts soon", week: "This week" } as const;
-  const escrowStatuses = new Set<string>([
-    BOOKING_STATUS.ESCROW_HELD,
-    BOOKING_STATUS.IN_PROGRESS,
-    BOOKING_STATUS.PENDING_RELEASE,
-  ]);
   const blockedKeys =
     !isFamily && user.caregiverProfile
       ? (
@@ -426,9 +424,9 @@ export default async function DashboardPage({
       rateLabel: formatAud(proposal.counterRateCents ?? 0),
     }));
   const counterCopy = counterBanner(counterJobs);
-  const heldCents = bookings
-    .filter((booking) => escrowStatuses.has(booking.status))
-    .reduce((sum, booking) => sum + (isFamily ? booking.totalCents : booking.subtotalCents), 0);
+  const heldCents = heldEscrowCents(bookings, isFamily);
+  const disputedCents = disputedHeldCents(bookings, isFamily);
+  const heldCaption = heldEscrowCaption({ heldCents, disputedCents, isFamily });
   const settledCents = bookings
     .filter((booking) => booking.status === BOOKING_STATUS.RELEASED)
     .reduce((sum, booking) => sum + (isFamily ? booking.totalCents : booking.subtotalCents), 0);
@@ -565,9 +563,7 @@ export default async function DashboardPage({
             {isFamily ? "In escrow" : "Held for you"}
           </p>
           <p className="mt-1 text-2xl font-semibold text-teal">{formatAud(heldCents)}</p>
-          <p className="mt-1 text-sm text-stone-500">
-            {isFamily ? "Family total still held until care is released." : "Payout waiting on release after care."}
-          </p>
+          <p className="mt-1 text-sm text-stone-500">{heldCaption}</p>
         </div>
         <div className="rounded-2xl border border-line bg-card p-5">
           <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">

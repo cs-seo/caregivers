@@ -217,6 +217,56 @@ export function carerDisputePauseHint() {
   return "The 72-hour clock is paused. Funds stay held until the family releases them to you or refunds the sit.";
 }
 
+export const HELD_ESCROW_STATUSES = new Set<string>([
+  BOOKING_STATUS.ESCROW_HELD,
+  BOOKING_STATUS.IN_PROGRESS,
+  BOOKING_STATUS.PENDING_RELEASE,
+  BOOKING_STATUS.DISPUTED,
+]);
+
+export function isHeldEscrowStatus(status: string) {
+  return HELD_ESCROW_STATUSES.has(status);
+}
+
+export function heldEscrowCents(
+  bookings: { status: string; totalCents: number; subtotalCents: number }[],
+  isFamily: boolean,
+) {
+  return bookings
+    .filter((booking) => isHeldEscrowStatus(booking.status))
+    .reduce((sum, booking) => sum + (isFamily ? booking.totalCents : booking.subtotalCents), 0);
+}
+
+export function disputedHeldCents(
+  bookings: { status: string; totalCents: number; subtotalCents: number }[],
+  isFamily: boolean,
+) {
+  return bookings
+    .filter((booking) => isAutoReleasePaused(booking.status))
+    .reduce((sum, booking) => sum + (isFamily ? booking.totalCents : booking.subtotalCents), 0);
+}
+
+export function heldEscrowCaption(args: { heldCents: number; disputedCents: number; isFamily: boolean }) {
+  if (args.heldCents <= 0) {
+    return args.isFamily
+      ? "Family total still held until care is released."
+      : "Payout waiting on release after care.";
+  }
+  if (args.disputedCents <= 0) {
+    return args.isFamily
+      ? "Family total still held until care is released."
+      : "Payout waiting on release after care.";
+  }
+  if (args.disputedCents >= args.heldCents) {
+    return args.isFamily
+      ? "All of this is paused in dispute until you release or refund."
+      : "All of this is paused in dispute until the family releases or refunds.";
+  }
+  return args.isFamily
+    ? "Some of this is paused in dispute until you release or refund."
+    : "Some of this is paused in dispute until the family releases or refunds.";
+}
+
 export function canAutoRelease(
   booking: { status: string; endAt: Date; payment?: { status: string } | null },
   now = new Date(),

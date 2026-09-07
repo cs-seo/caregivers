@@ -8,9 +8,13 @@ import {
   carerAutoReleasePausedLabel,
   carerDisputePauseBanner,
   carerDisputePauseHint,
+  disputedHeldCents,
   disputePauseBanner,
   familyDisputePauseHint,
+  heldEscrowCaption,
+  heldEscrowCents,
   isAutoReleasePaused,
+  isHeldEscrowStatus,
   msUntilAutoRelease,
   shouldAutoRelease,
   showsAutoReleaseNotice,
@@ -86,6 +90,35 @@ test("carer dispute pause copy names the family and does not ask the carer to re
   assert.equal(
     familyDisputePauseHint(),
     "The 72-hour clock is paused. Funds stay held until you release them to the carer or refund the sit.",
+  );
+});
+
+test("heldEscrowCents includes disputed sits that still have funds held", () => {
+  const rows = [
+    { status: BOOKING_STATUS.IN_PROGRESS, totalCents: 24200, subtotalCents: 22000 },
+    { status: BOOKING_STATUS.DISPUTED, totalCents: 14520, subtotalCents: 13200 },
+    { status: BOOKING_STATUS.RELEASED, totalCents: 22000, subtotalCents: 20000 },
+  ];
+  assert.equal(isHeldEscrowStatus(BOOKING_STATUS.DISPUTED), true);
+  assert.equal(isHeldEscrowStatus(BOOKING_STATUS.RELEASED), false);
+  assert.equal(heldEscrowCents(rows, false), 35200);
+  assert.equal(heldEscrowCents(rows, true), 38720);
+  assert.equal(disputedHeldCents(rows, false), 13200);
+  assert.equal(disputedHeldCents(rows, true), 14520);
+});
+
+test("heldEscrowCaption says when the held total is paused in dispute", () => {
+  assert.equal(
+    heldEscrowCaption({ heldCents: 0, disputedCents: 0, isFamily: false }),
+    "Payout waiting on release after care.",
+  );
+  assert.equal(
+    heldEscrowCaption({ heldCents: 13200, disputedCents: 13200, isFamily: false }),
+    "All of this is paused in dispute until the family releases or refunds.",
+  );
+  assert.equal(
+    heldEscrowCaption({ heldCents: 38720, disputedCents: 14520, isFamily: true }),
+    "Some of this is paused in dispute until you release or refund.",
   );
 });
 
