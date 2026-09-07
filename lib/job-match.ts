@@ -1,5 +1,5 @@
 import { formatDate, formatDateTime, sydneyDateKey } from "./format";
-import { isDateClosed, isOpenAtMinutes, sydneyMinutes, type WeeklyWindow } from "./weekly-windows";
+import { isDateClosed, isOpenAtMinutes, minutesToInput, sydneyMinutes, type WeeklyWindow } from "./weekly-windows";
 
 export type JobMatchCarer = {
   cityId: string;
@@ -61,4 +61,25 @@ export function matchingJobs<T extends JobMatchJob>(jobs: T[], carer: JobMatchCa
 export function jobMissLabel(reason: JobMiss | null) {
   if (!reason) return "Fits your roster";
   return JOB_MISS[reason];
+}
+
+export function jobDirectoryFilters(job: {
+  startDate: Date;
+  specialty: { slug: string };
+  city: { slug: string; state: { slug: string } };
+}) {
+  return {
+    specialty: job.specialty.slug,
+    state: job.city.state.slug,
+    city: job.city.slug,
+    availableOn: sydneyDateKey(job.startDate),
+    availableAt: isUtcDateOnly(job.startDate) ? undefined : minutesToInput(sydneyMinutes(job.startDate)),
+  };
+}
+
+export function jobDirectoryHref(job: Parameters<typeof jobDirectoryFilters>[0]) {
+  const filters = jobDirectoryFilters(job);
+  const query = [`availableOn=${filters.availableOn}`];
+  if (filters.availableAt) query.push(`availableAt=${filters.availableAt}`);
+  return `/caregivers/${filters.specialty}/${filters.state}/${filters.city}?${query.join("&")}`;
 }

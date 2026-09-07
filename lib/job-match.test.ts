@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { parseSydneyDateTimeLocal } from "./format";
-import { formatJobStart, isUtcDateOnly, jobFitsCarer, jobMissLabel, jobMissReason, matchingJobs } from "./job-match";
+import { formatJobStart, isUtcDateOnly, jobDirectoryHref, jobFitsCarer, jobMissLabel, jobMissReason, matchingJobs } from "./job-match";
 import { parseWeeklyHours } from "./weekly-windows";
 
 const sarah = {
@@ -83,4 +83,23 @@ test("a timed Tuesday morning sit still fits Sarah", () => {
   };
   assert.equal(jobMissReason(job, sarah), null);
   assert.equal(formatJobStart(job.startDate), "15 Sept 2026, 8:00 am");
+});
+
+test("jobDirectoryHref points at Needed on with the start clock time", () => {
+  assert.equal(
+    jobDirectoryHref({
+      startDate: parseSydneyDateTimeLocal("2026-09-15T08:00"),
+      specialty: { slug: "aged-care" },
+      city: { slug: "sydney", state: { slug: "nsw" } },
+    }),
+    "/caregivers/aged-care/nsw/sydney?availableOn=2026-09-15&availableAt=08:00",
+  );
+  assert.equal(
+    jobDirectoryHref({
+      startDate: new Date("2026-09-12T00:00:00.000Z"),
+      specialty: { slug: "babysitters" },
+      city: { slug: "sydney", state: { slug: "nsw" } },
+    }),
+    "/caregivers/babysitters/nsw/sydney?availableOn=2026-09-12",
+  );
 });

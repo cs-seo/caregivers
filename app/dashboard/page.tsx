@@ -11,7 +11,7 @@ import {
   type DashboardBookingGroup,
 } from "@/lib/dashboard-groups";
 import { formatDateTime, plural, snippet } from "@/lib/format";
-import { formatJobStart, matchingJobs } from "@/lib/job-match";
+import { formatJobStart, jobDirectoryFilters, jobDirectoryHref, matchingJobs } from "@/lib/job-match";
 import { buildRoster } from "@/lib/roster";
 import { formatAud } from "@/lib/money";
 import { deleteSavedSearchAction, applyHouseholdHandoverAction } from "@/lib/actions";
@@ -152,9 +152,22 @@ export default async function DashboardPage({
   const familyJobs = isFamily
     ? await prisma.careRequest.findMany({
         where: { familyId: user.id },
+        include: { specialty: true, city: { include: { state: true } } },
         orderBy: { createdAt: "desc" },
       })
     : [];
+  const familyJobMatchById = new Map(
+    (
+      await Promise.all(
+        familyJobs
+          .filter((job) => job.status === "open")
+          .map(async (job) => {
+            const stats = await directoryStats(jobDirectoryFilters(job));
+            return [job.id, { count: stats.count, href: jobDirectoryHref(job) }] as const;
+          }),
+      )
+    ),
+  );
   const carerProposals = !isFamily
     ? await prisma.proposal.findMany({
         where: { caregiverId: user.caregiverProfile?.id ?? "__none__" },
@@ -685,14 +698,27 @@ export default async function DashboardPage({
                 </Link>
               </li>
             ) : (
-              familyJobs.map((job) => (
+              familyJobs.map((job) => {
+                const match = familyJobMatchById.get(job.id);
+                return (
                 <li key={job.id}>
                   <Link href={`/care-requests/${job.slug}`} className="text-teal hover:underline">
                     {job.title}
                   </Link>
                   <span className="ml-2 text-sm text-stone-500">{job.status}</span>
+                  {match ? (
+                    <span className="mt-0.5 block text-sm text-stone-500">
+                      {match.count
+                        ? `${match.count} ${match.count === 1 ? "carer" : "carers"} free at ${formatJobStart(job.startDate)} · `
+                        : "No carers free at this start · "}
+                      <Link href={match.href} className="text-teal hover:underline">
+                        Browse
+                      </Link>
+                    </span>
+                  ) : null}
                 </li>
-              ))
+                );
+              })
             )
           ) : carerProposals.length === 0 ? (
             <li className="text-sm text-stone-500">

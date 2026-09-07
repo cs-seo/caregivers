@@ -4,9 +4,17 @@ import { auth } from "@/auth";
 import { Badge } from "@/components/badges";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { createProposalAction, hireProposalAction } from "@/lib/actions";
-import { formatJobStart, jobFitsCarer, jobMissLabel, jobMissReason } from "@/lib/job-match";
+import {
+  formatJobStart,
+  jobDirectoryFilters,
+  jobDirectoryHref,
+  jobFitsCarer,
+  jobMissLabel,
+  jobMissReason,
+} from "@/lib/job-match";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
+import { directoryStats, searchCaregivers } from "@/lib/queries";
 import { pageMeta } from "@/lib/seo";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -67,6 +75,12 @@ export default async function CareRequestPage({
   const miss = matchCarer ? jobMissReason(job, matchCarer) : null;
   const fit = matchCarer ? jobFitsCarer(job, matchCarer) : false;
   const alreadyProposed = Boolean(carer && job.proposals.some((proposal) => proposal.caregiverId === carer.id));
+  const directoryFilters = jobDirectoryFilters(job);
+  const matchHref = job.status === "open" ? jobDirectoryHref(job) : null;
+  const [matchStats, matchCarers] =
+    isOwner && matchHref
+      ? await Promise.all([directoryStats(directoryFilters), searchCaregivers(directoryFilters, 3)])
+      : [null, []];
 
   return (
     <div className="grid gap-8 md:grid-cols-[1fr_340px]">
@@ -97,6 +111,39 @@ export default async function CareRequestPage({
           Posted by {job.family.name} · budget {formatAud(job.budgetCents)}/hr
           {job.hoursEstimate ? ` · about ${job.hoursEstimate} hours` : ""}
         </p>
+
+        {isOwner && matchStats && matchHref ? (
+          <section className="mt-10 rounded-2xl border border-line bg-card p-5">
+            <h2 className="text-xl font-semibold">Carers free at this time</h2>
+            <p className="mt-2 text-sm text-stone-600">
+              {matchStats.count
+                ? `${matchStats.count} verified ${matchStats.count === 1 ? "carer is" : "carers are"} free in ${job.city.name} at ${formatJobStart(job.startDate)}. Browse them to Instant Book while you wait on proposals.`
+                : `No listed carers are free in ${job.city.name} at ${formatJobStart(job.startDate)}. Proposals below may still come in.`}
+            </p>
+            {matchCarers.length ? (
+              <ul className="mt-3 space-y-2 text-sm">
+                {matchCarers.map((carer) => (
+                  <li key={carer.id} className="flex flex-wrap items-center justify-between gap-2">
+                    <Link href={`/caregiver/${carer.slug}`} className="font-medium text-teal hover:underline">
+                      {carer.user.name}
+                    </Link>
+                    <span className="text-stone-500">{formatAud(carer.hourlyRateCents)}/hr</span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            <Link
+              href={
+                matchStats.count
+                  ? matchHref
+                  : `/caregivers/${directoryFilters.specialty}/${directoryFilters.state}/${directoryFilters.city}?availableOn=${directoryFilters.availableOn}`
+              }
+              className="mt-3 inline-block text-sm font-medium text-teal"
+            >
+              {matchStats.count ? "See every match in the directory" : "Search any time that day"}
+            </Link>
+          </section>
+        ) : null}
 
         {isOwner ? (
           <section className="mt-10">
