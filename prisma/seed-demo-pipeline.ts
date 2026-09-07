@@ -179,6 +179,22 @@ export async function seedDemoRecurring(prisma: PrismaClient) {
   return created;
 }
 
+export async function seedDemoFundingRefs(prisma: PrismaClient) {
+  const family = await prisma.user.findUnique({
+    where: { email: "family@careproof.com.au" },
+    include: { familyProfile: true },
+  });
+  if (!family?.familyProfile) return 0;
+  await prisma.familyProfile.update({
+    where: { id: family.familyProfile.id },
+    data: {
+      ndisNumber: family.familyProfile.ndisNumber ?? "430 112 223",
+      agedCareRef: family.familyProfile.agedCareRef ?? "HCP-NSW-88421",
+    },
+  });
+  return 1;
+}
+
 export async function seedDemoBlockedDates(prisma: PrismaClient) {
   const sarah = await prisma.caregiverProfile.findUnique({
     where: { slug: "sarah-nguyen-aged-care-sydney" },
@@ -291,8 +307,9 @@ async function main() {
   const expiring = await seedDemoExpiringChecks(prisma);
   const series = await seedDemoSeriesActions(prisma);
   const blocked = await seedDemoBlockedDates(prisma);
+  const funding = await seedDemoFundingRefs(prisma);
   console.log(
-    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}`,
+    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}`,
   );
   await prisma.$disconnect();
 }

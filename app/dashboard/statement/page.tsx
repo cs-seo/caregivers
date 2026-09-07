@@ -6,6 +6,7 @@ import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { pageMeta } from "@/lib/seo";
+import { fundingLines } from "@/lib/funding";
 import { australianFinancialYear, statementTotals, toStatementRows } from "@/lib/statement";
 
 export const metadata = pageMeta({
@@ -23,7 +24,7 @@ export default async function StatementPage() {
     where: isFamily ? { familyId: user.id } : { caregiver: { userId: user.id } },
     include: {
       caregiver: { include: { user: true } },
-      family: { select: { name: true } },
+      family: { select: { name: true, familyProfile: true } },
       specialty: true,
     },
     orderBy: { startAt: "asc" },
@@ -47,6 +48,9 @@ export default async function StatementPage() {
       <p className="mt-2 text-sm text-stone-600">
         {PLATFORM_ENTITY} · ABN {PLATFORM_ABN} (demo) · {isFamily ? "Family spend" : "Carer earnings"} for {user.name}.
         Funded and released sits only. Unpaid and cancelled weeks are omitted.
+        {isFamily && fundingLines(user.familyProfile).length
+          ? ` ${fundingLines(user.familyProfile).join(" · ")}.`
+          : ""}
       </p>
 
       <dl className="mt-6 grid gap-3 sm:grid-cols-3">

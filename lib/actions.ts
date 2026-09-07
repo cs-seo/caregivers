@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { signIn } from "@/auth";
 import { dateKeysInWindows, firstBlockedKey, isDateKey } from "./blocked-dates";
+import { normalizeFundingRef } from "./funding";
 import { findSeriesOverlap } from "./booking-overlap";
 import { BOOKING_STATUS, ROLES, UNPAID_BOOKING_STATUSES } from "./constants";
 import { autoReleaseIfDue, holdPayment, refundPayment, releasePayment } from "./escrow";
@@ -781,6 +782,8 @@ export async function updateFamilyProfileAction(formData: FormData) {
   const cityId = String(formData.get("cityId") ?? "");
   const bio = String(formData.get("bio") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
+  const ndisNumber = normalizeFundingRef(String(formData.get("ndisNumber") ?? ""));
+  const agedCareRef = normalizeFundingRef(String(formData.get("agedCareRef") ?? ""));
 
   await prisma.user.update({
     where: { id: user.id },
@@ -793,6 +796,8 @@ export async function updateFamilyProfileAction(formData: FormData) {
         suburb: suburb || null,
         cityId: cityId || null,
         bio: bio || null,
+        ndisNumber,
+        agedCareRef,
       },
     });
   } else {
@@ -802,10 +807,13 @@ export async function updateFamilyProfileAction(formData: FormData) {
         suburb: suburb || null,
         cityId: cityId || null,
         bio: bio || null,
+        ndisNumber,
+        agedCareRef,
       },
     });
   }
   revalidatePath("/dashboard/household");
+  revalidatePath("/dashboard/statement");
   redirect("/dashboard/household?saved=1");
 }
 

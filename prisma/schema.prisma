@@ -27,13 +27,15 @@ model User {
 }
 
 model FamilyProfile {
-  id     String  @id @default(cuid())
-  userId String  @unique
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  suburb String?
-  cityId String?
-  city   City?   @relation(fields: [cityId], references: [id])
-  bio    String?
+  id          String  @id @default(cuid())
+  userId      String  @unique
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  suburb      String?
+  cityId      String?
+  city        City?   @relation(fields: [cityId], references: [id])
+  bio         String?
+  ndisNumber  String?
+  agedCareRef String?
 }
 
 model State {

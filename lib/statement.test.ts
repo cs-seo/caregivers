@@ -70,6 +70,10 @@ test("statementCsv quotes commas and lists family totals", () => {
           id: "abcdefgh",
           startAt: new Date("2026-09-12T00:00:00.000Z"),
           status: BOOKING_STATUS.RELEASED,
+          family: {
+            name: "Alex Martin",
+            familyProfile: { ndisNumber: "430 112 223", agedCareRef: "HCP-NSW-88421" },
+          },
         }),
       ],
       new Date("2026-09-07T00:00:00.000Z"),
@@ -77,6 +81,8 @@ test("statementCsv quotes commas and lists family totals", () => {
     true,
   );
   assert.match(csv, /Date,Invoice,Carer,/);
+  assert.match(csv, /NDIS,My Aged Care/);
   assert.match(csv, /2026-09-12,CP-ABCDEFGH,Sarah Nguyen/);
   assert.match(csv, /299.20/);
+  assert.match(csv, /430 112 223,HCP-NSW-88421/);
 });

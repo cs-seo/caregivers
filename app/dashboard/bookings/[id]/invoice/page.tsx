@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { PLATFORM_ABN, PLATFORM_ENTITY, SITE_NAME } from "@/lib/constants";
+import { fundingLines } from "@/lib/funding";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
@@ -42,7 +43,13 @@ export default async function BookingInvoicePage({
   const invoiceNumber = `CP-${booking.id.slice(-8).toUpperCase()}`;
   const issued = booking.payment.heldAt ?? booking.createdAt;
   const feeGst = Math.round(booking.platformFeeCents / 11);
-  const household = [booking.family.familyProfile?.suburb, booking.family.email].filter(Boolean).join(" · ");
+  const household = [
+    booking.family.familyProfile?.suburb,
+    booking.family.email,
+    ...fundingLines(booking.family.familyProfile),
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <div className="mx-auto max-w-2xl">

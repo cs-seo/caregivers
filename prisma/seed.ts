@@ -7,6 +7,7 @@ import { insertCarer } from "./insert-carer";
 import {
   seedDemoBlockedDates,
   seedDemoExpiringChecks,
+  seedDemoFundingRefs,
   seedDemoPipeline,
   seedDemoRecurring,
   seedDemoSeriesActions,
@@ -295,6 +296,8 @@ async function main() {
             suburb: "Marrickville",
             cityId: cityId("nsw", "sydney"),
             bio: "Looking after Mum at home in Marrickville. We need reliable weekday cover.",
+            ndisNumber: "430 112 223",
+            agedCareRef: "HCP-NSW-88421",
           },
         },
       },
@@ -714,8 +717,9 @@ async function main() {
   const expiring = await seedDemoExpiringChecks(prisma);
   const series = await seedDemoSeriesActions(prisma);
   const blocked = await seedDemoBlockedDates(prisma);
+  const funding = await seedDemoFundingRefs(prisma);
   console.log(
-    `Seeded ${carerProfiles.length} featured carers + ${generatedCount} generated profiles, ${familyUsers.length} families, ${requests.length} jobs, ${suburbCount} suburbs, ${pipeline.created} live demo bookings, ${shortlisted} shortlisted, ${recurring} recurring weeks, ${expiring} expiring checks, ${series} series weeks, ${blocked} days off.`,
+    `Seeded ${carerProfiles.length} featured carers + ${generatedCount} generated profiles, ${familyUsers.length} families, ${requests.length} jobs, ${suburbCount} suburbs, ${pipeline.created} live demo bookings, ${shortlisted} shortlisted, ${recurring} recurring weeks, ${expiring} expiring checks, ${series} series weeks, ${blocked} days off, ${funding} funding refs.`,
   );
   console.log("Demo logins: family@careproof.com.au / carer@careproof.com.au / CareProof123!");
 }

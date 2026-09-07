@@ -13,7 +13,7 @@ export async function GET() {
     where: isFamily ? { familyId: user.id } : { caregiver: { userId: user.id } },
     include: {
       caregiver: { include: { user: true } },
-      family: { select: { name: true } },
+      family: { select: { name: true, familyProfile: true } },
       specialty: true,
     },
     orderBy: { startAt: "asc" },

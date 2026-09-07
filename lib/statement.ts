@@ -21,7 +21,10 @@ export type StatementBooking = {
   recurringTotal: number;
   specialty: { name: string };
   caregiver: { user: { name: string }; abn?: string | null };
-  family: { name: string };
+  family: {
+    name: string;
+    familyProfile?: { ndisNumber?: string | null; agedCareRef?: string | null } | null;
+  };
 };
 
 export type StatementRow = {
@@ -40,6 +43,8 @@ export type StatementRow = {
   payoutCents: number;
   status: string;
   abn: string;
+  ndisNumber: string;
+  agedCareRef: string;
 };
 
 export function invoiceNumber(bookingId: string) {
@@ -91,6 +96,8 @@ export function toStatementRows(bookings: StatementBooking[], now = new Date()):
       payoutCents: booking.subtotalCents,
       status: booking.status,
       abn: booking.caregiver.abn ?? "",
+      ndisNumber: booking.family.familyProfile?.ndisNumber ?? "",
+      agedCareRef: booking.family.familyProfile?.agedCareRef ?? "",
     }));
 }
 
@@ -121,6 +128,8 @@ export function statementCsv(rows: StatementRow[], isFamily: boolean) {
     isFamily ? "Family total" : "Carer payout",
     "Status",
     "Carer ABN",
+    "NDIS",
+    "My Aged Care",
   ];
   const lines = [
     header.map(csvCell).join(","),
@@ -138,6 +147,8 @@ export function statementCsv(rows: StatementRow[], isFamily: boolean) {
         ((isFamily ? row.familyCents : row.payoutCents) / 100).toFixed(2),
         row.status,
         row.abn,
+        row.ndisNumber,
+        row.agedCareRef,
       ]
         .map(csvCell)
         .join(","),
