@@ -22,6 +22,7 @@ import {
   autoReleaseIfDue,
   autoReleaseLabel,
   autoReleasePausedLabel,
+  carerAutoReleasePausedLabel,
   isAutoReleasePaused,
   showsAutoReleaseNotice,
 } from "@/lib/escrow";
@@ -145,7 +146,9 @@ export default async function BookingDetailPage({
         </p>
       ) : null}
       {isAutoReleasePaused(booking.status) ? (
-        <p className="mt-3 rounded-xl bg-orange-50 p-3 text-sm text-clay">{autoReleasePausedLabel()}</p>
+        <p className="mt-3 rounded-xl bg-orange-50 p-3 text-sm text-clay">
+          {isCarer ? carerAutoReleasePausedLabel() : autoReleasePausedLabel()}
+        </p>
       ) : showsAutoReleaseNotice(booking.status) ? (
         <p className="mt-3 rounded-xl border border-line bg-card p-3 text-sm text-stone-600">
           {autoReleaseLabel(booking.endAt)}

@@ -27,7 +27,13 @@ import { inviteStatusLabel } from "@/lib/job-invite";
 import { unreadJobCountsByRequest } from "@/lib/job-messages";
 import { formatJobStart, jobDirectoryFilters, jobDirectoryHref, matchingJobs } from "@/lib/job-match";
 import { buildRoster, canToggleRosterAway } from "@/lib/roster";
-import { disputePauseBanner, isAutoReleasePaused } from "@/lib/escrow";
+import {
+  carerDisputePauseBanner,
+  carerDisputePauseHint,
+  disputePauseBanner,
+  familyDisputePauseHint,
+  isAutoReleasePaused,
+} from "@/lib/escrow";
 import { formatAud } from "@/lib/money";
 import {
   carerPendingAcceptanceBanner,
@@ -140,6 +146,11 @@ function BookingList({
                   {isFamily
                     ? familyPendingAcceptanceHint(pendingAcceptanceCount(group.weeks))
                     : carerPendingAcceptanceHint(pendingAcceptanceCount(group.weeks))}
+                </p>
+              ) : null}
+              {group.weeks.some((week) => isAutoReleasePaused(week.status)) ? (
+                <p className="mt-2 text-sm text-stone-600">
+                  {isFamily ? familyDisputePauseHint() : carerDisputePauseHint()}
                 </p>
               ) : null}
               {group.messageCount > 0 ? (
@@ -302,12 +313,16 @@ export default async function DashboardPage({
   const pendingAcceptanceCopy = isFamily
     ? familyPendingAcceptanceBanner(pendingAcceptanceItems)
     : carerPendingAcceptanceBanner(pendingAcceptanceItems);
-  const disputedItems = isFamily
-    ? needsAction
-        .filter((group) => group.weeks.some((week) => isAutoReleasePaused(week.status)))
-        .map((group) => ({ carerName: group.caregiverName, href: group.href }))
-    : [];
-  const disputePauseCopy = disputePauseBanner(disputedItems);
+  const disputedItems = needsAction
+    .filter((group) => group.weeks.some((week) => isAutoReleasePaused(week.status)))
+    .map((group) => ({
+      carerName: group.caregiverName,
+      familyName: group.familyName,
+      href: group.href,
+    }));
+  const disputePauseCopy = isFamily
+    ? disputePauseBanner(disputedItems)
+    : carerDisputePauseBanner(disputedItems);
   const comingUp = comingUpBookings(bookings).slice(0, 4);
   const comingUpLabel = { now: "Happening now", soon: "Starts soon", week: "This week" } as const;
   const escrowStatuses = new Set<string>([

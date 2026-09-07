@@ -5,7 +5,11 @@ import {
   autoReleaseLabel,
   autoReleasePausedLabel,
   canAutoRelease,
+  carerAutoReleasePausedLabel,
+  carerDisputePauseBanner,
+  carerDisputePauseHint,
   disputePauseBanner,
+  familyDisputePauseHint,
   isAutoReleasePaused,
   msUntilAutoRelease,
   shouldAutoRelease,
@@ -61,6 +65,27 @@ test("disputePauseBanner names the carer on a paused sit", () => {
   assert.equal(
     disputePauseBanner([{ carerName: "Chloe Bennett" }, { carerName: "Elena Rossi" }]),
     "Auto-release is paused on 2 disputed sits.",
+  );
+});
+
+test("carer dispute pause copy names the family and does not ask the carer to release", () => {
+  assert.equal(carerDisputePauseBanner([]), null);
+  assert.equal(
+    carerDisputePauseBanner([{ familyName: "Alex Martin" }]),
+    "Auto-release is paused on the sit with Alex Martin while it is in dispute.",
+  );
+  assert.equal(
+    carerDisputePauseBanner([{ familyName: "Alex Martin" }, { familyName: "Priya Shah" }]),
+    "Auto-release is paused on 2 disputed sits.",
+  );
+  assert.match(carerAutoReleasePausedLabel(), /until the family releases them to you or refunds the sit/);
+  assert.equal(
+    carerDisputePauseHint(),
+    "The 72-hour clock is paused. Funds stay held until the family releases them to you or refunds the sit.",
+  );
+  assert.equal(
+    familyDisputePauseHint(),
+    "The 72-hour clock is paused. Funds stay held until you release them to the carer or refund the sit.",
   );
 });
 

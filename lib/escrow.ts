@@ -189,12 +189,32 @@ export function autoReleasePausedLabel() {
   return "Auto-release is paused while this sit is in dispute. Funds stay in escrow until you release them to the carer or refund the family.";
 }
 
+export function carerAutoReleasePausedLabel() {
+  return "Auto-release is paused while this sit is in dispute. Funds stay in escrow until the family releases them to you or refunds the sit.";
+}
+
 export function disputePauseBanner(items: { carerName: string }[]) {
   if (!items.length) return null;
   if (items.length === 1) {
     return `Auto-release is paused on the sit with ${items[0].carerName} while it is in dispute.`;
   }
   return `Auto-release is paused on ${items.length} disputed sits.`;
+}
+
+export function carerDisputePauseBanner(items: { familyName: string }[]) {
+  if (!items.length) return null;
+  if (items.length === 1) {
+    return `Auto-release is paused on the sit with ${items[0].familyName} while it is in dispute.`;
+  }
+  return `Auto-release is paused on ${items.length} disputed sits.`;
+}
+
+export function familyDisputePauseHint() {
+  return "The 72-hour clock is paused. Funds stay held until you release them to the carer or refund the sit.";
+}
+
+export function carerDisputePauseHint() {
+  return "The 72-hour clock is paused. Funds stay held until the family releases them to you or refunds the sit.";
 }
 
 export function canAutoRelease(
