@@ -1,0 +1,108 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { markJobAlertSentAction, toggleJobAlertsAction } from "@/lib/actions";
+import { ROLES } from "@/lib/constants";
+import { formatJobStart, matchingJobs } from "@/lib/job-match";
+import { prisma } from "@/lib/prisma";
+import { composeJobFitAlert, jobAlertLabel, searchAlertDelta, searchAlertMailto } from "@/lib/saved-search";
+import { requireUser } from "@/lib/session";
+import { pageMeta } from "@/lib/seo";
+
+export const metadata = pageMeta({
+  title: "Job alerts",
+  description: "Preview the digest CareProof would email when new care requests fit your roster.",
+  path: "/dashboard/job-alerts",
+  noIndex: true,
+});
+
+export default async function JobAlertsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sent?: string }>;
+}) {
+  const user = await requireUser();
+  if (!user) redirect("/login?callbackUrl=/dashboard/job-alerts");
+  if (user.role !== ROLES.CAREGIVER || !user.caregiverProfile) redirect("/dashboard");
+  const query = await searchParams;
+  const [openJobs, profile] = await Promise.all([
+    prisma.careRequest.findMany({
+      where: { status: "open" },
+      include: { specialty: true, city: { include: { state: true } } },
+      orderBy: { startDate: "asc" },
+    }),
+    prisma.caregiverProfile.findUnique({
+      where: { id: user.caregiverProfile.id },
+      include: { specialties: true, weeklyWindows: true, blockedDates: true },
+    }),
+  ]);
+  if (!profile) redirect("/dashboard");
+  const fitting = matchingJobs(openJobs, {
+    cityId: profile.cityId,
+    specialtyIds: profile.specialties.map((item) => item.specialtyId),
+    windows: profile.weeklyWindows,
+    blockedKeys: profile.blockedDates.map((row) => row.dateKey),
+  });
+  const delta = searchAlertDelta(fitting.length, profile.lastJobAlertedCount, profile.jobAlertedAt);
+  const digest = composeJobFitAlert(
+    fitting.map((job) => ({
+      title: job.title,
+      href: `/care-requests/${job.slug}`,
+      when: `${job.city.name} · ${formatJobStart(job.startDate)}`,
+    })),
+    fitting.length,
+    delta.newCount,
+  );
+  const email = user.email ?? "carer@careproof.com.au";
+
+  return (
+    <div className="mx-auto max-w-2xl">
+      <Link href="/dashboard" className="text-sm text-teal">
+        Back to dashboard
+      </Link>
+      <h1 className="mt-3 text-3xl font-semibold text-ink">Job alerts</h1>
+      <p className="mt-2 text-stone-600">
+        This demo has no mail server. The digest below is what CareProof would email when a new request fits your
+        city, specialties and usual hours.
+      </p>
+      {query.sent ? (
+        <p className="mt-4 rounded-xl bg-sage p-3 text-sm">Digest marked sent. New-job counts start from this visit.</p>
+      ) : null}
+
+      {profile.jobAlertsOn ? (
+        <article className="mt-6 rounded-2xl border border-line bg-card p-5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-teal">Email preview</p>
+          <h2 className="mt-2 text-xl font-semibold text-ink">{digest.subject}</h2>
+          <p className="mt-3 whitespace-pre-line text-sm text-stone-700">{digest.body}</p>
+          <p className="mt-4">
+            <a href={searchAlertMailto(email, digest)} className="text-sm font-medium text-teal hover:underline">
+              Email this digest to {email}
+            </a>
+          </p>
+        </article>
+      ) : (
+        <p className="mt-6 text-sm text-stone-600">Job alerts are off. Turn them on to preview a digest.</p>
+      )}
+
+      <section className="mt-6 rounded-2xl border border-line bg-card p-4">
+        <p className="text-sm text-stone-500">{jobAlertLabel(delta, profile.jobAlertsOn)}</p>
+        <div className="mt-3 flex flex-wrap gap-3 text-sm">
+          <form action={toggleJobAlertsAction}>
+            <input type="hidden" name="next" value="/dashboard/job-alerts" />
+            <input type="hidden" name="alertsOn" value={profile.jobAlertsOn ? "0" : "1"} />
+            <button className="text-stone-500 hover:text-ink" type="submit">
+              {profile.jobAlertsOn ? "Turn alerts off" : "Turn alerts on"}
+            </button>
+          </form>
+          {profile.jobAlertsOn && delta.newCount > 0 ? (
+            <form action={markJobAlertSentAction}>
+              <input type="hidden" name="next" value="/dashboard/job-alerts" />
+              <button className="text-teal hover:underline" type="submit">
+                Mark digest sent
+              </button>
+            </form>
+          ) : null}
+        </div>
+      </section>
+    </div>
+  );
+}

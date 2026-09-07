@@ -116,6 +116,9 @@ model CaregiverProfile {
   noticeHours      Int      @default(4)
   jobsLastSeenCount Int      @default(0)
   jobsSeenAt        DateTime?
+  jobAlertsOn         Boolean   @default(true)
+  lastJobAlertedCount Int       @default(0)
+  jobAlertedAt        DateTime?
   lastActiveAt     DateTime @default(now())
   ratingAvg       Float    @default(0)
   reviewCount     Int      @default(0)

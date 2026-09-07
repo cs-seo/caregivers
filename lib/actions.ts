@@ -19,6 +19,7 @@ import { newCalendarToken } from "./calendar-feed";
 import { handoverFromForm, handoverToDb, fillEmptyHandover, canFillFromHousehold } from "./handover";
 import { sanitizePhotoUrl } from "./photos";
 import { isSafeReviewReturnPath, sanitizeReviewReply, hasReviewReply } from "./reviews";
+import { matchingJobs } from "./job-match";
 import { directoryStats } from "./queries";
 import { filtersFromSearchHref, isSafeSearchHref, MAX_SAVED_SEARCHES } from "./saved-search";
 import { requireRole, requireUser } from "./session";
@@ -1458,8 +1459,60 @@ export async function deleteSavedSearchAction(formData: FormData) {
 }
 
 function savedSearchReturnPath(raw: string) {
-  if (raw === "/dashboard" || raw === "/dashboard/alerts" || raw.startsWith("/dashboard?")) return raw;
+  if (
+    raw === "/dashboard" ||
+    raw === "/dashboard/alerts" ||
+    raw === "/dashboard/job-alerts" ||
+    raw.startsWith("/dashboard?")
+  ) {
+    return raw;
+  }
   return "/dashboard";
+}
+
+export async function toggleJobAlertsAction(formData: FormData) {
+  const user = await requireRole(ROLES.CAREGIVER);
+  if (!user?.caregiverProfile) redirect("/login?callbackUrl=/dashboard");
+  const next = savedSearchReturnPath(String(formData.get("next") ?? "/dashboard"));
+  const jobAlertsOn = String(formData.get("alertsOn") ?? "") === "1";
+  await prisma.caregiverProfile.update({
+    where: { id: user.caregiverProfile.id },
+    data: { jobAlertsOn },
+  });
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/job-alerts");
+  redirect(next);
+}
+
+export async function markJobAlertSentAction(formData: FormData) {
+  const user = await requireRole(ROLES.CAREGIVER);
+  if (!user?.caregiverProfile) redirect("/login?callbackUrl=/dashboard/job-alerts");
+  const next = savedSearchReturnPath(String(formData.get("next") ?? "/dashboard/job-alerts"));
+  const [openJobs, profile] = await Promise.all([
+    prisma.careRequest.findMany({
+      where: { status: "open" },
+      select: { cityId: true, specialtyId: true, startDate: true },
+    }),
+    prisma.caregiverProfile.findUnique({
+      where: { id: user.caregiverProfile.id },
+      include: { specialties: true, weeklyWindows: true, blockedDates: true },
+    }),
+  ]);
+  const count = profile
+    ? matchingJobs(openJobs, {
+        cityId: profile.cityId,
+        specialtyIds: profile.specialties.map((item) => item.specialtyId),
+        windows: profile.weeklyWindows,
+        blockedKeys: profile.blockedDates.map((row) => row.dateKey),
+      }).length
+    : 0;
+  await prisma.caregiverProfile.update({
+    where: { id: user.caregiverProfile.id },
+    data: { lastJobAlertedCount: count, jobAlertedAt: new Date() },
+  });
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/job-alerts");
+  redirect(`${next}${next.includes("?") ? "&" : "?"}sent=1`);
 }
 
 export async function toggleSavedSearchAlertsAction(formData: FormData) {

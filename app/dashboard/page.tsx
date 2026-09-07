@@ -30,6 +30,7 @@ import { formatAud } from "@/lib/money";
 import {
   declineInviteAction,
   deleteSavedSearchAction,
+  toggleJobAlertsAction,
   toggleSavedSearchAlertsAction,
   applyHouseholdHandoverAction,
   withdrawProposalAction,
@@ -37,6 +38,7 @@ import {
 import { directoryStats } from "@/lib/queries";
 import {
   filtersFromSearchHref,
+  jobAlertLabel,
   jobsFitDeltaLabel,
   savedSearchDelta,
   savedSearchDeltaLabel,
@@ -293,6 +295,9 @@ export default async function DashboardPage({
   const fittingJobs = matchCarer ? matchingJobs(openJobs, matchCarer) : [];
   const fittingDelta = carerProfile
     ? savedSearchDelta(fittingJobs.length, carerProfile.jobsLastSeenCount, carerProfile.jobsSeenAt)
+    : null;
+  const fittingAlertDelta = carerProfile
+    ? searchAlertDelta(fittingJobs.length, carerProfile.lastJobAlertedCount, carerProfile.jobAlertedAt)
     : null;
   const carerInvites =
     !isFamily && user.caregiverProfile
@@ -727,7 +732,14 @@ export default async function DashboardPage({
           <h2 className="font-semibold text-ink">Jobs that fit you</h2>
           <p className="mt-1 text-sm text-stone-600">
             Open requests in your city that match your specialties and usual weekly hours.
-            {fittingDelta ? ` ${jobsFitDeltaLabel(fittingDelta)}.` : ""}
+            {fittingDelta ? ` ${jobsFitDeltaLabel(fittingDelta)}.` : ""}{" "}
+            <Link href="/dashboard/job-alerts" className="font-medium text-teal hover:underline">
+              Job alerts
+            </Link>{" "}
+            preview the digest CareProof would email.
+            {fittingAlertDelta && carerProfile
+              ? ` ${jobAlertLabel(fittingAlertDelta, carerProfile.jobAlertsOn)}.`
+              : ""}
           </p>
           {fittingJobs.length === 0 ? (
             <Link href="/care-requests" className="mt-3 inline-block text-sm font-medium text-teal">
@@ -753,11 +765,22 @@ export default async function DashboardPage({
               ))}
             </ul>
           )}
-          {fittingJobs.length > 0 ? (
-            <Link href="/care-requests?fit=1" className="mt-3 inline-block text-sm font-medium text-teal">
-              See all matches
-            </Link>
-          ) : null}
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
+            {fittingJobs.length > 0 ? (
+              <Link href="/care-requests?fit=1" className="font-medium text-teal hover:underline">
+                See all matches
+              </Link>
+            ) : null}
+            {carerProfile ? (
+              <form action={toggleJobAlertsAction}>
+                <input type="hidden" name="next" value="/dashboard" />
+                <input type="hidden" name="alertsOn" value={carerProfile.jobAlertsOn ? "0" : "1"} />
+                <button className="text-stone-500 hover:text-ink" type="submit">
+                  {carerProfile.jobAlertsOn ? "Turn alerts off" : "Turn alerts on"}
+                </button>
+              </form>
+            ) : null}
+          </div>
         </section>
       ) : null}
 

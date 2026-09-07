@@ -131,3 +131,39 @@ export function composeSearchAlert(
 export function searchAlertMailto(to: string, alert: { subject: string; body: string }) {
   return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(alert.subject)}&body=${encodeURIComponent(alert.body)}`;
 }
+
+export function jobAlertLabel(delta: ReturnType<typeof savedSearchDelta>, alertsOn: boolean) {
+  if (!alertsOn) return "Email alerts off";
+  if (delta.current === 0) return delta.unseen ? "Alerts on · no matching jobs yet" : "Alerts on · 0 matching jobs";
+  if (delta.unseen) return `Alerts on · ${delta.current} ${delta.current === 1 ? "job" : "jobs"} waiting for a first digest`;
+  if (delta.newCount > 0) {
+    return `Alerts on · ${delta.newCount} new ${delta.newCount === 1 ? "job" : "jobs"} since last digest`;
+  }
+  return "Alerts on · no new jobs";
+}
+
+export function composeJobFitAlert(
+  jobs: { title: string; href: string; when: string }[],
+  current: number,
+  newCount: number,
+) {
+  const subject =
+    newCount > 0
+      ? `CareProof: ${newCount} new ${newCount === 1 ? "job fits" : "jobs fit"} your roster`
+      : "CareProof: no new jobs on your roster";
+  const listed = jobs.slice(0, 5);
+  const lines =
+    listed.length === 0
+      ? ["No open requests match your city, specialties and usual hours right now."]
+      : listed.map((job) => `${job.title}\n${job.when}\nOpen ${job.href}`);
+  const body = [
+    newCount > 0
+      ? `${current} open ${current === 1 ? "job fits" : "jobs fit"} you now · ${newCount} new since your last digest.`
+      : `${current} open ${current === 1 ? "job fits" : "jobs fit"} you now. None are new since your last digest.`,
+    "",
+    ...lines,
+    "",
+    "Turn job alerts off from your dashboard if you do not want another digest.",
+  ].join("\n");
+  return { subject, body, hasNew: newCount > 0 };
+}

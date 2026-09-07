@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  composeJobFitAlert,
   composeSearchAlert,
   defaultSearchName,
   filtersFromSearchHref,
   isSafeSearchHref,
+  jobAlertLabel,
   jobsFitDeltaLabel,
   savedSearchDelta,
   savedSearchDeltaLabel,
@@ -93,6 +95,28 @@ test("searchAlertLabel and composeSearchAlert describe new carers since the last
   assert.match(digest.body, /43 carers match now · 23 new/);
   assert.match(digest.body, /\/caregivers\/aged-care\/nsw\/sydney\?availableOn=2026-09-15/);
   assert.ok(searchAlertMailto("family@careproof.com.au", digest).startsWith("mailto:family%40careproof.com.au"));
+});
+
+test("jobAlertLabel and composeJobFitAlert describe new fitting jobs", () => {
+  const grown = savedSearchDelta(3, 1, new Date("2026-09-01"));
+  assert.equal(jobAlertLabel(grown, true), "Alerts on · 2 new jobs since last digest");
+  assert.equal(jobAlertLabel(grown, false), "Email alerts off");
+  assert.equal(jobAlertLabel(savedSearchDelta(1, 0, null), true), "Alerts on · 1 job waiting for a first digest");
+  const digest = composeJobFitAlert(
+    [
+      {
+        title: "Weekday aged care for Mum in Marrickville",
+        href: "/care-requests/weekday-aged-care-marrickville",
+        when: "Sydney · 15 Sept 2026, 8:00 am",
+      },
+    ],
+    1,
+    1,
+  );
+  assert.equal(digest.hasNew, true);
+  assert.equal(digest.subject, "CareProof: 1 new job fits your roster");
+  assert.match(digest.body, /1 open job fits you now · 1 new/);
+  assert.match(digest.body, /weekday-aged-care-marrickville/);
 });
 
 test("jobsFitDeltaLabel mirrors saved-search new counts for carers", () => {
