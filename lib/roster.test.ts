@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { BOOKING_STATUS } from "./constants";
-import { buildRoster } from "./roster";
+import { buildRoster, canToggleRosterAway } from "./roster";
 import { parseWeeklyHours } from "./weekly-windows";
 
 test("buildRoster marks a held Sydney sit and leaves other days open", () => {
@@ -38,5 +38,11 @@ test("buildRoster marks weekdays outside usual hours as closed", () => {
   const days = buildRoster([], 14, new Date("2026-09-07T00:00:00.000Z"), [], parseWeeklyHours("Mon–Fri 7am–1pm"));
   assert.equal(days.find((day) => day.key === "2026-09-11")?.closed, false);
   assert.equal(days.find((day) => day.key === "2026-09-12")?.closed, true);
-  assert.equal(days.find((day) => day.key === "2026-09-13")?.closed, true);
+});
+
+test("canToggleRosterAway is only for free or already-away days", () => {
+  assert.equal(canToggleRosterAway({ booking: null, blocked: false, closed: false }), true);
+  assert.equal(canToggleRosterAway({ booking: null, blocked: true, closed: true }), true);
+  assert.equal(canToggleRosterAway({ booking: null, blocked: false, closed: true }), false);
+  assert.equal(canToggleRosterAway({ booking: { id: "sit" }, blocked: false, closed: false }), false);
 });

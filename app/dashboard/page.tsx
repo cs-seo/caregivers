@@ -25,7 +25,7 @@ import { INVITE_NOTE_LIMIT } from "@/lib/job-invite";
 import { inviteStatusLabel } from "@/lib/job-invite";
 import { unreadJobCountsByRequest } from "@/lib/job-messages";
 import { formatJobStart, jobDirectoryFilters, jobDirectoryHref, matchingJobs } from "@/lib/job-match";
-import { buildRoster } from "@/lib/roster";
+import { buildRoster, canToggleRosterAway } from "@/lib/roster";
 import { formatAud } from "@/lib/money";
 import {
   declineInviteAction,
@@ -34,7 +34,9 @@ import {
   toggleJobAlertsAction,
   toggleProposalAlertsAction,
   toggleSavedSearchAlertsAction,
+  addBlockedDateAction,
   applyHouseholdHandoverAction,
+  removeBlockedDateAction,
   withdrawProposalAction,
 } from "@/lib/actions";
 import { directoryStats } from "@/lib/queries";
@@ -642,7 +644,7 @@ export default async function DashboardPage({
         <p className="mt-1 text-sm text-stone-600">
           {isFamily
             ? "Sits already in escrow, plus empty days you can still book. Subscribe so Google or Apple Calendar stay in sync, or download a snapshot."
-            : "Your held roster. Open days have no sit on the books. Away days pause Instant Book and hide you from Needed on. Closed weekdays follow your usual hours. Subscribe to booked sits, days off and usual hours, or download a snapshot."}
+            : "Your held roster. Tap an Open day to mark away, or an Away day to come back. Away days pause Instant Book and hide you from Needed on. Closed weekdays follow your usual hours — edit those on your profile. Subscribe to booked sits, days off and usual hours, or download a snapshot."}
         </p>
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-7">
           {roster.map((day) =>
@@ -666,6 +668,20 @@ export default async function DashboardPage({
                 <p className="font-medium">{day.label}</p>
                 <p className="mt-0.5">Find a carer</p>
               </Link>
+            ) : !isFamily && canToggleRosterAway(day) ? (
+              <form key={day.key} action={day.blocked ? removeBlockedDateAction : addBlockedDateAction}>
+                <input type="hidden" name="dateKey" value={day.key} />
+                <button
+                  type="submit"
+                  title={day.blocked ? `${day.key} · away · click to clear` : `${day.key} · open · mark away`}
+                  className={`w-full rounded-xl px-2 py-2 text-center text-xs ${
+                    day.blocked ? "bg-stone-100 text-stone-600" : "bg-sage text-teal-deep hover:bg-sage/80"
+                  }`}
+                >
+                  <p className="font-medium">{day.label}</p>
+                  <p className="mt-0.5">{day.blocked ? "Away" : "Open"}</p>
+                </button>
+              </form>
             ) : day.blocked ? (
               <Link
                 key={day.key}

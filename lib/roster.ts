@@ -36,3 +36,7 @@ export function buildRoster<T extends { startAt: Date; status: string }>(
     };
   });
 }
+
+export function canToggleRosterAway(day: { booking?: unknown; blocked: boolean; closed: boolean }) {
+  return !day.booking && (day.blocked || !day.closed);
+}
