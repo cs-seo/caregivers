@@ -2,8 +2,14 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { Badge } from "@/components/badges";
-import { BOOKING_STATUS, BOOKING_STATUS_LABELS } from "@/lib/constants";
+import { BOOKING_STATUS } from "@/lib/constants";
 import { credentialWatchlist, watchLabel } from "@/lib/credentials";
+import {
+  BOOKING_STATUS_SHORT,
+  groupDashboardBookings,
+  isClosedStatus,
+  type DashboardBookingGroup,
+} from "@/lib/dashboard-groups";
 import { formatDateTime, plural, snippet } from "@/lib/format";
 import { buildRoster } from "@/lib/roster";
 import { formatAud } from "@/lib/money";
@@ -19,36 +25,14 @@ export const metadata = pageMeta({
   noIndex: true,
 });
 
-const ACTION_STATUSES = new Set<string>([
-  BOOKING_STATUS.PENDING_ACCEPTANCE,
-  BOOKING_STATUS.AWAITING_PAYMENT,
-  BOOKING_STATUS.PENDING_RELEASE,
-  BOOKING_STATUS.DISPUTED,
-]);
-const ACTIVE_STATUSES = new Set<string>([BOOKING_STATUS.ESCROW_HELD, BOOKING_STATUS.IN_PROGRESS]);
-
 function BookingList({
   title,
-  bookings,
+  groups,
   isFamily,
   empty,
 }: {
   title: string;
-  bookings: {
-    id: string;
-    status: string;
-    startAt: Date;
-    totalCents: number;
-    subtotalCents: number;
-    specialty: { name: string };
-    caregiver: { user: { name: string } };
-    family: { name: string };
-    payment: { status: string } | null;
-    messages: { body: string }[];
-    _count: { messages: number };
-    recurringIndex: number;
-    recurringTotal: number;
-  }[];
+  groups: DashboardBookingGroup[];
   isFamily: boolean;
   empty: ReactNode;
 }) {
@@ -56,35 +40,50 @@ function BookingList({
     <section className="mt-8">
       <h2 className="text-xl font-semibold">{title}</h2>
       <ul className="mt-4 space-y-3">
-        {bookings.length === 0 ? (
+        {groups.length === 0 ? (
           <li className="rounded-2xl border border-dashed border-line bg-card p-5 text-sm text-stone-600">{empty}</li>
         ) : (
-          bookings.map((booking) => (
-            <li key={booking.id} className="rounded-2xl border border-line bg-card p-4">
+          groups.map((group) => (
+            <li key={group.key} className="rounded-2xl border border-line bg-card p-4">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
-                  <Link href={`/dashboard/bookings/${booking.id}`} className="font-semibold hover:text-teal">
-                    {booking.specialty.name} with {isFamily ? booking.caregiver.user.name : booking.family.name}
+                  <Link href={group.href} className="font-semibold hover:text-teal">
+                    {group.specialtyName} with {isFamily ? group.caregiverName : group.familyName}
                   </Link>
-                  <p className="text-sm text-stone-500">{formatDateTime(booking.startAt)}</p>
+                  <p className="text-sm text-stone-500">
+                    {group.seriesLabel ? `Next sit ${formatDateTime(group.nextAt)}` : formatDateTime(group.nextAt)}
+                  </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {booking.recurringTotal > 1 ? (
-                    <Badge tone="clay">
-                      Week {booking.recurringIndex} of {booking.recurringTotal}
-                    </Badge>
-                  ) : null}
-                  <Badge>{BOOKING_STATUS_LABELS[booking.status] ?? booking.status}</Badge>
+                  {group.seriesLabel ? <Badge tone="clay">{group.seriesLabel}</Badge> : null}
+                  <Badge>{group.statusLabel}</Badge>
                 </div>
               </div>
               <p className="mt-2 text-sm text-stone-600">
-                {formatAud(booking.totalCents)} family total · carer payout {formatAud(booking.subtotalCents)}
-                {booking.payment ? ` · payment ${booking.payment.status}` : ""}
+                {formatAud(isFamily ? group.liveCents.total : group.liveCents.payout)}
+                {isFamily ? " family total" : " carer payout"}
+                {group.weeks.length === 1 && group.weeks[0].payment
+                  ? ` · payment ${group.weeks[0].payment.status}`
+                  : group.weeks.length > 1
+                    ? ` · ${plural(group.weeks.filter((week) => !isClosedStatus(week.status)).length, "live week")}`
+                    : ""}
               </p>
-              {booking._count.messages > 0 ? (
+              {group.weeks.length > 1 ? (
+                <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-stone-500">
+                  {group.weeks.map((week) => (
+                    <Link key={week.id} href={`/dashboard/bookings/${week.id}`} className="hover:text-teal">
+                      W{week.recurringIndex} {BOOKING_STATUS_SHORT[week.status] ?? week.status}
+                    </Link>
+                  ))}
+                  <a href={`${group.href}/ics?series=1`} className="text-teal hover:underline">
+                    Calendar
+                  </a>
+                </p>
+              ) : null}
+              {group.messageCount > 0 ? (
                 <p className="mt-2 text-sm text-stone-500">
-                  {plural(booking._count.messages, "message")}
-                  {booking.messages[0] ? ` · “${snippet(booking.messages[0].body)}”` : ""}
+                  {plural(group.messageCount, "message")}
+                  {group.latestMessage ? ` · “${snippet(group.latestMessage)}”` : ""}
                 </p>
               ) : (
                 <p className="mt-2 text-sm text-stone-400">No messages yet</p>
@@ -147,11 +146,7 @@ export default async function DashboardPage({
     ? await prisma.shortlist.count({ where: { familyId: user.id } })
     : 0;
 
-  const needsAction = bookings.filter((booking) => ACTION_STATUSES.has(booking.status));
-  const active = bookings.filter((booking) => ACTIVE_STATUSES.has(booking.status));
-  const history = bookings.filter(
-    (booking) => !ACTION_STATUSES.has(booking.status) && !ACTIVE_STATUSES.has(booking.status),
-  );
+  const { action: needsAction, active, history } = groupDashboardBookings(bookings);
   const escrowStatuses = new Set<string>([
     BOOKING_STATUS.ESCROW_HELD,
     BOOKING_STATUS.IN_PROGRESS,
@@ -315,7 +310,7 @@ export default async function DashboardPage({
 
       <BookingList
         title="Needs action"
-        bookings={needsAction}
+        groups={needsAction}
         isFamily={isFamily}
         empty={
           isFamily ? (
@@ -347,7 +342,7 @@ export default async function DashboardPage({
       />
       <BookingList
         title="Active care"
-        bookings={active}
+        groups={active}
         isFamily={isFamily}
         empty={
           isFamily ? (
@@ -371,7 +366,7 @@ export default async function DashboardPage({
       />
       <BookingList
         title="History"
-        bookings={history}
+        groups={history}
         isFamily={isFamily}
         empty={
           isFamily ? (
