@@ -22,6 +22,7 @@ import { directoryStats } from "./queries";
 import { filtersFromSearchHref, isSafeSearchHref, MAX_SAVED_SEARCHES } from "./saved-search";
 import { requireRole, requireUser } from "./session";
 import { markRequestHired } from "./job-hire";
+import { INVITE_STATUS, canCreateInvite, isSafeInviteReturnPath } from "./job-invite";
 import { bookHref, canAttachJob, isJobSlug } from "./job-match";
 import {
   firstSitOutsideHours,
@@ -550,9 +551,76 @@ export async function createProposalAction(formData: FormData) {
     },
     update: { coverLetter, rateCents, status: "pending" },
   });
+  await prisma.careRequestInvite.updateMany({
+    where: {
+      requestId: request.id,
+      caregiverId: user.caregiverProfile.id,
+      status: INVITE_STATUS.PENDING,
+    },
+    data: { status: INVITE_STATUS.APPLIED },
+  });
 
   revalidatePath(`/care-requests/${slug}`);
+  revalidatePath("/dashboard");
   redirect(`/care-requests/${slug}?proposed=1`);
+}
+
+export async function inviteToJobAction(formData: FormData) {
+  const nextRaw = String(formData.get("next") ?? "/dashboard");
+  const next = isSafeInviteReturnPath(nextRaw) ? nextRaw : "/dashboard";
+  const user = await requireRole(ROLES.FAMILY);
+  if (!user) redirect(`/login?callbackUrl=${encodeURIComponent(next)}`);
+
+  const caregiverId = String(formData.get("caregiverId") ?? "");
+  const jobSlug = String(formData.get("job") ?? "").trim();
+  if (!isJobSlug(jobSlug)) redirect(next);
+
+  const [job, caregiver] = await Promise.all([
+    prisma.careRequest.findUnique({
+      where: { slug: jobSlug },
+      include: {
+        proposals: { where: { caregiverId }, select: { id: true } },
+        invites: { where: { caregiverId }, select: { id: true, status: true } },
+      },
+    }),
+    prisma.caregiverProfile.findUnique({ where: { id: caregiverId }, select: { id: true, slug: true } }),
+  ]);
+  if (!job || !caregiver || !canCreateInvite(job, user.id, job.invites[0], Boolean(job.proposals.length))) {
+    redirect(next);
+  }
+
+  await prisma.careRequestInvite.upsert({
+    where: { requestId_caregiverId: { requestId: job.id, caregiverId: caregiver.id } },
+    create: { requestId: job.id, caregiverId: caregiver.id, status: INVITE_STATUS.PENDING },
+    update: { status: INVITE_STATUS.PENDING },
+  });
+
+  revalidatePath(next);
+  revalidatePath(`/care-requests/${job.slug}`);
+  revalidatePath(`/caregiver/${caregiver.slug}`);
+  revalidatePath("/care-requests");
+  revalidatePath("/dashboard");
+}
+
+export async function declineInviteAction(formData: FormData) {
+  const user = await requireRole(ROLES.CAREGIVER);
+  if (!user?.caregiverProfile) redirect("/login");
+  const inviteId = String(formData.get("inviteId") ?? "");
+  const invite = await prisma.careRequestInvite.findUnique({
+    where: { id: inviteId },
+    include: { request: { select: { slug: true } } },
+  });
+  if (!invite || invite.caregiverId !== user.caregiverProfile.id || invite.status !== INVITE_STATUS.PENDING) {
+    redirect("/dashboard");
+  }
+
+  await prisma.careRequestInvite.update({
+    where: { id: invite.id },
+    data: { status: INVITE_STATUS.DECLINED },
+  });
+  revalidatePath("/dashboard");
+  revalidatePath(`/care-requests/${invite.request.slug}`);
+  revalidatePath("/care-requests");
 }
 
 export async function hireProposalAction(formData: FormData) {

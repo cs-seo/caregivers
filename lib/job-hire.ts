@@ -1,3 +1,4 @@
+import { INVITE_STATUS } from "./job-invite";
 import { prisma } from "./prisma";
 
 export const PROPOSAL_STATUS = {
@@ -46,5 +47,17 @@ export async function markRequestHired(careRequestId: string, hiredCaregiverId: 
       status: PROPOSAL_STATUS.PENDING,
     },
     data: { status: PROPOSAL_STATUS.DECLINED },
+  });
+  await prisma.careRequestInvite.updateMany({
+    where: { requestId: careRequestId, caregiverId: hiredCaregiverId, status: INVITE_STATUS.PENDING },
+    data: { status: INVITE_STATUS.APPLIED },
+  });
+  await prisma.careRequestInvite.updateMany({
+    where: {
+      requestId: careRequestId,
+      caregiverId: { not: hiredCaregiverId },
+      status: INVITE_STATUS.PENDING,
+    },
+    data: { status: INVITE_STATUS.DECLINED },
   });
 }

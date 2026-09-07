@@ -12,10 +12,11 @@ import {
 } from "@/lib/dashboard-groups";
 import { formatDateTime, plural, snippet } from "@/lib/format";
 import { proposalStatusLabel, requestStatusLabel } from "@/lib/job-hire";
+import { inviteStatusLabel } from "@/lib/job-invite";
 import { formatJobStart, jobDirectoryFilters, jobDirectoryHref, matchingJobs } from "@/lib/job-match";
 import { buildRoster } from "@/lib/roster";
 import { formatAud } from "@/lib/money";
-import { deleteSavedSearchAction, applyHouseholdHandoverAction } from "@/lib/actions";
+import { declineInviteAction, deleteSavedSearchAction, applyHouseholdHandoverAction } from "@/lib/actions";
 import { directoryStats } from "@/lib/queries";
 import { filtersFromSearchHref, jobsFitDeltaLabel, savedSearchDelta, savedSearchDeltaLabel } from "@/lib/saved-search";
 import { comingUpBookings, comingUpKind } from "@/lib/coming-up";
@@ -157,6 +158,7 @@ export default async function DashboardPage({
           specialty: true,
           city: { include: { state: true } },
           bookings: { select: { id: true }, orderBy: { startAt: "asc" }, take: 1 },
+          _count: { select: { invites: { where: { status: "pending" } } } },
         },
         orderBy: { createdAt: "desc" },
       })
@@ -257,6 +259,27 @@ export default async function DashboardPage({
   const fittingDelta = carerProfile
     ? savedSearchDelta(fittingJobs.length, carerProfile.jobsLastSeenCount, carerProfile.jobsSeenAt)
     : null;
+  const carerInvites =
+    !isFamily && user.caregiverProfile
+      ? await prisma.careRequestInvite.findMany({
+          where: {
+            caregiverId: user.caregiverProfile.id,
+            status: "pending",
+            request: { status: "open" },
+          },
+          include: {
+            request: {
+              select: {
+                slug: true,
+                title: true,
+                startDate: true,
+                family: { select: { name: true } },
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        })
+      : [];
   const proposedJobIds = new Set(carerProposals.map((proposal) => proposal.careRequestId));
   const heldCents = bookings
     .filter((booking) => escrowStatuses.has(booking.status))
@@ -321,6 +344,16 @@ export default async function DashboardPage({
             Open jobs that fit you
           </Link>{" "}
           to mark them seen.
+        </p>
+      ) : null}
+      {carerInvites.length ? (
+        <p className="mt-4 rounded-xl bg-sage p-3 text-sm text-teal-deep">
+          {carerInvites.length === 1
+            ? `${carerInvites[0].request.family.name} invited you to ${carerInvites[0].request.title}.`
+            : `${carerInvites.length} families invited you to apply.`}{" "}
+          <Link href={`/care-requests/${carerInvites[0].request.slug}`} className="font-medium text-teal">
+            {carerInvites.length === 1 ? "Open the request" : "Open the first invite"}
+          </Link>
         </p>
       ) : null}
 
@@ -711,6 +744,35 @@ export default async function DashboardPage({
         }
       />
 
+      {!isFamily && carerInvites.length ? (
+        <section className="mt-10">
+          <h2 className="text-xl font-semibold">Invites to apply</h2>
+          <ul className="mt-4 space-y-3">
+            {carerInvites.map((invite) => (
+              <li key={invite.id} className="rounded-2xl border border-line bg-card p-4">
+                <Link href={`/care-requests/${invite.request.slug}`} className="font-medium text-teal hover:underline">
+                  {invite.request.title}
+                </Link>
+                <p className="mt-1 text-sm text-stone-500">
+                  {invite.request.family.name} invited you · starts {formatJobStart(invite.request.startDate)}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-3 text-sm">
+                  <Link href={`/care-requests/${invite.request.slug}`} className="font-medium text-teal hover:underline">
+                    Send a proposal
+                  </Link>
+                  <form action={declineInviteAction}>
+                    <input type="hidden" name="inviteId" value={invite.id} />
+                    <button className="text-stone-500 hover:text-ink" type="submit">
+                      Decline
+                    </button>
+                  </form>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       <section className="mt-10">
         <h2 className="text-xl font-semibold">{isFamily ? "Your care requests" : "Your proposals"}</h2>
         <ul className="mt-4 space-y-3">
@@ -746,6 +808,11 @@ export default async function DashboardPage({
                       <Link href={match.href} className="text-teal hover:underline">
                         Browse
                       </Link>
+                      {job._count.invites ? ` · ${job._count.invites} invited` : ""}
+                    </span>
+                  ) : job._count.invites ? (
+                    <span className="mt-0.5 block text-sm text-stone-500">
+                      {job._count.invites} {inviteStatusLabel("pending").toLowerCase()}
                     </span>
                   ) : null}
                 </li>

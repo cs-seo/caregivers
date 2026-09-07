@@ -27,6 +27,7 @@ export default async function CareRequestsPage({
       specialty: true,
       city: { include: { state: true } },
       _count: { select: { proposals: true } },
+      invites: { select: { caregiverId: true, status: true } },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -54,11 +55,16 @@ export default async function CareRequestsPage({
   const decorated = requests.map((job) => {
     const reason = matchCarer ? jobMissReason(job, matchCarer) : null;
     const fit = matchCarer ? jobFitsCarer(job, matchCarer) : false;
-    return { job, reason, fit };
+    const invited = Boolean(
+      carer && job.invites.some((invite) => invite.caregiverId === carer.id && invite.status === "pending"),
+    );
+    return { job, reason, fit, invited };
   });
   const fitOnly = query.fit === "1" && Boolean(matchCarer);
   const visible = fitOnly ? decorated.filter((row) => row.fit) : decorated;
-  const sorted = matchCarer ? [...visible].sort((a, b) => Number(b.fit) - Number(a.fit)) : visible;
+  const sorted = matchCarer
+    ? [...visible].sort((a, b) => Number(b.invited) - Number(a.invited) || Number(b.fit) - Number(a.fit))
+    : visible;
   const fitCount = decorated.filter((row) => row.fit).length;
   const fitDelta = carer
     ? savedSearchDelta(fitCount, carer.jobsLastSeenCount, carer.jobsSeenAt)
@@ -108,7 +114,7 @@ export default async function CareRequestsPage({
             {fitOnly ? "No open jobs match your city, specialties and usual weekly hours." : "No open care requests right now."}
           </li>
         ) : (
-          sorted.map(({ job, fit, reason }) => (
+          sorted.map(({ job, fit, reason, invited }) => (
             <li key={job.id} className="rounded-2xl border border-line bg-card p-5">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <h2 className="text-lg font-semibold">
@@ -116,9 +122,12 @@ export default async function CareRequestsPage({
                     {job.title}
                   </Link>
                 </h2>
-                {matchCarer ? (
-                  <Badge tone={fit ? "teal" : "stone"}>{jobMissLabel(reason)}</Badge>
-                ) : null}
+                <span className="flex flex-wrap gap-2">
+                  {invited ? <Badge tone="clay">Invited</Badge> : null}
+                  {matchCarer ? (
+                    <Badge tone={fit ? "teal" : "stone"}>{jobMissLabel(reason)}</Badge>
+                  ) : null}
+                </span>
               </div>
               <p className="mt-1 text-sm text-stone-600">
                 {job.specialty.name} · {job.city.name}, {job.city.state.abbrev} · from {formatJobStart(job.startDate)}

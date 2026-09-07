@@ -3,9 +3,11 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { Badge } from "@/components/badges";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { createProposalAction, hireProposalAction } from "@/lib/actions";
+import { InviteButton } from "@/components/invite-button";
+import { createProposalAction, declineInviteAction, hireProposalAction } from "@/lib/actions";
 import { BOOKING_STATUS_LABELS } from "@/lib/constants";
 import { proposalStatusLabel, proposalStatusTone } from "@/lib/job-hire";
+import { INVITE_STATUS, inviteStatusLabel, inviteStatusTone } from "@/lib/job-invite";
 import {
   formatJobStart,
   jobBookHref,
@@ -72,6 +74,12 @@ export default async function CareRequestPage({
         },
         orderBy: { createdAt: "desc" },
       },
+      invites: {
+        include: {
+          caregiver: { include: { user: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
   if (!job) notFound();
@@ -98,6 +106,7 @@ export default async function CareRequestPage({
   const miss = matchCarer ? jobMissReason(job, matchCarer) : null;
   const fit = matchCarer ? jobFitsCarer(job, matchCarer) : false;
   const alreadyProposed = Boolean(carer && job.proposals.some((proposal) => proposal.caregiverId === carer.id));
+  const ownInvite = carer ? job.invites.find((invite) => invite.caregiverId === carer.id) : null;
   const directoryFilters = jobDirectoryFilters(job);
   const matchHref = job.status === "open" ? jobDirectoryHref(job) : null;
   const [matchStats, matchCarers] =
@@ -141,24 +150,39 @@ export default async function CareRequestPage({
             <h2 className="text-xl font-semibold">Carers free at this time</h2>
             <p className="mt-2 text-sm text-stone-600">
               {matchStats.count
-                ? `${matchStats.count} verified ${matchStats.count === 1 ? "carer is" : "carers are"} free in ${job.city.name} at ${formatJobStart(job.startDate)}. Book one to close this request and attach the sit — same as hiring a proposal.`
+                ? `${matchStats.count} verified ${matchStats.count === 1 ? "carer is" : "carers are"} free in ${job.city.name} at ${formatJobStart(job.startDate)}. Book one to close this request, or invite them to send a proposal.`
                 : `No listed carers are free in ${job.city.name} at ${formatJobStart(job.startDate)}. Proposals below may still come in.`}
             </p>
             {matchCarers.length ? (
               <ul className="mt-3 space-y-2 text-sm">
-                {matchCarers.map((carer) => (
-                  <li key={carer.id} className="flex flex-wrap items-center justify-between gap-2">
-                    <Link href={`/caregiver/${carer.slug}`} className="font-medium text-teal hover:underline">
-                      {carer.user.name}
+                {matchCarers.map((match) => {
+                  const invited = job.invites.find((invite) => invite.caregiverId === match.id);
+                  const proposed = job.proposals.some((proposal) => proposal.caregiverId === match.id);
+                  return (
+                  <li key={match.id} className="flex flex-wrap items-center justify-between gap-2">
+                    <Link href={`/caregiver/${match.slug}?job=${job.slug}`} className="font-medium text-teal hover:underline">
+                      {match.user.name}
                     </Link>
-                    <span className="flex items-center gap-3 text-stone-500">
-                      {formatAud(carer.hourlyRateCents)}/hr
-                      <Link href={jobBookHref(carer.slug, job.startDate, job.slug)} className="font-medium text-teal hover:underline">
+                    <span className="flex flex-wrap items-center gap-3 text-stone-500">
+                      {formatAud(match.hourlyRateCents)}/hr
+                      <Link href={jobBookHref(match.slug, job.startDate, job.slug)} className="font-medium text-teal hover:underline">
                         Book
                       </Link>
+                      <InviteButton
+                        caregiverId={match.id}
+                        jobSlug={job.slug}
+                        job={job}
+                        familyId={session?.user?.id}
+                        existing={invited ?? null}
+                        proposed={proposed}
+                        next={`/care-requests/${job.slug}`}
+                        signedIn
+                        compact
+                      />
                     </span>
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             ) : null}
             <Link
@@ -190,6 +214,25 @@ export default async function CareRequestPage({
                   <Link href={`/dashboard/bookings/${booking.id}`} className="font-medium text-teal hover:underline">
                     Open booking
                   </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
+        {isOwner && job.invites.length ? (
+          <section className="mt-10">
+            <h2 className="text-xl font-semibold">Invited carers</h2>
+            <ul className="mt-4 space-y-3">
+              {job.invites.map((invite) => (
+                <li key={invite.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-line bg-card p-4">
+                  <div>
+                    <Link href={`/caregiver/${invite.caregiver.slug}?job=${job.slug}`} className="font-semibold text-ink hover:text-teal">
+                      {invite.caregiver.user.name}
+                    </Link>
+                    <p className="mt-1 text-sm text-stone-500">Asked to send a proposal on this request.</p>
+                  </div>
+                  <Badge tone={inviteStatusTone(invite.status)}>{inviteStatusLabel(invite.status)}</Badge>
                 </li>
               ))}
             </ul>
@@ -246,6 +289,11 @@ export default async function CareRequestPage({
 
       <aside className="h-fit rounded-2xl border border-line bg-card p-5">
         {query.proposed ? <p className="mb-3 text-sm text-teal">Proposal sent.</p> : null}
+        {isCarer && ownInvite?.status === INVITE_STATUS.PENDING && job.status === "open" ? (
+          <p className="mb-3 rounded-xl bg-sage px-3 py-2 text-sm text-teal-deep">
+            {job.family.name} invited you to apply. Send a proposal below or decline.
+          </p>
+        ) : null}
         {isCarer && job.status === "open" ? (
           alreadyProposed ? (
             <p className="text-sm text-teal">You already sent a proposal on this request.</p>
@@ -270,11 +318,20 @@ export default async function CareRequestPage({
               <textarea name="coverLetter" required rows={5} className="mt-1 w-full rounded-lg border border-line px-3 py-2" />
             </label>
             <button className="w-full rounded-lg bg-teal py-2 font-medium text-white" type="submit">
-              Submit proposal
+              {ownInvite?.status === INVITE_STATUS.PENDING ? "Apply to this invite" : "Submit proposal"}
             </button>
           </form>
           )
-        ) : !session ? (
+        ) : null}
+        {isCarer && ownInvite?.status === INVITE_STATUS.PENDING && job.status === "open" && !alreadyProposed ? (
+          <form action={declineInviteAction} className="mt-3">
+            <input type="hidden" name="inviteId" value={ownInvite.id} />
+            <button className="w-full text-sm text-stone-500 hover:text-ink" type="submit">
+              Decline this invite
+            </button>
+          </form>
+        ) : null}
+        {isCarer && job.status === "open" ? null : !session ? (
           <p className="text-sm">
             <Link href={`/login?callbackUrl=/care-requests/${job.slug}`} className="text-teal">
               Log in as a carer

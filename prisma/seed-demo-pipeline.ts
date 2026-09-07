@@ -646,6 +646,24 @@ export async function seedDemoHiredRequest(prisma: PrismaClient) {
   return 1;
 }
 
+export async function seedDemoInvites(prisma: PrismaClient) {
+  const james = await prisma.caregiverProfile.findUnique({
+    where: { slug: "james-okafor-disability-support-sydney" },
+  });
+  const job = await prisma.careRequest.findUnique({
+    where: { slug: "weekday-aged-care-marrickville" },
+  });
+  if (!james || !job || job.status !== "open") return 0;
+  const existing = await prisma.careRequestInvite.findUnique({
+    where: { requestId_caregiverId: { requestId: job.id, caregiverId: james.id } },
+  });
+  if (existing) return existing.status === "pending" ? 1 : 0;
+  await prisma.careRequestInvite.create({
+    data: { requestId: job.id, caregiverId: james.id, status: "pending" },
+  });
+  return 1;
+}
+
 export async function seedDemoJobStarts(prisma: PrismaClient) {
   const times: Record<string, Date> = {
     "weekday-aged-care-marrickville": parseSydneyDateTimeLocal("2026-09-15T08:00"),
@@ -734,8 +752,9 @@ async function main() {
   const notice = await seedDemoNoticeHours(prisma);
   const jobStarts = await seedDemoJobStarts(prisma);
   const hired = await seedDemoHiredRequest(prisma);
+  const invites = await seedDemoInvites(prisma);
   console.log(
-    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}; notice ${notice}; jobStarts ${jobStarts}; hired ${hired}`,
+    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}; notice ${notice}; jobStarts ${jobStarts}; hired ${hired}; invites ${invites}`,
   );
   await prisma.$disconnect();
 }

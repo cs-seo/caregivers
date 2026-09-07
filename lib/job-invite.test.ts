@@ -1,0 +1,59 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import {
+  INVITE_STATUS,
+  canCreateInvite,
+  canInviteToJob,
+  hiredInviteStatus,
+  inviteButtonLabel,
+  inviteStatusLabel,
+  isSafeInviteReturnPath,
+} from "./job-invite";
+
+test("canInviteToJob only allows the family on an open request", () => {
+  assert.equal(canInviteToJob({ familyId: "alex", status: "open" }, "alex"), true);
+  assert.equal(canInviteToJob({ familyId: "alex", status: "hired" }, "alex"), false);
+  assert.equal(canInviteToJob({ familyId: "alex", status: "open" }, "other"), false);
+  assert.equal(canInviteToJob(null, "alex"), false);
+});
+
+test("canCreateInvite skips carers who already proposed or have a live invite", () => {
+  const job = { familyId: "alex", status: "open" };
+  assert.equal(canCreateInvite(job, "alex"), true);
+  assert.equal(canCreateInvite(job, "alex", { status: INVITE_STATUS.PENDING }), false);
+  assert.equal(canCreateInvite(job, "alex", { status: INVITE_STATUS.APPLIED }), false);
+  assert.equal(canCreateInvite(job, "alex", { status: INVITE_STATUS.DECLINED }), true);
+  assert.equal(canCreateInvite(job, "alex", null, true), false);
+  assert.equal(canCreateInvite({ familyId: "alex", status: "hired" }, "alex"), false);
+});
+
+test("hiring applies the chosen invite and declines leftover pending invites", () => {
+  assert.equal(hiredInviteStatus("pending", "james", "james"), INVITE_STATUS.APPLIED);
+  assert.equal(hiredInviteStatus("pending", "elena", "james"), INVITE_STATUS.DECLINED);
+  assert.equal(hiredInviteStatus("applied", "james", "other"), INVITE_STATUS.APPLIED);
+});
+
+test("invite labels stay family-facing", () => {
+  assert.equal(inviteStatusLabel("pending"), "Invited");
+  assert.equal(inviteStatusLabel("applied"), "Applied");
+  assert.equal(inviteStatusLabel("declined"), "Declined");
+  assert.equal(inviteButtonLabel(null), "Invite to this request");
+  assert.equal(inviteButtonLabel({ status: "pending" }), "Invited");
+  assert.equal(inviteButtonLabel({ status: "declined" }), "Invite again");
+  assert.equal(inviteButtonLabel(null, true), "Already proposed");
+});
+
+test("isSafeInviteReturnPath stays on local marketplace pages", () => {
+  assert.equal(
+    isSafeInviteReturnPath("/caregiver/james-okafor-disability-support-sydney?job=weekday-aged-care-marrickville"),
+    true,
+  );
+  assert.equal(
+    isSafeInviteReturnPath("/caregivers/aged-care/nsw/sydney?availableOn=2026-09-15&job=weekday-aged-care-marrickville"),
+    true,
+  );
+  assert.equal(isSafeInviteReturnPath("/care-requests/weekday-aged-care-marrickville"), true);
+  assert.equal(isSafeInviteReturnPath("/dashboard"), true);
+  assert.equal(isSafeInviteReturnPath("https://evil.example/caregiver/x"), false);
+  assert.equal(isSafeInviteReturnPath("//evil"), false);
+});

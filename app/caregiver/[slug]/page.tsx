@@ -5,14 +5,16 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { CaregiverCardView } from "@/components/caregiver-card";
 import { JsonLd } from "@/components/json-ld";
 import { DaysOffCalendar } from "@/components/days-off-calendar";
+import { InviteButton } from "@/components/invite-button";
 import { MobileBookBar } from "@/components/mobile-book-bar";
 import { Portrait } from "@/components/portrait";
 import { ReviewCard, ReviewReplyForm } from "@/components/review-card";
 import { ShortlistButton } from "@/components/shortlist-button";
 import { fortnightLabel, isAvailableNowLive, isInstantBookLive, noticeLabel, summariseFortnight, weeklyHourChips } from "@/lib/availability";
 import { lastActiveLabel, monthYear } from "@/lib/format";
-import { bookHref, isJobSlug } from "@/lib/job-match";
+import { canAttachJob, bookHref, caregiverHref, isJobSlug } from "@/lib/job-match";
 import { formatAud } from "@/lib/money";
+import { prisma } from "@/lib/prisma";
 import { getCaregiverBySlug, getShortlistedIds, getUpcomingAvailability, similarCaregivers } from "@/lib/queries";
 import { requireUser } from "@/lib/session";
 import { breadcrumbJsonLd, pageMeta } from "@/lib/seo";
@@ -57,7 +59,7 @@ export default async function CaregiverProfilePage({
   const startClock = /^([01]\d|2[0-3]):([0-5]\d)$/.test(query.at ?? "") ? query.at : "";
   if (!carer) notFound();
   const isOwner = viewer?.caregiverProfile?.id === carer.id;
-  const [similar, savedIds, upcoming] = await Promise.all([
+  const [similar, savedIds, upcoming, attachJob] = await Promise.all([
     similarCaregivers(
       carer.id,
       carer.cityId,
@@ -65,7 +67,33 @@ export default async function CaregiverProfilePage({
     ),
     getShortlistedIds(viewer?.role === "FAMILY" ? viewer.id : null),
     getUpcomingAvailability(carer.id, 70),
+    jobSlug && viewer?.role === "FAMILY"
+      ? prisma.careRequest.findUnique({
+          where: { slug: jobSlug },
+          select: {
+            id: true,
+            slug: true,
+            title: true,
+            familyId: true,
+            status: true,
+            proposals: { where: { caregiverId: carer.id }, select: { id: true } },
+            invites: { where: { caregiverId: carer.id }, select: { id: true, status: true } },
+          },
+        })
+      : Promise.resolve(null),
   ]);
+  const jobTitle = attachJob && viewer?.id && canAttachJob(attachJob, viewer.id) ? attachJob.title : null;
+  const profileInvite = jobTitle && attachJob
+    ? {
+        jobSlug,
+        job: attachJob,
+        familyId: viewer?.id,
+        existing: attachJob.invites[0] ?? null,
+        proposed: attachJob.proposals.length > 0,
+        next: caregiverHref(carer.slug, { start: startDate || undefined, at: startClock || undefined, job: jobSlug }),
+        signedIn: true,
+      }
+    : null;
   const primary = carer.specialties[0]?.specialty;
   const canShortlist = viewer?.role === "FAMILY";
   const fortnight = summariseFortnight(upcoming.slice(0, 14));
@@ -320,6 +348,23 @@ export default async function CaregiverProfilePage({
           >
             {liveInstant ? "Book now" : "Request to book"}
           </Link>
+          {profileInvite && jobTitle ? (
+            <>
+              <p className="mt-3 text-xs text-stone-500">
+                Invite {carer.user.name.split(" ")[0]} to send a proposal on {jobTitle}.
+              </p>
+              <InviteButton
+                caregiverId={carer.id}
+                jobSlug={profileInvite.jobSlug}
+                job={profileInvite.job}
+                familyId={profileInvite.familyId}
+                existing={profileInvite.existing}
+                proposed={profileInvite.proposed}
+                next={profileInvite.next}
+                signedIn={profileInvite.signedIn}
+              />
+            </>
+          ) : null}
           <div className="mt-3">
             <ShortlistButton
               caregiverId={carer.id}

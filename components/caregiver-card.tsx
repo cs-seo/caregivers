@@ -6,6 +6,7 @@ import { formatAud } from "@/lib/money";
 import { trustLabel } from "@/lib/trust";
 import type { CaregiverCard } from "@/lib/queries";
 import { Badge, CredentialBadges } from "./badges";
+import { InviteButton } from "./invite-button";
 import { Portrait } from "./portrait";
 import { ShortlistButton } from "./shortlist-button";
 
@@ -15,12 +16,22 @@ export function CaregiverCardView({
   neededOn,
   neededAt,
   job,
+  invite,
 }: {
   caregiver: CaregiverCard & { trustScore: number };
   shortlist?: { saved: boolean; signedIn: boolean; next: string };
   neededOn?: string;
   neededAt?: string;
   job?: string;
+  invite?: {
+    jobSlug: string;
+    job: { familyId: string; status: string };
+    familyId?: string | null;
+    existing?: { status: string } | null;
+    proposed?: boolean;
+    next: string;
+    signedIn: boolean;
+  };
 }) {
   const specialtyNames = caregiver.specialties.map((s) => s.specialty.name).join(" · ");
   const blockedKeys = (caregiver.blockedDates ?? []).map((row) => row.dateKey);
@@ -98,6 +109,21 @@ export function CaregiverCardView({
                 Book on {formatDate(parseSydneyDateTimeLocal(`${neededOn}T${neededAt ?? "17:00"}`))}
               </Link>
             </p>
+          ) : null}
+          {invite ? (
+            <div className="mt-3">
+              <InviteButton
+                caregiverId={caregiver.id}
+                jobSlug={invite.jobSlug}
+                job={invite.job}
+                familyId={invite.familyId}
+                existing={invite.existing}
+                proposed={invite.proposed}
+                next={invite.next}
+                signedIn={invite.signedIn}
+                compact
+              />
+            </div>
           ) : null}
           {shortlist ? (
             <div className="mt-3">

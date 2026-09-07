@@ -62,11 +62,28 @@ export async function DirectoryResults({
     canShortlist && filters.job
       ? await prisma.careRequest.findUnique({
           where: { slug: filters.job },
-          select: { slug: true, title: true, familyId: true, status: true },
+          select: { id: true, slug: true, title: true, familyId: true, status: true },
         })
       : null;
   const jobTitle =
     attachJob && viewer?.id && canAttachJob(attachJob, viewer.id) ? attachJob.title : null;
+  const pageIds = caregivers.map((carer) => carer.id);
+  const inviteRows =
+    jobTitle && attachJob && pageIds.length
+      ? await prisma.careRequestInvite.findMany({
+          where: { requestId: attachJob.id, caregiverId: { in: pageIds } },
+          select: { caregiverId: true, status: true },
+        })
+      : [];
+  const proposedRows =
+    jobTitle && attachJob && pageIds.length
+      ? await prisma.proposal.findMany({
+          where: { careRequestId: attachJob.id, caregiverId: { in: pageIds } },
+          select: { caregiverId: true },
+        })
+      : [];
+  const inviteByCarer = new Map(inviteRows.map((row) => [row.caregiverId, row]));
+  const proposedIds = new Set(proposedRows.map((row) => row.caregiverId));
 
   return (
     <div>
@@ -166,7 +183,7 @@ export async function DirectoryResults({
       {jobTitle ? (
         <p className="mt-4 rounded-xl border border-teal/25 bg-sage px-3 py-2 text-sm text-ink">
           Booking from this list will close your <span className="font-semibold">{jobTitle}</span> request
-          and attach the sit to that job.
+          and attach the sit to that job. Invite a carer to apply if you want a proposal first.
         </p>
       ) : null}
       <div className="mt-8 grid gap-6 md:grid-cols-[240px_1fr]">
@@ -193,6 +210,19 @@ export async function DirectoryResults({
                 neededOn={filters.availableOn}
                 neededAt={filters.availableAt}
                 job={jobTitle ? filters.job : undefined}
+                invite={
+                  jobTitle && attachJob && filters.job
+                    ? {
+                        jobSlug: filters.job,
+                        job: attachJob,
+                        familyId: viewer?.id,
+                        existing: inviteByCarer.get(carer.id) ?? null,
+                        proposed: proposedIds.has(carer.id),
+                        next: filterHref(path, current),
+                        signedIn: Boolean(canShortlist),
+                      }
+                    : undefined
+                }
                 shortlist={{
                   saved: savedIds.has(carer.id),
                   signedIn: Boolean(canShortlist),

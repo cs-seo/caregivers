@@ -127,6 +127,7 @@ model CaregiverProfile {
   credentials Credential[]
   bookings    Booking[]
   proposals   Proposal[]
+  invites     CareRequestInvite[]
   reviews     Review[]
   shortlistedBy Shortlist[]
   blockedDates CaregiverBlockedDate[]
@@ -210,6 +211,7 @@ model CareRequest {
   status        String    @default("open")
   createdAt     DateTime  @default(now())
   proposals     Proposal[]
+  invites       CareRequestInvite[]
   bookings      Booking[]
 }
 
@@ -225,6 +227,20 @@ model Proposal {
   createdAt     DateTime         @default(now())
 
   @@unique([careRequestId, caregiverId])
+}
+
+model CareRequestInvite {
+  id          String           @id @default(cuid())
+  requestId   String
+  request     CareRequest      @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  caregiverId String
+  caregiver   CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  status      String           @default("pending")
+  createdAt   DateTime         @default(now())
+
+  @@unique([requestId, caregiverId])
+  @@index([caregiverId, status])
+  @@index([requestId, status])
 }
 
 model Booking {
