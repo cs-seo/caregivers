@@ -19,6 +19,7 @@ import {
 } from "@/lib/actions";
 import { BOOKING_STATUS, BOOKING_STATUS_LABELS, UNPAID_BOOKING_STATUSES } from "@/lib/constants";
 import { autoReleaseIfDue } from "@/lib/escrow";
+import { DemoCardForm } from "@/components/demo-card-form";
 import { HandoverCard } from "@/components/handover-card";
 import { ReviewCard, ReviewReplyForm } from "@/components/review-card";
 import { persistMissingInvoiceNumbers } from "@/lib/invoice-peers";
@@ -129,6 +130,11 @@ export default async function BookingDetailPage({
       {query.paid ? (
         <p className="mt-4 rounded-xl bg-sage p-3 text-sm">Payment collected and held in escrow.</p>
       ) : null}
+      {query.error === "card" ? (
+        <p className="mt-4 rounded-xl bg-clay/10 p-3 text-sm text-clay">
+          Use the demo Visa 4242 4242 4242 4242, an expiry in this month or later, and a 3-digit CVC.
+        </p>
+      ) : null}
       {query.released ? (
         <p className="mt-4 rounded-xl bg-sage p-3 text-sm">Funds released to the carer.</p>
       ) : null}
@@ -216,12 +222,18 @@ export default async function BookingDetailPage({
             </div>
           ) : null}
           {isFamily && series.some((week) => week.status === BOOKING_STATUS.AWAITING_PAYMENT) ? (
-            <form action={paySeriesAction} className="mt-4">
-              <input type="hidden" name="bookingId" value={booking.id} />
-              <button className="rounded-lg bg-teal px-4 py-2 text-sm font-medium text-white" type="submit">
-                Pay remaining weeks into escrow
-              </button>
-            </form>
+            <div className="mt-4">
+              <DemoCardForm
+                bookingId={booking.id}
+                action={paySeriesAction}
+                submitLabel="Pay remaining weeks into escrow"
+                amountLabel={formatAud(
+                  liveWeeks
+                    .filter((week) => week.status === BOOKING_STATUS.AWAITING_PAYMENT)
+                    .reduce((sum, week) => sum + week.totalCents, 0),
+                )}
+              />
+            </div>
           ) : null}
           {isFamily &&
           series.some((week) => (UNPAID_BOOKING_STATUSES as readonly string[]).includes(week.status)) ? (
@@ -273,6 +285,17 @@ export default async function BookingDetailPage({
         ) : null}
       </p>
 
+      {isFamily && booking.status === BOOKING_STATUS.AWAITING_PAYMENT ? (
+        <div className="mt-6">
+          <DemoCardForm
+            bookingId={booking.id}
+            action={payBookingAction}
+            submitLabel="Pay into escrow"
+            amountLabel={formatAud(booking.totalCents)}
+          />
+        </div>
+      ) : null}
+
       <div className="mt-6 flex flex-wrap gap-3">
         {isCarer && booking.status === BOOKING_STATUS.PENDING_ACCEPTANCE ? (
           <>
@@ -289,14 +312,6 @@ export default async function BookingDetailPage({
               </button>
             </form>
           </>
-        ) : null}
-        {isFamily && booking.status === BOOKING_STATUS.AWAITING_PAYMENT ? (
-          <form action={payBookingAction}>
-            <input type="hidden" name="bookingId" value={booking.id} />
-            <button className="rounded-lg bg-teal px-4 py-2 text-sm font-medium text-white" type="submit">
-              Pay into escrow
-            </button>
-          </form>
         ) : null}
         {isFamily && (UNPAID_BOOKING_STATUSES as readonly string[]).includes(booking.status) ? (
           <form action={cancelUnpaidBookingAction}>

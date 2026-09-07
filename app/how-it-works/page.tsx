@@ -15,7 +15,7 @@ const faqs = [
   },
   {
     q: "When is the carer paid?",
-    a: "Never up front. CareProof collects your payment, holds it, and releases it after you confirm — or automatically 72 hours after the booking ends if there is no dispute.",
+    a: "Never up front. After the carer accepts a request-to-book sit, the family pays into escrow with a card. This demo has no live Stripe keys — use Visa 4242 4242 4242 4242, any expiry in this month or later, and any 3-digit CVC. CareProof holds the funds and releases them after you confirm — or automatically 72 hours after the booking ends if there is no dispute. Instant Book still collects on the book page.",
   },
   {
     q: "What makes a carer verified?",

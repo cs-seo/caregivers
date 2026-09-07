@@ -10,6 +10,7 @@ import { dateKeysInWindows, firstBlockedKey, isDateKey } from "./blocked-dates";
 import { normalizeFundingRef } from "./funding";
 import { findSeriesOverlap } from "./booking-overlap";
 import { BOOKING_STATUS, ROLES, UNPAID_BOOKING_STATUSES } from "./constants";
+import { isAcceptedDemoCard, readDemoCard } from "./demo-card";
 import { autoReleaseIfDue, holdPayment, refundPayment, releasePayment } from "./escrow";
 import { parseSydneyDateTimeLocal, sydneyDateKey } from "./format";
 import { quoteBooking } from "./money";
@@ -271,6 +272,9 @@ export async function payBookingAction(formData: FormData) {
   const bookingId = String(formData.get("bookingId") ?? "");
   const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
   if (!booking || booking.familyId !== user.id) throw new Error("Not allowed");
+  if (!isAcceptedDemoCard(readDemoCard(formData))) {
+    redirect(`/dashboard/bookings/${booking.id}?error=card`);
+  }
   await holdPayment(booking.id);
   revalidatePath(`/dashboard/bookings/${booking.id}`);
   redirect(`/dashboard/bookings/${booking.id}?paid=1`);
@@ -283,6 +287,9 @@ export async function paySeriesAction(formData: FormData) {
   const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
   if (!booking || booking.familyId !== user.id || !booking.recurringGroupId) {
     throw new Error("Not allowed");
+  }
+  if (!isAcceptedDemoCard(readDemoCard(formData))) {
+    redirect(`/dashboard/bookings/${booking.id}?error=card`);
   }
   const weeks = await prisma.booking.findMany({
     where: { recurringGroupId: booking.recurringGroupId, status: BOOKING_STATUS.AWAITING_PAYMENT },

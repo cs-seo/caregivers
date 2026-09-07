@@ -705,6 +705,44 @@ const ELENA_NORWOOD_REPLY = "I only work mornings in Leichhardt that week — ov
 const CHLOE_NORWOOD_NOTE = "We need someone who can stay both nights this month.";
 const LARA_COUNTER_NOTE = "Two nights is a long sit — $38 works if you can do both.";
 
+const ELENA_AWAITING_NOTE =
+  "DEMO_AWAITING_PAY: Wednesday companion sit in Leichhardt — Elena accepted, waiting for escrow.";
+
+export async function seedDemoAwaitingPay(prisma: PrismaClient) {
+  const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
+  const elena = await prisma.caregiverProfile.findUnique({
+    where: { slug: "elena-rossi-companion-care-sydney" },
+    include: { specialties: true },
+  });
+  if (!family || !elena || !elena.specialties[0]) return 0;
+  const existing = await prisma.booking.findFirst({
+    where: { familyId: family.id, notes: ELENA_AWAITING_NOTE },
+  });
+  if (existing) return 0;
+
+  const hours = 3;
+  const subtotal = elena.hourlyRateCents * hours;
+  const fee = Math.round(subtotal * 0.1);
+  await prisma.booking.create({
+    data: {
+      familyId: family.id,
+      caregiverId: elena.id,
+      specialtyId: elena.specialties[0].specialtyId,
+      startAt: parseSydneyDateTimeLocal("2026-09-16T10:00"),
+      endAt: parseSydneyDateTimeLocal("2026-09-16T13:00"),
+      notes: ELENA_AWAITING_NOTE,
+      status: BOOKING_STATUS.AWAITING_PAYMENT,
+      hours,
+      rateCents: elena.hourlyRateCents,
+      subtotalCents: subtotal,
+      platformFeeCents: fee,
+      gstCents: Math.round(subtotal / 11),
+      totalCents: subtotal + fee,
+    },
+  });
+  return 1;
+}
+
 export async function seedDemoPassOn(prisma: PrismaClient) {
   const elena = await prisma.caregiverProfile.findUnique({
     where: { slug: "elena-rossi-companion-care-sydney" },
@@ -908,8 +946,9 @@ async function main() {
   const invites = await seedDemoInvites(prisma);
   const jobMessages = await seedDemoJobMessages(prisma);
   const passOn = await seedDemoPassOn(prisma);
+  const awaitingPay = await seedDemoAwaitingPay(prisma);
   console.log(
-    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}; notice ${notice}; jobStarts ${jobStarts}; hired ${hired}; invites ${invites}; jobMessages ${jobMessages}; passOn ${passOn}`,
+    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}; notice ${notice}; jobStarts ${jobStarts}; hired ${hired}; invites ${invites}; jobMessages ${jobMessages}; passOn ${passOn}; awaitingPay ${awaitingPay}`,
   );
   await prisma.$disconnect();
 }
