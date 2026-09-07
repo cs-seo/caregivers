@@ -100,7 +100,7 @@ test("carerPendingAcceptanceNotice names the family and asks them to accept or d
   );
 });
 
-test("carerPendingAcceptanceBanner summarises one or many waiting families", () => {
+test("carerPendingAcceptanceBanner summarises one or many waiting sits", () => {
   assert.equal(carerPendingAcceptanceBanner([]), null);
   assert.equal(
     carerPendingAcceptanceBanner([{ familyName: "Alex Martin", pendingWeeks: 1 }]),
