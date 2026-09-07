@@ -12,6 +12,7 @@ import {
   updateCaregiverProfileAction,
 } from "@/lib/actions";
 import { CREDENTIAL_LABELS, CREDENTIAL_TYPES } from "@/lib/constants";
+import { credentialLabel } from "@/lib/trust";
 import { credentialWatchlist, watchLabel } from "@/lib/credentials";
 import { monthYear } from "@/lib/format";
 import { profileChecklist } from "@/lib/profile";
@@ -280,7 +281,7 @@ export default async function CarerProfileEditorPage({
             profile.credentials.map((credential) => (
               <li key={credential.id} className="flex items-start justify-between gap-3 rounded-xl border border-line px-3 py-2">
                 <div>
-                  <p className="font-medium">{CREDENTIAL_LABELS[credential.type] ?? credential.type}</p>
+                  <p className="font-medium">{credentialLabel(credential.type, credential.issuingState)}</p>
                   <p className="text-stone-500">
                     {credential.number ? `No. ${credential.number}` : "Number on file later"}
                     {credential.issuingState ? ` · ${credential.issuingState.toUpperCase()}` : ""}

@@ -80,6 +80,17 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
         ))}
       </ul>
 
+      {"extra" in guide && guide.extra ? (
+        <>
+          <h2 className="mt-8 text-xl font-semibold">On CareProof</h2>
+          {guide.extra.map((paragraph) => (
+            <p key={paragraph.slice(0, 24)} className="mt-3 text-stone-700">
+              {paragraph}
+            </p>
+          ))}
+        </>
+      ) : null}
+
       {guide.slug === "hire-a-babysitter" ? (
         <>
           <h2 className="mt-8 text-xl font-semibold">Date night, last-minute and overnight</h2>

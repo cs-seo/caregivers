@@ -1,4 +1,5 @@
 import { CREDENTIAL_LABELS } from "./constants";
+import { childCheckLabel, childCheckShort, issuingStateSlug } from "./seo-content";
 
 export type TrustInput = {
   credentials: { type: string; verified: boolean }[];
@@ -42,6 +43,10 @@ export function trustLabel(score: number) {
   return "New on CareProof";
 }
 
-export function credentialLabel(type: string) {
+export function credentialLabel(type: string, issuingState?: string | null, compact = false) {
+  if (type === "wwcc") {
+    const slug = issuingStateSlug(issuingState);
+    return compact ? childCheckShort(slug) : childCheckLabel(slug);
+  }
   return CREDENTIAL_LABELS[type] ?? type;
 }

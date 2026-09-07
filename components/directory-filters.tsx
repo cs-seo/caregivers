@@ -39,7 +39,7 @@ export function DirectoryFilters({
       </label>
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" name="wwcc" value="1" defaultChecked={current.wwcc === "1"} />
-        WWCC verified
+        Child check (WWCC / Blue Card)
       </label>
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" name="ndis" value="1" defaultChecked={current.ndis === "1"} />

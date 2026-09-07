@@ -108,9 +108,43 @@ const SPECIALTY_GUIDE: Record<string, { hire: string; checks: string; typical: s
   },
 };
 
+export const CHILD_CHECK_SHORT: Record<string, string> = {
+  nsw: "WWCC",
+  vic: "WWC",
+  qld: "Blue Card",
+  wa: "WWCC",
+  sa: "WWCC",
+  tas: "WWVP",
+  act: "WWVP",
+  nt: "Ochre Card",
+};
+
+const STATE_ALIASES: Record<string, string> = {
+  "new south wales": "nsw",
+  victoria: "vic",
+  queensland: "qld",
+  "western australia": "wa",
+  "south australia": "sa",
+  tasmania: "tas",
+  "australian capital territory": "act",
+  "northern territory": "nt",
+};
+
+export function issuingStateSlug(value?: string | null) {
+  if (!value) return undefined;
+  const raw = value.trim().toLowerCase();
+  if (CHILD_CHECK[raw]) return raw;
+  return STATE_ALIASES[raw];
+}
+
 export function childCheckLabel(stateSlug?: string) {
   if (!stateSlug) return "Working with Children Check (or the local equivalent)";
   return CHILD_CHECK[stateSlug] ?? "Working with Children Check";
+}
+
+export function childCheckShort(stateSlug?: string) {
+  if (!stateSlug) return "WWCC";
+  return CHILD_CHECK_SHORT[stateSlug] ?? "WWCC";
 }
 
 export function placeLabel(place: SeoPlace) {
@@ -300,5 +334,24 @@ export const HIRE_GUIDES = [
     description: "PCA duties, screening and how to book personal care support with escrow.",
     h1: "Hiring a personal care assistant at home",
     keywords: ["personal care assistant", "PCA", "daily living support"],
+  },
+  {
+    slug: "gst-invoices-for-hcp-and-ndis",
+    specialty: "aged-care",
+    title: "GST invoices for Home Care Packages and NDIS",
+    description:
+      "How CareProof tax invoices show GST as 1/11, the 10% platform fee, carer ABN, and your NDIS or My Aged Care number.",
+    h1: "GST invoices for Home Care Packages and NDIS plans",
+    keywords: [
+      "Home Care Package invoice",
+      "NDIS tax invoice",
+      "GST carer invoice",
+      "plan manager invoice",
+    ],
+    extra: [
+      "Save your NDIS number or My Aged Care / HCP reference on Household. It prints on every tax invoice Bill to line and on the financial-year CSV.",
+      "Each funded sit has its own invoice: care rate inc GST, GST as 1/11, the 10% CareProof fee on top, and the carer payout. Independent carers list an ABN where they have one.",
+      "Download the FY statement when a coordinator or plan manager wants a running total for 1 July to 30 June, without unpaid or cancelled weeks.",
+    ],
   },
 ] as const;

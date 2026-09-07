@@ -25,7 +25,12 @@ export function CredentialBadges({
   credentials,
   abn,
 }: {
-  credentials: { type: string; verified: boolean; expiresAt?: Date | string | null }[];
+  credentials: {
+    type: string;
+    verified: boolean;
+    issuingState?: string | null;
+    expiresAt?: Date | string | null;
+  }[];
   abn?: string | null;
 }) {
   const watch = new Map(credentialWatchlist(credentials).map((item) => [item.type, item]));
@@ -37,7 +42,7 @@ export function CredentialBadges({
           const alert = watch.get(credential.type);
           return (
             <Badge key={credential.type} tone={alert ? "clay" : "sage"}>
-              {alert ? watchLabel(alert) : credentialLabel(credential.type)}
+              {alert ? watchLabel(alert) : credentialLabel(credential.type, credential.issuingState, true)}
             </Badge>
           );
         })}
@@ -68,7 +73,7 @@ export function CredentialDetails({
             key={`${credential.type}-${credential.number ?? ""}`}
             className="rounded-xl border border-line bg-card px-4 py-3 text-sm"
           >
-            <p className="font-medium text-ink">{credentialLabel(credential.type)}</p>
+            <p className="font-medium text-ink">{credentialLabel(credential.type, credential.issuingState)}</p>
             <p className="mt-1 text-stone-600">
               {credential.number ? `No. ${credential.number}` : "Verified document on file"}
               {credential.issuingState ? ` · ${credential.issuingState.toUpperCase()}` : ""}

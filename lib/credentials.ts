@@ -1,4 +1,4 @@
-import { CREDENTIAL_LABELS } from "./constants";
+import { credentialLabel } from "./trust";
 
 export type CredentialWatch = {
   type: string;
@@ -13,7 +13,7 @@ export function daysUntil(expiresAt: Date, now = new Date()) {
 }
 
 export function credentialWatchlist(
-  credentials: { type: string; expiresAt?: Date | string | null }[],
+  credentials: { type: string; issuingState?: string | null; expiresAt?: Date | string | null }[],
   now = new Date(),
   soonDays = 60,
 ): CredentialWatch[] {
@@ -27,7 +27,7 @@ export function credentialWatchlist(
       return [
         {
           type: credential.type,
-          label: CREDENTIAL_LABELS[credential.type] ?? credential.type,
+          label: credentialLabel(credential.type, credential.issuingState),
           expiresAt,
           days,
           state: days < 0 ? ("expired" as const) : ("soon" as const),
