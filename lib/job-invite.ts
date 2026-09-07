@@ -1,3 +1,9 @@
+export const INVITE_NOTE_LIMIT = 400;
+
+export function sanitizeInviteNote(raw: string) {
+  return raw.trim().slice(0, INVITE_NOTE_LIMIT);
+}
+
 export const INVITE_STATUS = {
   PENDING: "pending",
   APPLIED: "applied",

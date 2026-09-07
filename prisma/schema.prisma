@@ -236,6 +236,7 @@ model CareRequestInvite {
   caregiverId String
   caregiver   CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
   status      String           @default("pending")
+  note        String?
   createdAt   DateTime         @default(now())
 
   @@unique([requestId, caregiverId])

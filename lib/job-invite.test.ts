@@ -11,7 +11,13 @@ import {
   isSafeInviteReturnPath,
   defaultInviteJobSlug,
   invitableOpenJobs,
+  sanitizeInviteNote,
 } from "./job-invite";
+
+test("sanitizeInviteNote trims and caps length", () => {
+  assert.equal(sanitizeInviteNote("  Weekday mornings  "), "Weekday mornings");
+  assert.equal(sanitizeInviteNote("x".repeat(500)).length, 400);
+});
 
 test("canInviteToJob only allows the family on an open request", () => {
   assert.equal(canInviteToJob({ familyId: "alex", status: "open" }, "alex"), true);

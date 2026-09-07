@@ -81,18 +81,44 @@ export function filterCurrent(filters: {
   };
 }
 
+export function directoryBasePath(
+  filters: Pick<DirectoryFilters, "specialty" | "state" | "city" | "suburb">,
+) {
+  const { specialty, state, city, suburb } = filters;
+  if (specialty && state && city && suburb) return `/caregivers/${specialty}/${state}/${city}/${suburb}`;
+  if (specialty && state && city) return `/caregivers/${specialty}/${state}/${city}`;
+  if (specialty && state) return `/caregivers/${specialty}/${state}`;
+  if (specialty) return `/caregivers/${specialty}`;
+  return "/caregivers";
+}
+
+function emptyStateHref(
+  filters: DirectoryFilters,
+  overrides: Partial<DirectoryFilters> = {},
+) {
+  const next = { ...filters, ...overrides, page: 1 };
+  const path = directoryBasePath(next);
+  const query = filterCurrent(next);
+  if (path !== "/caregivers") {
+    query.specialty = undefined;
+    query.state = undefined;
+    query.city = undefined;
+  }
+  return filterHref(path, query);
+}
+
 export function emptyStateLinks(filters: DirectoryFilters) {
   const links: { href: string; label: string }[] = [];
   const { specialty, state, city, suburb, availableOn, availableAt } = filters;
   if (availableOn && availableAt) {
     links.push({
-      href: filterHref("/caregivers", filterCurrent({ ...filters, availableAt: undefined, page: 1 })),
+      href: emptyStateHref(filters, { availableAt: undefined }),
       label: "Search any time that day",
     });
   }
   if (availableOn) {
     links.push({
-      href: filterHref("/caregivers", filterCurrent({ ...filters, availableOn: undefined, availableAt: undefined, page: 1 })),
+      href: emptyStateHref(filters, { availableOn: undefined, availableAt: undefined }),
       label: "Search again without a date",
     });
   }

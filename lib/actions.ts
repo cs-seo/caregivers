@@ -22,7 +22,13 @@ import { directoryStats } from "./queries";
 import { filtersFromSearchHref, isSafeSearchHref, MAX_SAVED_SEARCHES } from "./saved-search";
 import { requireRole, requireUser } from "./session";
 import { canWithdrawProposal, markRequestHired } from "./job-hire";
-import { INVITE_STATUS, canCreateInvite, canWithdrawInvite, isSafeInviteReturnPath } from "./job-invite";
+import {
+  INVITE_STATUS,
+  canCreateInvite,
+  canWithdrawInvite,
+  isSafeInviteReturnPath,
+  sanitizeInviteNote,
+} from "./job-invite";
 import { bookHref, canAttachJob, isJobSlug } from "./job-match";
 import {
   firstSitOutsideHours,
@@ -535,6 +541,17 @@ export async function createProposalAction(formData: FormData) {
   const request = await prisma.careRequest.findUnique({ where: { slug } });
   if (!request || request.status !== "open") throw new Error("Job is not open");
   if (!coverLetter || !rateCents) redirect(`/care-requests/${slug}?error=invalid`);
+  const updating = Boolean(
+    await prisma.proposal.findUnique({
+      where: {
+        careRequestId_caregiverId: {
+          careRequestId: request.id,
+          caregiverId: user.caregiverProfile.id,
+        },
+      },
+      select: { id: true },
+    }),
+  );
 
   await prisma.proposal.upsert({
     where: {
@@ -562,7 +579,7 @@ export async function createProposalAction(formData: FormData) {
 
   revalidatePath(`/care-requests/${slug}`);
   revalidatePath("/dashboard");
-  redirect(`/care-requests/${slug}?proposed=1`);
+  redirect(`/care-requests/${slug}?${updating ? "updated" : "proposed"}=1`);
 }
 
 export async function inviteToJobAction(formData: FormData) {
@@ -589,10 +606,11 @@ export async function inviteToJobAction(formData: FormData) {
     redirect(next);
   }
 
+  const note = sanitizeInviteNote(String(formData.get("note") ?? ""));
   await prisma.careRequestInvite.upsert({
     where: { requestId_caregiverId: { requestId: job.id, caregiverId: caregiver.id } },
-    create: { requestId: job.id, caregiverId: caregiver.id, status: INVITE_STATUS.PENDING },
-    update: { status: INVITE_STATUS.PENDING },
+    create: { requestId: job.id, caregiverId: caregiver.id, status: INVITE_STATUS.PENDING, note: note || null },
+    update: { status: INVITE_STATUS.PENDING, note: note || null },
   });
 
   revalidatePath(next);

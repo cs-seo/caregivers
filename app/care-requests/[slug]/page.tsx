@@ -47,7 +47,7 @@ export default async function CareRequestPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ proposed?: string; error?: string }>;
+  searchParams: Promise<{ proposed?: string; updated?: string; error?: string }>;
 }) {
   const [{ slug }, query, session] = await Promise.all([params, searchParams, auth()]);
   const job = await prisma.careRequest.findUnique({
@@ -238,6 +238,7 @@ export default async function CareRequestPage({
                       {invite.caregiver.user.name}
                     </Link>
                     <p className="mt-1 text-sm text-stone-500">Asked to send a proposal on this request.</p>
+                    {invite.note ? <p className="mt-2 text-sm text-stone-700">{invite.note}</p> : null}
                   </div>
                   <span className="flex flex-wrap items-center gap-2">
                     <Badge tone={inviteStatusTone(invite.status)}>{inviteStatusLabel(invite.status)}</Badge>
@@ -307,28 +308,17 @@ export default async function CareRequestPage({
 
       <aside className="h-fit rounded-2xl border border-line bg-card p-5">
         {query.proposed ? <p className="mb-3 text-sm text-teal">Proposal sent.</p> : null}
+        {query.updated ? <p className="mb-3 text-sm text-teal">Proposal updated.</p> : null}
         {isCarer && ownInvite?.status === INVITE_STATUS.PENDING && job.status === "open" ? (
           <p className="mb-3 rounded-xl bg-sage px-3 py-2 text-sm text-teal-deep">
-            {job.family.name} invited you to apply. Send a proposal below or decline.
+            {job.family.name} invited you to apply
+            {ownInvite.note ? `: “${ownInvite.note}”` : ""}. Send a proposal below or decline.
           </p>
         ) : null}
-        {isCarer && job.status === "open" ? (
-          alreadyProposed ? (
-            <div>
-              <p className="text-sm text-teal">You already sent a proposal on this request.</p>
-              {ownProposal && canWithdrawProposal(ownProposal, carer!.id, job.status) ? (
-                <form action={withdrawProposalAction} className="mt-3">
-                  <input type="hidden" name="proposalId" value={ownProposal.id} />
-                  <button className="text-sm text-stone-500 hover:text-ink" type="submit">
-                    Withdraw proposal
-                  </button>
-                </form>
-              ) : null}
-            </div>
-          ) : (
+        {isCarer && job.status === "open" && (!alreadyProposed || canWithdrawProposal(ownProposal ?? null, carer!.id, job.status)) ? (
           <form action={createProposalAction} className="space-y-3">
             <input type="hidden" name="slug" value={job.slug} />
-            <h2 className="font-semibold">Send a proposal</h2>
+            <h2 className="font-semibold">{alreadyProposed ? "Update your proposal" : "Send a proposal"}</h2>
             <label className="block text-sm">
               Your hourly rate (AUD)
               <input
@@ -336,20 +326,39 @@ export default async function CareRequestPage({
                 type="number"
                 min={20}
                 step={1}
-                defaultValue={Math.round(job.budgetCents / 100)}
+                defaultValue={Math.round((ownProposal?.rateCents ?? job.budgetCents) / 100)}
                 required
                 className="mt-1 w-full rounded-lg border border-line px-3 py-2"
               />
             </label>
             <label className="block text-sm">
               Cover letter
-              <textarea name="coverLetter" required rows={5} className="mt-1 w-full rounded-lg border border-line px-3 py-2" />
+              <textarea
+                name="coverLetter"
+                required
+                rows={5}
+                defaultValue={ownProposal?.coverLetter ?? ""}
+                className="mt-1 w-full rounded-lg border border-line px-3 py-2"
+              />
             </label>
             <button className="w-full rounded-lg bg-teal py-2 font-medium text-white" type="submit">
-              {ownInvite?.status === INVITE_STATUS.PENDING ? "Apply to this invite" : "Submit proposal"}
+              {alreadyProposed
+                ? "Save proposal"
+                : ownInvite?.status === INVITE_STATUS.PENDING
+                  ? "Apply to this invite"
+                  : "Submit proposal"}
             </button>
           </form>
-          )
+        ) : isCarer && job.status === "open" && alreadyProposed ? (
+          <p className="text-sm text-teal">You already sent a proposal on this request.</p>
+        ) : null}
+        {isCarer && ownProposal && canWithdrawProposal(ownProposal, carer!.id, job.status) ? (
+          <form action={withdrawProposalAction} className="mt-3">
+            <input type="hidden" name="proposalId" value={ownProposal.id} />
+            <button className="text-sm text-stone-500 hover:text-ink" type="submit">
+              Withdraw proposal
+            </button>
+          </form>
         ) : null}
         {isCarer && ownInvite?.status === INVITE_STATUS.PENDING && job.status === "open" && !alreadyProposed ? (
           <form action={declineInviteAction} className="mt-3">

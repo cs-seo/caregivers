@@ -778,6 +778,7 @@ export default async function DashboardPage({
                 <p className="mt-1 text-sm text-stone-500">
                   {invite.request.family.name} invited you · starts {formatJobStart(invite.request.startDate)}
                 </p>
+                {invite.note ? <p className="mt-2 text-sm text-stone-700">{invite.note}</p> : null}
                 <div className="mt-2 flex flex-wrap gap-3 text-sm">
                   <Link href={`/care-requests/${invite.request.slug}`} className="font-medium text-teal hover:underline">
                     Send a proposal

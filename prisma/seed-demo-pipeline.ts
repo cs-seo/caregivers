@@ -654,12 +654,19 @@ export async function seedDemoInvites(prisma: PrismaClient) {
     where: { slug: "weekday-aged-care-marrickville" },
   });
   if (!james || !job || job.status !== "open") return 0;
+  const note =
+    "Mum is in Marrickville and we need weekday mornings. Happy to be flexible if 8am is tight.";
   const existing = await prisma.careRequestInvite.findUnique({
     where: { requestId_caregiverId: { requestId: job.id, caregiverId: james.id } },
   });
-  if (existing) return existing.status === "pending" ? 1 : 0;
+  if (existing) {
+    if (!existing.note) {
+      await prisma.careRequestInvite.update({ where: { id: existing.id }, data: { note } });
+    }
+    return existing.status === "pending" ? 1 : 0;
+  }
   await prisma.careRequestInvite.create({
-    data: { requestId: job.id, caregiverId: james.id, status: "pending" },
+    data: { requestId: job.id, caregiverId: james.id, status: "pending", note },
   });
   return 1;
 }

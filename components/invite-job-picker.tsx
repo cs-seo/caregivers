@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { inviteToJobAction } from "@/lib/actions";
-import { defaultInviteJobSlug, invitableOpenJobs, type InviteJobOption } from "@/lib/job-invite";
+import { INVITE_NOTE_LIMIT, defaultInviteJobSlug, invitableOpenJobs, type InviteJobOption } from "@/lib/job-invite";
 
 export function InviteJobPicker({
   caregiverId,
@@ -60,6 +60,16 @@ export function InviteJobPicker({
             </option>
           ))}
         </select>
+      </label>
+      <label className="block text-xs text-stone-500">
+        Optional note
+        <textarea
+          name="note"
+          rows={3}
+          maxLength={INVITE_NOTE_LIMIT}
+          placeholder="Why this carer, or what they should know."
+          className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm text-ink"
+        />
       </label>
       <button
         type="submit"
