@@ -8,6 +8,7 @@ import { credentialWatchlist, watchLabel } from "@/lib/credentials";
 import { lastActiveLabel, sydneyDateTimeLocal } from "@/lib/format";
 import { formatAud } from "@/lib/money";
 import { getCaregiverBySlug, getUpcomingAvailability } from "@/lib/queries";
+import { suggestedStartLocal } from "@/lib/weekly-windows";
 import { pageMeta } from "@/lib/seo";
 import Link from "next/link";
 
@@ -42,7 +43,11 @@ export default async function BookPage({
   const checkAlerts = credentialWatchlist(carer.credentials);
   const startDate = query.start && /^\d{4}-\d{2}-\d{2}$/.test(query.start) ? query.start : "";
   const startIsBlocked = startDate ? blockedKeys.includes(startDate) : false;
-  const defaultStart = startDate && !startIsBlocked ? `${startDate}T17:00` : sydneyDateTimeLocal(1, 9);
+  const startIsClosed = startDate ? upcoming.some((day) => day.key === startDate && day.closed) : false;
+  const defaultStart =
+    startDate && !startIsBlocked && !startIsClosed
+      ? suggestedStartLocal(startDate, carer.weeklyWindows)
+      : sydneyDateTimeLocal(1, 9);
   const bookPath = startDate ? `/caregiver/${carer.slug}/book?start=${startDate}` : `/caregiver/${carer.slug}/book`;
 
   return (
@@ -79,7 +84,7 @@ export default async function BookPage({
       {carer.availabilityNote ? <p className="mt-3 rounded-xl bg-sage p-3 text-sm text-stone-700">{carer.availabilityNote}</p> : null}
       <div className="mt-4 rounded-2xl border border-line bg-card p-4">
         <p className="text-sm font-medium text-ink">Pick a free day</p>
-        <p className="mt-1 text-xs text-stone-500">This month and next. Away and booked days cannot be selected.</p>
+        <p className="mt-1 text-xs text-stone-500">This month and next. Away, closed and booked days cannot be selected.</p>
         <div className="mt-3">
           <DaysOffCalendar days={upcoming} bookSlug={carer.slug} />
         </div>
@@ -98,6 +103,11 @@ export default async function BookPage({
       {query.error === "overlap" ? (
         <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
           That time overlaps a booking already held for this carer. Pick another start, or a different week.
+        </p>
+      ) : query.error === "hours" || startIsClosed ? (
+        <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
+          That start is outside this carer’s usual weekly hours. Pick a free day, or a time that begins during their
+          windows.
         </p>
       ) : query.error === "blocked" || startIsBlocked ? (
         <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">

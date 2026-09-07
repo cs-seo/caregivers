@@ -45,6 +45,7 @@ export default async function CarerProfileEditorPage({
         specialties: true,
         credentials: true,
         workHistory: { orderBy: { startDate: "desc" } },
+        weeklyWindows: { orderBy: [{ weekday: "asc" }, { startMin: "asc" }] },
         city: { include: { state: true } },
       },
     }),
@@ -85,6 +86,10 @@ export default async function CarerProfileEditorPage({
       {query.error === "photo" ? (
         <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
           Photos must be an https URL, or a CareProof portrait path. Initials are used if you leave this blank.
+        </p>
+      ) : query.error === "hours" ? (
+        <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
+          Check each weekly window — start and end need to be at least 30 minutes apart.
         </p>
       ) : query.error ? (
         <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
@@ -229,7 +234,7 @@ export default async function CarerProfileEditorPage({
             Available now
           </label>
         </div>
-        <WeeklyHoursField defaultValue={profile.weeklyHours ?? ""} />
+        <WeeklyHoursField windows={profile.weeklyWindows} />
         <label className="block text-sm">
           Availability note (optional)
           <textarea
@@ -250,9 +255,9 @@ export default async function CarerProfileEditorPage({
       <section className="mt-8 rounded-2xl border border-line bg-card p-5">
         <h2 className="font-semibold text-ink">Days off</h2>
         <p className="mt-1 text-sm text-stone-600">
-          Click a day on this month or next. Families cannot book an away day, or find you with Needed on that date.
-          Marking today away also pauses Instant Book until tomorrow. Booked sits still show as booked. Use the date
-          field if you want a note such as school holidays.
+          Click a day on this month or next. Families cannot book an away day, a closed weekday, or find you with Needed
+          on that date. Marking today away also pauses Instant Book until tomorrow. Booked sits still show as booked.
+          Use the date field if you want a note such as school holidays. Closed days follow your usual weekly hours.
         </p>
         <div className="mt-4">
           <DaysOffCalendar days={upcoming} />

@@ -127,6 +127,19 @@ model CaregiverProfile {
   reviews     Review[]
   shortlistedBy Shortlist[]
   blockedDates CaregiverBlockedDate[]
+  weeklyWindows CaregiverWeeklyWindow[]
+}
+
+model CaregiverWeeklyWindow {
+  id          String           @id @default(cuid())
+  caregiverId String
+  caregiver   CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  weekday     Int
+  startMin    Int
+  endMin      Int
+
+  @@index([caregiverId])
+  @@index([weekday])
 }
 
 model CaregiverBlockedDate {

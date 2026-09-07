@@ -1,13 +1,7 @@
 import { sydneyDateKey } from "./format";
+import { WEEKLY_WINDOW_PRESETS } from "./weekly-windows";
 
-export const WEEKLY_HOUR_PRESETS = [
-  "Thu–Sun 5pm–midnight",
-  "Mon–Fri 3pm–7pm",
-  "Mon–Fri 8am–6pm",
-  "Mon–Fri 7am–1pm",
-  "Wed–Sun 9am–5pm",
-  "Fri–Mon, overnight by arrangement",
-] as const;
+export const WEEKLY_HOUR_PRESETS = WEEKLY_WINDOW_PRESETS.map((preset) => preset.label);
 
 export function defaultWeeklyHours(specialties: string[]) {
   if (specialties.includes("babysitters")) return "Thu–Sun 5pm–midnight";
@@ -17,18 +11,22 @@ export function defaultWeeklyHours(specialties: string[]) {
   if (specialties.includes("disability-support") || specialties.includes("special-needs")) {
     return "Wed–Sun 9am–5pm";
   }
-  if (specialties.includes("respite")) return "Fri–Mon, overnight by arrangement";
+  if (specialties.includes("respite")) return "Fri–Mon 9am–5pm";
   return "Mon–Fri 9am–5pm";
 }
 
-export function summariseFortnight(days: { key: string; booked: boolean; blocked: boolean }[]) {
-  const free = days.filter((day) => !day.booked && !day.blocked);
+export function summariseFortnight(
+  days: { key: string; booked: boolean; blocked: boolean; closed?: boolean }[],
+) {
+  const free = days.filter((day) => !day.booked && !day.blocked && !day.closed);
   const booked = days.filter((day) => day.booked);
   const away = days.filter((day) => day.blocked && !day.booked);
+  const closed = days.filter((day) => day.closed && !day.booked && !day.blocked);
   return {
     free: free.length,
     booked: booked.length,
     away: away.length,
+    closed: closed.length,
     nextFree: free[0]?.key ?? null,
   };
 }
@@ -37,6 +35,7 @@ export function fortnightLabel(summary: ReturnType<typeof summariseFortnight>) {
   const parts = [`${summary.free} free`];
   if (summary.booked) parts.push(`${summary.booked} booked`);
   if (summary.away) parts.push(`${summary.away} away`);
+  if (summary.closed) parts.push(`${summary.closed} closed`);
   return parts.join(" · ");
 }
 

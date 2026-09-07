@@ -20,6 +20,11 @@ import { sanitizePhotoUrl } from "./photos";
 import { isSafeReviewReturnPath, sanitizeReviewReply, hasReviewReply } from "./reviews";
 import { isSafeSearchHref, MAX_SAVED_SEARCHES } from "./saved-search";
 import { requireRole, requireUser } from "./session";
+import {
+  firstSitOutsideHours,
+  formatWeeklyHours,
+  windowsFromForm,
+} from "./weekly-windows";
 
 function slugify(value: string) {
   return value
@@ -150,6 +155,13 @@ export async function createBookingAction(formData: FormData) {
   });
   if (firstBlockedKey(dateKeysInWindows(windows), blockedRows.map((row) => row.dateKey))) {
     redirect(`/caregiver/${slug}/book?error=blocked`);
+  }
+  const weeklyWindows = await prisma.caregiverWeeklyWindow.findMany({
+    where: { caregiverId: caregiver.id },
+    select: { weekday: true, startMin: true, endMin: true },
+  });
+  if (firstSitOutsideHours(weeklyWindows, windows)) {
+    redirect(`/caregiver/${slug}/book?error=hours`);
   }
 
   const householdHandover = handoverToDb({
@@ -798,7 +810,9 @@ export async function updateCaregiverProfileAction(formData: FormData) {
   const instantBook = formData.get("instantBook") === "1";
   const availableNow = formData.get("availableNow") === "1";
   const availabilityNote = String(formData.get("availabilityNote") ?? "").trim().slice(0, 240);
-  const weeklyHours = String(formData.get("weeklyHours") ?? "").trim().slice(0, 120);
+  const weeklyParsed = windowsFromForm(formData.getAll("weeklyWindow").map(String));
+  if (!weeklyParsed.ok) redirect("/dashboard/profile?error=hours");
+  const weeklyHours = formatWeeklyHours(weeklyParsed.windows) || null;
   const photoRaw = String(formData.get("photoUrl") ?? "").trim();
   const photoUrl = photoRaw ? sanitizePhotoUrl(photoRaw) : null;
   if (photoRaw && !photoUrl) redirect("/dashboard/profile?error=photo");
@@ -824,11 +838,22 @@ export async function updateCaregiverProfileAction(formData: FormData) {
         instantBook,
         availableNow,
         availabilityNote: availabilityNote || null,
-        weeklyHours: weeklyHours || null,
+        weeklyHours,
         photoUrl,
         lastActiveAt: new Date(),
       },
     });
+    await tx.caregiverWeeklyWindow.deleteMany({ where: { caregiverId: user.caregiverProfile!.id } });
+    if (weeklyParsed.windows.length) {
+      await tx.caregiverWeeklyWindow.createMany({
+        data: weeklyParsed.windows.map((window) => ({
+          caregiverId: user.caregiverProfile!.id,
+          weekday: window.weekday,
+          startMin: window.startMin,
+          endMin: window.endMin,
+        })),
+      });
+    }
     await tx.caregiverSpecialty.deleteMany({ where: { caregiverId: user.caregiverProfile!.id } });
     if (specialtyIds.length) {
       await tx.caregiverSpecialty.createMany({

@@ -3,6 +3,7 @@ import { stillCurrentWhere } from "./credentials";
 import { sydneyDateKey, sydneyDayBounds } from "./format";
 import { prisma } from "./prisma";
 import { computeTrustScore } from "./trust";
+import { isDateClosed, weeklyOpenWhere } from "./weekly-windows";
 
 export const caregiverCardInclude = {
   user: { select: { name: true } },
@@ -155,6 +156,7 @@ function caregiverWhere(filters: DirectoryFilters) {
               },
             },
             { blockedDates: { none: { dateKey: filters.availableOn } } },
+            weeklyOpenWhere(filters.availableOn!),
           ],
         }
       : {}),
@@ -232,6 +234,7 @@ export async function getCaregiverBySlug(slug: string) {
     where: { slug },
     include: {
       ...caregiverCardInclude,
+      weeklyWindows: { select: { weekday: true, startMin: true, endMin: true } },
       reviews: {
         include: { author: { select: { name: true } } },
         orderBy: { createdAt: "desc" },
@@ -296,6 +299,10 @@ export async function getUpcomingAvailability(caregiverId: string, days = 14) {
     select: { dateKey: true },
   });
   const blockedKeys = new Set(blockedRows.map((row) => row.dateKey));
+  const windows = await prisma.caregiverWeeklyWindow.findMany({
+    where: { caregiverId },
+    select: { weekday: true, startMin: true, endMin: true },
+  });
   return Array.from({ length: days }, (_, index) => {
     const date = new Date(start.getTime() + index * 24 * 60 * 60 * 1000);
     const key = sydneyDateKey(date);
@@ -305,7 +312,13 @@ export async function getUpcomingAvailability(caregiverId: string, days = 14) {
       month: "short",
       timeZone: "Australia/Sydney",
     }).format(date);
-    return { key, label, booked: bookedKeys.has(key), blocked: blockedKeys.has(key) };
+    return {
+      key,
+      label,
+      booked: bookedKeys.has(key),
+      blocked: blockedKeys.has(key),
+      closed: isDateClosed(windows, key),
+    };
   });
 }
 

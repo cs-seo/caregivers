@@ -378,7 +378,7 @@ export default async function DashboardPage({
         <p className="mt-1 text-sm text-stone-600">
           {isFamily
             ? "Sits already in escrow, plus empty days you can still book. Subscribe so Google or Apple Calendar stay in sync, or download a snapshot."
-            : "Your held roster. Open days have no sit on the books. Away days pause Instant Book and hide you from Needed on. Subscribe to booked sits and days off, or download a snapshot."}
+            : "Your held roster. Open days have no sit on the books. Away days pause Instant Book and hide you from Needed on. Closed weekdays follow your usual hours on the public calendar. Subscribe to booked sits and days off, or download a snapshot."}
         </p>
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-7">
           {roster.map((day) =>

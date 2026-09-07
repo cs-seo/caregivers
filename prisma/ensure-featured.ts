@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { defaultWeeklyHours } from "../lib/availability";
+import { formatWeeklyHours, parseWeeklyHours } from "../lib/weekly-windows";
 import { featuredCarers } from "./data/featured-carers";
 import { insertCarer } from "./insert-carer";
 
@@ -17,10 +18,22 @@ async function backfillWeeklyHours() {
   });
   let updated = 0;
   for (const profile of missing) {
+    const hours = defaultWeeklyHours(profile.specialties.map((item) => item.specialty.slug));
+    const windows = parseWeeklyHours(hours);
     await prisma.caregiverProfile.update({
       where: { id: profile.id },
-      data: { weeklyHours: defaultWeeklyHours(profile.specialties.map((item) => item.specialty.slug)) },
+      data: { weeklyHours: formatWeeklyHours(windows) || hours },
     });
+    if (windows.length) {
+      await prisma.caregiverWeeklyWindow.createMany({
+        data: windows.map((window) => ({
+          caregiverId: profile.id,
+          weekday: window.weekday,
+          startMin: window.startMin,
+          endMin: window.endMin,
+        })),
+      });
+    }
     updated += 1;
   }
   return updated;
@@ -51,11 +64,29 @@ async function main() {
   for (const carer of featuredCarers) {
     if (emails.has(carer.email)) {
       if (carer.weeklyHours) {
-        const result = await prisma.caregiverProfile.updateMany({
+        const windows = parseWeeklyHours(carer.weeklyHours);
+        const profile = await prisma.caregiverProfile.findFirst({
           where: { user: { email: carer.email } },
-          data: { weeklyHours: carer.weeklyHours },
+          select: { id: true },
         });
-        synced += result.count;
+        if (profile) {
+          await prisma.caregiverProfile.update({
+            where: { id: profile.id },
+            data: { weeklyHours: formatWeeklyHours(windows) || carer.weeklyHours },
+          });
+          await prisma.caregiverWeeklyWindow.deleteMany({ where: { caregiverId: profile.id } });
+          if (windows.length) {
+            await prisma.caregiverWeeklyWindow.createMany({
+              data: windows.map((window) => ({
+                caregiverId: profile.id,
+                weekday: window.weekday,
+                startMin: window.startMin,
+                endMin: window.endMin,
+              })),
+            });
+          }
+          synced += 1;
+        }
       }
       continue;
     }

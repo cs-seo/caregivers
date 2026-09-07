@@ -219,8 +219,8 @@ export default async function CaregiverProfilePage({
               </div>
               <p className="mt-2 text-xs text-stone-500">
                 Free days open the book form. Booked days already have a sit in escrow. Away days are marked off by the
-                carer. Search{" "}
-                <Link href={`/caregivers?availableOn=${upcoming.find((day) => !day.booked && !day.blocked)?.key ?? ""}`} className="text-teal">
+                carer. Closed days sit outside their usual weekly hours. Search{" "}
+                <Link href={`/caregivers?availableOn=${upcoming.find((day) => !day.booked && !day.blocked && !day.closed)?.key ?? ""}`} className="text-teal">
                   carers free on another day
                 </Link>
                 .

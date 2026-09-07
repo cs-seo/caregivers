@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { BOOKING_STATUS } from "../lib/constants";
 import { DEMO_PORTRAITS } from "../lib/photos";
 import { invoiceNumberMap, STATEMENT_STATUSES, australianFinancialYear } from "../lib/statement";
+import { formatWeeklyHours, parseWeeklyHours } from "../lib/weekly-windows";
 
 export async function seedDemoPipeline(prisma: PrismaClient) {
   const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
@@ -497,6 +498,39 @@ export async function seedDemoPortraits(prisma: PrismaClient) {
   return updated;
 }
 
+export async function seedDemoWeeklyWindows(prisma: PrismaClient) {
+  const carers = await prisma.caregiverProfile.findMany({
+    select: {
+      id: true,
+      weeklyHours: true,
+      weeklyWindows: { select: { id: true }, take: 1 },
+    },
+  });
+  let updated = 0;
+  for (const carer of carers) {
+    if (carer.weeklyWindows.length) continue;
+    const windows = parseWeeklyHours(carer.weeklyHours);
+    if (!windows.length) continue;
+    await prisma.caregiverWeeklyWindow.createMany({
+      data: windows.map((window) => ({
+        caregiverId: carer.id,
+        weekday: window.weekday,
+        startMin: window.startMin,
+        endMin: window.endMin,
+      })),
+    });
+    const label = formatWeeklyHours(windows);
+    if (label && label !== carer.weeklyHours) {
+      await prisma.caregiverProfile.update({
+        where: { id: carer.id },
+        data: { weeklyHours: label },
+      });
+    }
+    updated += 1;
+  }
+  return updated;
+}
+
 export async function seedDemoSavedSearches(prisma: PrismaClient) {
   const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
   if (!family) return 0;
@@ -534,8 +568,9 @@ async function main() {
   const invoices = await seedDemoInvoiceNumbers(prisma);
   const replies = await seedDemoReviewReplies(prisma);
   const portraits = await seedDemoPortraits(prisma);
+  const weekly = await seedDemoWeeklyWindows(prisma);
   console.log(
-    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}`,
+    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}`,
   );
   await prisma.$disconnect();
 }

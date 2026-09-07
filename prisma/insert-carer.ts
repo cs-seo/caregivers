@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 import { defaultWeeklyHours } from "../lib/availability";
+import { formatWeeklyHours, parseWeeklyHours } from "../lib/weekly-windows";
 import type { GeneratedCarer } from "./data/generate-carers";
 
 function addMonths(months: number) {
@@ -16,6 +17,8 @@ export async function insertCarer(
   cityId: string,
 ) {
   const verifiedHours = carer.work.reduce((sum, role) => sum + role.hours, 0);
+  const hoursText = carer.weeklyHours || defaultWeeklyHours(carer.specialties);
+  const windows = parseWeeklyHours(hoursText);
   return prisma.user.create({
     data: {
       email: carer.email,
@@ -40,10 +43,19 @@ export async function insertCarer(
             (carer.availableNow
               ? `Weekday afternoons and most weekends around ${carer.suburb}.`
               : `Book a few days ahead — usually free mid-week around ${carer.suburb}.`),
-          weeklyHours: carer.weeklyHours || defaultWeeklyHours(carer.specialties),
+          weeklyHours: formatWeeklyHours(windows) || hoursText,
           photoUrl: carer.photoUrl || null,
           lastActiveAt: new Date(),
           verifiedHours,
+          weeklyWindows: windows.length
+            ? {
+                create: windows.map((window) => ({
+                  weekday: window.weekday,
+                  startMin: window.startMin,
+                  endMin: window.endMin,
+                })),
+              }
+            : undefined,
           specialties: {
             create: carer.specialties
               .filter((slug) => specBySlug[slug])

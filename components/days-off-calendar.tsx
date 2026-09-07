@@ -10,7 +10,7 @@ import {
   sydneyYearMonth,
 } from "@/lib/month-calendar";
 
-type DayState = { key: string; booked: boolean; blocked: boolean };
+type DayState = { key: string; booked: boolean; blocked: boolean; closed?: boolean };
 
 export function DaysOffCalendar({
   days,
@@ -43,13 +43,16 @@ export function DaysOffCalendar({
               const today = cell.key === todayKey;
               const blocked = info?.blocked ?? false;
               const booked = info?.booked ?? false;
+              const closed = info?.closed ?? false;
               const muted = !cell.inMonth || past;
               const tone = blocked
                 ? "bg-stone-100 font-medium text-stone-700"
                 : booked
                   ? "bg-orange-50 font-medium text-clay"
-                  : "bg-sage text-teal-deep hover:bg-sage/80";
-              const label = blocked ? "Away" : booked ? "Booked" : bookSlug ? "Free" : "Open";
+                  : closed
+                    ? "bg-stone-50 text-stone-500"
+                    : "bg-sage text-teal-deep hover:bg-sage/80";
+              const label = blocked ? "Away" : booked ? "Booked" : closed ? "Closed" : bookSlug ? "Free" : "Open";
               if (muted) {
                 return (
                   <div
@@ -63,7 +66,7 @@ export function DaysOffCalendar({
                 );
               }
               if (bookSlug) {
-                if (blocked || booked) {
+                if (blocked || booked || closed) {
                   return (
                     <div
                       key={cell.key}
@@ -99,7 +102,9 @@ export function DaysOffCalendar({
                         ? `${cell.key} · away · click to clear`
                         : booked
                           ? `${cell.key} · booked · mark away`
-                          : `${cell.key} · open · mark away`
+                          : closed
+                            ? `${cell.key} · closed · mark away`
+                            : `${cell.key} · open · mark away`
                     }
                     className={`w-full rounded-lg px-1 py-2 text-xs ${tone} ${today ? "ring-1 ring-teal" : ""}`}
                   >

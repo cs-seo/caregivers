@@ -31,7 +31,7 @@ const faqs = [
   },
   {
     q: "Can I search for a carer who is free on a specific night?",
-    a: "Yes. Use Needed on in search or the directory filters. CareProof hides carers who already have a sit in escrow that day, and carers who marked the day as away. Carers click days on a Monday-first month calendar covering this month and next. The same two months appear on the public profile so a family can tap a free day to book. The shortlist still summarises the next fortnight. If a carer is away today, Instant Book pauses and they drop out of the Instant Book filter until tomorrow.",
+    a: "Yes. Use Needed on in search or the directory filters. CareProof hides carers who already have a sit in escrow that day, carers who marked the day as away, and carers whose usual weekly hours are closed that weekday. Carers set Mon–Sun windows on their profile. Overnight windows that run past midnight still count as open the next morning. The same two months appear on the public profile so a family can tap a free day to book. The shortlist still summarises the next fortnight. If a carer is away today, Instant Book pauses and they drop out of the Instant Book filter until tomorrow.",
   },
   {
     q: "Can I get a GST tax invoice for a Home Care Package or NDIS plan?",
@@ -86,7 +86,8 @@ export default function HowItWorksPage() {
           <h2 className="text-xl font-semibold">3. Book in a few steps</h2>
           <p className="mt-2 text-stone-600">
             Instant Book pays into escrow immediately. Request to book waits for the carer. Days off pause Instant Book
-            for that calendar day in Australia/Sydney. Job posts collect proposals you can hire with one click. For
+            for that calendar day in Australia/Sydney. Usual weekly hours close weekdays the carer does not work, so a
+            start time has to fall inside a window. Job posts collect proposals you can hire with one click. For
             babysitting, pick a date night, last-minute sit, overnight or a standing weekly series — the hourly rate
             does not rise with a second child.
           </p>
