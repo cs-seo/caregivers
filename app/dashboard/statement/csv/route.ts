@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fundedInvoicePeers } from "@/lib/invoice-peers";
+import { fundedInvoicePeers, persistMissingInvoiceNumbers } from "@/lib/invoice-peers";
 import { australianFinancialYear, statementCsv, toStatementRows } from "@/lib/statement";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
@@ -16,14 +16,19 @@ export async function GET() {
       caregiver: { include: { user: true } },
       family: { select: { name: true, familyProfile: true } },
       specialty: true,
-      payment: { select: { heldAt: true } },
+      payment: { select: { heldAt: true, invoiceNumber: true } },
     },
     orderBy: { startAt: "asc" },
   });
   const fy = australianFinancialYear();
+  await persistMissingInvoiceNumbers();
   const peers = await fundedInvoicePeers();
   const rows = toStatementRows(
-    bookings.map((booking) => ({ ...booking, heldAt: booking.payment?.heldAt })),
+    bookings.map((booking) => ({
+      ...booking,
+      heldAt: booking.payment?.heldAt,
+      invoiceNumber: booking.payment?.invoiceNumber,
+    })),
     new Date(),
     peers,
   );

@@ -20,6 +20,7 @@ import {
 import { BOOKING_STATUS, BOOKING_STATUS_LABELS, UNPAID_BOOKING_STATUSES } from "@/lib/constants";
 import { autoReleaseIfDue } from "@/lib/escrow";
 import { HandoverCard } from "@/components/handover-card";
+import { persistMissingInvoiceNumbers } from "@/lib/invoice-peers";
 import { comingUpKind, isComingUp } from "@/lib/coming-up";
 import { formatDateTime } from "@/lib/format";
 import { isUnreadFor, markThreadRead } from "@/lib/messages";
@@ -68,6 +69,10 @@ export default async function BookingDetailPage({
   const isFamily = booking.familyId === user.id;
   const isCarer = booking.caregiver.userId === user.id;
   if (!isFamily && !isCarer) redirect("/dashboard");
+  if (booking.payment && !booking.payment.invoiceNumber) {
+    const numbers = await persistMissingInvoiceNumbers();
+    booking.payment.invoiceNumber = numbers.get(booking.id) ?? null;
+  }
   const newMessageIds = new Set(
     booking.messages.filter((message) => isUnreadFor(message, user.id)).map((message) => message.id),
   );
@@ -225,6 +230,7 @@ export default async function BookingDetailPage({
             {" · "}
             <Link href={`/dashboard/bookings/${booking.id}/invoice`} className="text-teal hover:underline">
               Tax invoice (GST)
+              {booking.payment.invoiceNumber ? ` · ${booking.payment.invoiceNumber}` : ""}
             </Link>
           </>
         ) : null}

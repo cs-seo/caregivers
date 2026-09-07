@@ -56,31 +56,60 @@ export function sequentialInvoiceNumber(index: number, startYear: number) {
   return `CP-${fyInvoiceCode(startYear)}-${String(index).padStart(4, "0")}`;
 }
 
+export type InvoicePeer = {
+  id: string;
+  startAt: Date;
+  status: string;
+  heldAt?: Date | null;
+  invoiceNumber?: string | null;
+};
+
 export function invoiceNumber(bookingId: string, index = 1, startYear = australianFinancialYear().startYear) {
   if (index > 0) return sequentialInvoiceNumber(index, startYear);
   return `CP-${bookingId.slice(-8).toUpperCase()}`;
 }
 
-export function invoiceNumberMap(
-  bookings: { id: string; startAt: Date; status: string; heldAt?: Date | null }[],
-  now = new Date(),
-) {
+export function parseInvoiceSequence(number: string, startYear: number) {
+  const prefix = `CP-${fyInvoiceCode(startYear)}-`;
+  if (!number.startsWith(prefix)) return null;
+  const sequence = Number(number.slice(prefix.length));
+  return Number.isInteger(sequence) && sequence > 0 ? sequence : null;
+}
+
+export function invoiceNumberMap(bookings: InvoicePeer[], now = new Date()) {
   const fy = australianFinancialYear(now);
-  const funded = bookings
-    .filter(
-      (booking) =>
-        STATEMENT_STATUSES.has(booking.status) &&
-        booking.startAt >= fy.startAt &&
-        booking.startAt < fy.endAt,
-    )
+  const funded = bookings.filter(
+    (booking) =>
+      STATEMENT_STATUSES.has(booking.status) &&
+      booking.startAt >= fy.startAt &&
+      booking.startAt < fy.endAt,
+  );
+  const assigned = new Map<string, string>();
+  const used = new Set<number>();
+
+  for (const booking of funded) {
+    if (!booking.invoiceNumber) continue;
+    assigned.set(booking.id, booking.invoiceNumber);
+    const sequence = parseInvoiceSequence(booking.invoiceNumber, fy.startYear);
+    if (sequence) used.add(sequence);
+  }
+
+  const unnumbered = funded
+    .filter((booking) => !assigned.has(booking.id))
     .sort((a, b) => {
       const left = (a.heldAt ?? a.startAt).getTime();
       const right = (b.heldAt ?? b.startAt).getTime();
       return left - right || a.id.localeCompare(b.id);
     });
-  return new Map(
-    funded.map((booking, index) => [booking.id, sequentialInvoiceNumber(index + 1, fy.startYear)]),
-  );
+
+  let next = 1;
+  for (const booking of unnumbered) {
+    while (used.has(next)) next += 1;
+    assigned.set(booking.id, sequentialInvoiceNumber(next, fy.startYear));
+    used.add(next);
+    next += 1;
+  }
+  return assigned;
 }
 
 export function australianFinancialYear(now = new Date()) {
@@ -108,7 +137,7 @@ export function csvCell(value: string | number) {
 export function toStatementRows(
   bookings: StatementBooking[],
   now = new Date(),
-  allFunded: { id: string; startAt: Date; status: string; heldAt?: Date | null }[] = bookings,
+  allFunded: InvoicePeer[] = bookings,
 ): StatementRow[] {
   const fy = australianFinancialYear(now);
   const numbers = invoiceNumberMap(allFunded, now);

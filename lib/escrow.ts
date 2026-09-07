@@ -1,4 +1,5 @@
 import { BOOKING_STATUS, PAYMENT_STATUS, AUTO_RELEASE_HOURS, WORK_VERIFICATION } from "./constants";
+import { persistMissingInvoiceNumbers } from "./invoice-peers";
 import { prisma } from "./prisma";
 import { getStripe, stripeEnabled } from "./stripe";
 
@@ -59,6 +60,10 @@ export async function holdPayment(bookingId: string) {
     where: { id: booking.id },
     data: { status: nextStatus },
   });
+
+  if (!payment.invoiceNumber) {
+    await persistMissingInvoiceNumbers();
+  }
 
   return payment;
 }

@@ -83,6 +83,44 @@ test("invoiceNumberMap numbers funded FY sits by hold time", () => {
   assert.equal(numbers.get("second"), "CP-2627-0002");
 });
 
+test("invoiceNumberMap keeps stored numbers when a later sit is held earlier", () => {
+  const now = new Date("2026-09-07T00:00:00.000Z");
+  const stored = invoiceNumberMap(
+    [
+      {
+        id: "kept",
+        startAt: new Date("2026-09-12T00:00:00.000Z"),
+        status: BOOKING_STATUS.ESCROW_HELD,
+        heldAt: new Date("2026-09-06T00:00:00.000Z"),
+        invoiceNumber: "CP-2627-0001",
+      },
+    ],
+    now,
+  );
+  assert.equal(stored.get("kept"), "CP-2627-0001");
+
+  const after = invoiceNumberMap(
+    [
+      {
+        id: "kept",
+        startAt: new Date("2026-09-12T00:00:00.000Z"),
+        status: BOOKING_STATUS.ESCROW_HELD,
+        heldAt: new Date("2026-09-06T00:00:00.000Z"),
+        invoiceNumber: "CP-2627-0001",
+      },
+      {
+        id: "new-earlier",
+        startAt: new Date("2026-09-08T00:00:00.000Z"),
+        status: BOOKING_STATUS.ESCROW_HELD,
+        heldAt: new Date("2026-09-05T00:00:00.000Z"),
+      },
+    ],
+    now,
+  );
+  assert.equal(after.get("kept"), "CP-2627-0001");
+  assert.equal(after.get("new-earlier"), "CP-2627-0002");
+});
+
 test("statementCsv quotes commas and lists family totals", () => {
   assert.equal(csvCell('Kids, "keys"'), '"Kids, ""keys"""');
   const csv = statementCsv(

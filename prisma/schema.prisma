@@ -265,6 +265,7 @@ model Payment {
   platformFeeCents      Int
   caregiverPayoutCents  Int
   status                String
+  invoiceNumber         String?   @unique
   heldAt                DateTime?
   releasedAt            DateTime?
   createdAt             DateTime  @default(now())

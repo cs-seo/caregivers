@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { BOOKING_STATUS } from "../lib/constants";
+import { invoiceNumberMap, STATEMENT_STATUSES, australianFinancialYear } from "../lib/statement";
 
 export async function seedDemoPipeline(prisma: PrismaClient) {
   const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
@@ -412,6 +413,42 @@ export async function seedDemoHandover(prisma: PrismaClient) {
   return (sarahSit ? 1 : 0) + priyaWeeks.length;
 }
 
+export async function seedDemoInvoiceNumbers(prisma: PrismaClient) {
+  const fy = australianFinancialYear();
+  const rows = await prisma.booking.findMany({
+    where: {
+      status: { in: [...STATEMENT_STATUSES] },
+      startAt: { gte: fy.startAt, lt: fy.endAt },
+      payment: { isNot: null },
+    },
+    select: {
+      id: true,
+      startAt: true,
+      status: true,
+      payment: { select: { heldAt: true, invoiceNumber: true } },
+    },
+  });
+  const peers = rows.map((row) => ({
+    id: row.id,
+    startAt: row.startAt,
+    status: row.status,
+    heldAt: row.payment?.heldAt ?? null,
+    invoiceNumber: row.payment?.invoiceNumber ?? null,
+  }));
+  const numbers = invoiceNumberMap(peers);
+  let stamped = 0;
+  for (const peer of peers) {
+    const invoiceNumber = numbers.get(peer.id);
+    if (!invoiceNumber || peer.invoiceNumber) continue;
+    const result = await prisma.payment.updateMany({
+      where: { bookingId: peer.id, invoiceNumber: null },
+      data: { invoiceNumber },
+    });
+    stamped += result.count;
+  }
+  return stamped;
+}
+
 export async function seedDemoSavedSearches(prisma: PrismaClient) {
   const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
   if (!family) return 0;
@@ -446,8 +483,9 @@ async function main() {
   const unread = await seedDemoUnreadMessages(prisma);
   const searches = await seedDemoSavedSearches(prisma);
   const handover = await seedDemoHandover(prisma);
+  const invoices = await seedDemoInvoiceNumbers(prisma);
   console.log(
-    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}`,
+    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}`,
   );
   await prisma.$disconnect();
 }
