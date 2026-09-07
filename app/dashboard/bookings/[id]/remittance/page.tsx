@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { PLATFORM_ABN, PLATFORM_ENTITY, SITE_NAME } from "@/lib/constants";
-import { fundingLines } from "@/lib/funding";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { formatAud } from "@/lib/money";
 import { persistMissingInvoiceNumbers } from "@/lib/invoice-peers";
@@ -10,13 +9,13 @@ import { requireUser } from "@/lib/session";
 import { pageMeta } from "@/lib/seo";
 
 export const metadata = pageMeta({
-  title: "Tax invoice",
-  description: "GST tax invoice for a CareProof booking.",
+  title: "Remittance advice",
+  description: "Payout remittance for a CareProof booking.",
   path: "/dashboard",
   noIndex: true,
 });
 
-export default async function BookingInvoicePage({
+export default async function BookingRemittancePage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -28,7 +27,7 @@ export default async function BookingInvoicePage({
     where: { id },
     include: {
       caregiver: { include: { user: true } },
-      family: { select: { id: true, name: true, email: true, familyProfile: true } },
+      family: { select: { id: true, name: true } },
       specialty: true,
       payment: true,
     },
@@ -42,16 +41,10 @@ export default async function BookingInvoicePage({
   }
 
   const numbers = await persistMissingInvoiceNumbers();
-  const invoiceNumber = numbers.get(booking.id) ?? booking.payment.invoiceNumber ?? `CP-${booking.id.slice(-8).toUpperCase()}`;
-  const issued = booking.payment.heldAt ?? booking.createdAt;
-  const feeGst = Math.round(booking.platformFeeCents / 11);
-  const household = [
-    booking.family.familyProfile?.suburb,
-    booking.family.email,
-    ...fundingLines(booking.family.familyProfile),
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const invoiceNumber =
+    numbers.get(booking.id) ?? booking.payment.invoiceNumber ?? `CP-${booking.id.slice(-8).toUpperCase()}`;
+  const issued = booking.payment.releasedAt ?? booking.payment.heldAt ?? booking.createdAt;
+  const released = booking.payment.status === "released";
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -60,12 +53,12 @@ export default async function BookingInvoicePage({
           Back to booking
         </Link>
         {" · "}
-        <Link href={`/dashboard/bookings/${booking.id}/remittance`} className="text-teal">
-          Carer remittance
+        <Link href={`/dashboard/bookings/${booking.id}/invoice`} className="text-teal">
+          Family tax invoice
         </Link>
       </p>
       <article className="mt-4 rounded-2xl border border-line bg-card p-6 print:mt-0 print:rounded-none print:border-0 print:p-0">
-        <p className="text-xs font-semibold uppercase tracking-wide text-teal">Australian tax invoice</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-teal">Remittance advice</p>
         <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold text-ink">{SITE_NAME}</h1>
@@ -74,11 +67,11 @@ export default async function BookingInvoicePage({
               <br />
               ABN {PLATFORM_ABN} (demo)
               <br />
-              Issued {formatDate(issued)}
+              {released ? `Paid ${formatDate(issued)}` : `Held ${formatDate(issued)}`}
             </p>
           </div>
           <div className="text-sm text-stone-600">
-            <p className="font-semibold text-ink">Invoice {invoiceNumber}</p>
+            <p className="font-semibold text-ink">Remittance {invoiceNumber}</p>
             <p className="mt-1">
               Status: {booking.payment.status}
               {booking.recurringTotal > 1
@@ -90,25 +83,21 @@ export default async function BookingInvoicePage({
 
         <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2">
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-stone-500">Bill to</dt>
-            <dd className="mt-1 text-stone-700">
-              {booking.family.name}
-              {household ? (
-                <>
-                  <br />
-                  {household}
-                </>
-              ) : null}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-stone-500">Care supplied by</dt>
+            <dt className="text-xs font-semibold uppercase tracking-wide text-stone-500">Pay to</dt>
             <dd className="mt-1 text-stone-700">
               {booking.caregiver.user.name}
               <br />
               {booking.caregiver.abn ? `ABN ${booking.caregiver.abn}` : "ABN not supplied"}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-semibold uppercase tracking-wide text-stone-500">For care supplied to</dt>
+            <dd className="mt-1 text-stone-700">
+              {booking.family.name}
               <br />
               {booking.specialty.name} · {formatDateTime(booking.startAt)}
+              <br />
+              {booking.hours} hours
             </dd>
           </div>
         </dl>
@@ -122,48 +111,40 @@ export default async function BookingInvoicePage({
           </thead>
           <tbody className="text-stone-700">
             <tr className="border-b border-line">
-              <td className="py-2">
-                {booking.specialty.name}, {booking.hours} hours inc GST
-              </td>
+              <td className="py-2">Advertised care rate inc GST</td>
               <td className="py-2 text-right">{formatAud(booking.subtotalCents)}</td>
             </tr>
             <tr className="border-b border-line">
-              <td className="py-2 text-stone-500">GST on care (1/11)</td>
+              <td className="py-2 text-stone-500">GST included (1/11)</td>
               <td className="py-2 text-right text-stone-500">{formatAud(booking.gstCents)}</td>
             </tr>
-            <tr className="border-b border-line">
-              <td className="py-2">CareProof platform fee inc GST</td>
-              <td className="py-2 text-right">{formatAud(booking.platformFeeCents)}</td>
-            </tr>
-            <tr className="border-b border-line">
-              <td className="py-2 text-stone-500">GST on platform fee (1/11)</td>
-              <td className="py-2 text-right text-stone-500">{formatAud(feeGst)}</td>
+            <tr>
+              <td className="py-3 font-semibold text-ink">
+                {released ? "Paid to you" : "Held for you"}
+              </td>
+              <td className="py-3 text-right font-semibold text-ink">{formatAud(booking.subtotalCents)}</td>
             </tr>
             <tr>
-              <td className="py-3 font-semibold text-ink">Total collected into escrow</td>
-              <td className="py-3 text-right font-semibold text-ink">{formatAud(booking.totalCents)}</td>
-            </tr>
-            <tr>
-              <td className="py-1 text-stone-600">Carer payout (100% of advertised rate)</td>
-              <td className="py-1 text-right text-stone-600">{formatAud(booking.subtotalCents)}</td>
+              <td className="py-1 text-stone-600">Family paid (rate + 10% platform fee)</td>
+              <td className="py-1 text-right text-stone-600">{formatAud(booking.totalCents)}</td>
             </tr>
           </tbody>
         </table>
 
         <p className="mt-6 text-xs text-stone-500">
-          Care rates are advertised inc GST. CareProof adds 10% on top and holds the total until the booking is
-          released. This demo invoice is for coordinators and plan managers reconciling a Home Care Package or
-          self-managed NDIS plan. Print from the browser for a PDF.
+          You receive 100% of the advertised rate. CareProof charges the family a 10% platform fee on top and does not
+          deduct it from this payout. This remittance uses the same number as the family tax invoice. Print from the
+          browser for a PDF.
         </p>
       </article>
       <p className="print:hidden mt-4 text-sm">
-        <a href="#" className="text-teal" id="print-invoice">
+        <a href="#" className="text-teal" id="print-remittance">
           Print or save as PDF
         </a>
       </p>
       <script
         dangerouslySetInnerHTML={{
-          __html: `document.getElementById("print-invoice")?.addEventListener("click",function(e){e.preventDefault();window.print();});`,
+          __html: `document.getElementById("print-remittance")?.addEventListener("click",function(e){e.preventDefault();window.print();});`,
         }}
       />
     </div>

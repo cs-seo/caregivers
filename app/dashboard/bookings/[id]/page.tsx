@@ -228,10 +228,29 @@ export default async function BookingDetailPage({
         {booking.payment ? (
           <>
             {" · "}
-            <Link href={`/dashboard/bookings/${booking.id}/invoice`} className="text-teal hover:underline">
-              Tax invoice (GST)
-              {booking.payment.invoiceNumber ? ` · ${booking.payment.invoiceNumber}` : ""}
-            </Link>
+            {isCarer ? (
+              <>
+                <Link href={`/dashboard/bookings/${booking.id}/remittance`} className="text-teal hover:underline">
+                  Remittance
+                  {booking.payment.invoiceNumber ? ` · ${booking.payment.invoiceNumber}` : ""}
+                </Link>
+                {" · "}
+                <Link href={`/dashboard/bookings/${booking.id}/invoice`} className="text-teal hover:underline">
+                  Family tax invoice
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href={`/dashboard/bookings/${booking.id}/invoice`} className="text-teal hover:underline">
+                  Tax invoice (GST)
+                  {booking.payment.invoiceNumber ? ` · ${booking.payment.invoiceNumber}` : ""}
+                </Link>
+                {" · "}
+                <Link href={`/dashboard/bookings/${booking.id}/remittance`} className="text-teal hover:underline">
+                  Carer remittance
+                </Link>
+              </>
+            )}
           </>
         ) : null}
       </p>

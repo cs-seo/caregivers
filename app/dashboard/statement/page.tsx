@@ -104,7 +104,14 @@ export default async function StatementPage() {
                 <tr key={row.id} className="border-t border-line">
                   <td className="px-3 py-2">{formatDate(row.dateKey)}</td>
                   <td className="px-3 py-2">
-                    <Link href={`/dashboard/bookings/${row.id}/invoice`} className="text-teal hover:underline">
+                    <Link
+                      href={
+                        isFamily
+                          ? `/dashboard/bookings/${row.id}/invoice`
+                          : `/dashboard/bookings/${row.id}/remittance`
+                      }
+                      className="text-teal hover:underline"
+                    >
                       {row.invoiceNumber}
                     </Link>
                     {row.week ? <span className="ml-1 text-stone-400">w{row.week}</span> : null}
