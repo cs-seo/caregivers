@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Badge } from "@/components/badges";
+import { DaysOffCalendar } from "@/components/days-off-calendar";
 import { WeeklyHoursField } from "@/components/weekly-hours-field";
 import {
   addBlockedDateAction,
   addCredentialAction,
   addWorkHistoryAction,
-  removeBlockedDateAction,
   removeCredentialAction,
   removeWorkHistoryAction,
   updateCaregiverProfileAction,
@@ -49,7 +49,7 @@ export default async function CarerProfileEditorPage({
     }),
     getSpecialties(),
     getStates(),
-    getUpcomingAvailability(user.caregiverProfile.id, 21),
+    getUpcomingAvailability(user.caregiverProfile.id, 70),
   ]);
   if (!profile) redirect("/dashboard");
 
@@ -229,35 +229,12 @@ export default async function CarerProfileEditorPage({
       <section className="mt-8 rounded-2xl border border-line bg-card p-5">
         <h2 className="font-semibold text-ink">Days off</h2>
         <p className="mt-1 text-sm text-stone-600">
-          Mark a day away and families cannot book it, or find you with Needed on that date. Marking today away also
-          pauses Instant Book until tomorrow — families send a request instead of paying into escrow immediately. Booked
-          sits still show as booked.
+          Click a day on this month or next. Families cannot book an away day, or find you with Needed on that date.
+          Marking today away also pauses Instant Book until tomorrow. Booked sits still show as booked. Use the date
+          field if you want a note such as school holidays.
         </p>
-        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-          {upcoming.map((day) => (
-            <form
-              key={day.key}
-              action={day.blocked ? removeBlockedDateAction : addBlockedDateAction}
-              className="text-xs"
-            >
-              <input type="hidden" name="dateKey" value={day.key} />
-              <button
-                className={`w-full rounded-xl px-2 py-2 ${
-                  day.blocked
-                    ? "bg-stone-100 text-stone-700"
-                    : day.booked
-                      ? "bg-orange-50 text-clay"
-                      : "bg-sage text-teal-deep"
-                }`}
-                type="submit"
-              >
-                <span className="block font-medium">{day.label}</span>
-                <span className="mt-0.5 block">
-                  {day.blocked ? "Away · clear" : day.booked ? "Booked · mark away" : "Open · mark away"}
-                </span>
-              </button>
-            </form>
-          ))}
+        <div className="mt-4">
+          <DaysOffCalendar days={upcoming} />
         </div>
         <form action={addBlockedDateAction} className="mt-4 flex flex-wrap items-end gap-3">
           <label className="block text-sm">
