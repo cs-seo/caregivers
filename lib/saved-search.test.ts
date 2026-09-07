@@ -2,12 +2,15 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   composeJobFitAlert,
+  composeProposalAlert,
   composeSearchAlert,
   defaultSearchName,
   filtersFromSearchHref,
   isSafeSearchHref,
   jobAlertLabel,
   jobsFitDeltaLabel,
+  proposalAlertLabel,
+  proposalAlertRate,
   savedSearchDelta,
   savedSearchDeltaLabel,
   savedSearchHref,
@@ -116,6 +119,42 @@ test("jobAlertLabel and composeJobFitAlert describe new fitting jobs", () => {
   assert.equal(digest.hasNew, true);
   assert.equal(digest.subject, "CareProof: 1 new job fits your roster");
   assert.match(digest.body, /1 open job fits you now · 1 new/);
+  assert.match(digest.body, /weekday-aged-care-marrickville/);
+});
+
+test("proposalAlertLabel and composeProposalAlert describe new proposals", () => {
+  const grown = savedSearchDelta(2, 0, new Date("2026-09-01"));
+  assert.equal(proposalAlertLabel(grown, true), "Alerts on · 2 new proposals since last digest");
+  assert.equal(proposalAlertLabel(grown, false), "Email alerts off");
+  assert.equal(
+    proposalAlertLabel(savedSearchDelta(1, 0, null), true),
+    "Alerts on · 1 proposal waiting for a first digest",
+  );
+  assert.equal(proposalAlertRate(6800), "$68.00/hr");
+  assert.equal(proposalAlertRate(6800, 3800), "$38.00/hr counter");
+  const digest = composeProposalAlert(
+    [
+      {
+        title: "Weekday aged care for Mum in Marrickville",
+        href: "/care-requests/weekday-aged-care-marrickville",
+        carer: "Sarah Nguyen",
+        rate: proposalAlertRate(6800),
+      },
+      {
+        title: "Overnight respite in Adelaide",
+        href: "/care-requests/overnight-respite-adelaide",
+        carer: "Lara Schmidt",
+        rate: proposalAlertRate(4200, 3800),
+      },
+    ],
+    2,
+    2,
+  );
+  assert.equal(digest.hasNew, true);
+  assert.equal(digest.subject, "CareProof: 2 new proposals on your requests");
+  assert.match(digest.body, /2 pending proposals on your open requests · 2 new/);
+  assert.match(digest.body, /Sarah Nguyen · \$68\.00\/hr/);
+  assert.match(digest.body, /Lara Schmidt · \$38\.00\/hr counter/);
   assert.match(digest.body, /weekday-aged-care-marrickville/);
 });
 

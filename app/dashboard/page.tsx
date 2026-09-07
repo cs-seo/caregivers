@@ -31,6 +31,7 @@ import {
   declineInviteAction,
   deleteSavedSearchAction,
   toggleJobAlertsAction,
+  toggleProposalAlertsAction,
   toggleSavedSearchAlertsAction,
   applyHouseholdHandoverAction,
   withdrawProposalAction,
@@ -40,6 +41,7 @@ import {
   filtersFromSearchHref,
   jobAlertLabel,
   jobsFitDeltaLabel,
+  proposalAlertLabel,
   savedSearchDelta,
   savedSearchDeltaLabel,
   searchAlertDelta,
@@ -186,7 +188,12 @@ export default async function DashboardPage({
           specialty: true,
           city: { include: { state: true } },
           bookings: { select: { id: true }, orderBy: { startAt: "asc" }, take: 1 },
-          _count: { select: { invites: { where: { status: "pending" } } } },
+          _count: {
+            select: {
+              invites: { where: { status: "pending" } },
+              proposals: { where: { status: "pending" } },
+            },
+          },
         },
         orderBy: { createdAt: "desc" },
       })
@@ -298,6 +305,13 @@ export default async function DashboardPage({
     : null;
   const fittingAlertDelta = carerProfile
     ? searchAlertDelta(fittingJobs.length, carerProfile.lastJobAlertedCount, carerProfile.jobAlertedAt)
+    : null;
+  const pendingProposalCount = familyJobs
+    .filter((job) => job.status === "open")
+    .reduce((sum, job) => sum + job._count.proposals, 0);
+  const familyProfile = isFamily ? user.familyProfile : null;
+  const proposalAlertDelta = familyProfile
+    ? searchAlertDelta(pendingProposalCount, familyProfile.lastProposalAlertedCount, familyProfile.proposalAlertedAt)
     : null;
   const carerInvites =
     !isFamily && user.caregiverProfile
@@ -924,6 +938,26 @@ export default async function DashboardPage({
 
       <section className="mt-10">
         <h2 className="text-xl font-semibold">{isFamily ? "Your care requests" : "Your proposals"}</h2>
+        {isFamily ? (
+          <p className="mt-1 text-sm text-stone-600">
+            <Link href="/dashboard/proposal-alerts" className="font-medium text-teal hover:underline">
+              Proposal alerts
+            </Link>{" "}
+            preview the digest CareProof would email when a carer proposes.
+            {proposalAlertDelta && familyProfile
+              ? ` ${proposalAlertLabel(proposalAlertDelta, familyProfile.proposalAlertsOn)}.`
+              : ""}
+          </p>
+        ) : null}
+        {isFamily && familyProfile ? (
+          <form action={toggleProposalAlertsAction} className="mt-2">
+            <input type="hidden" name="next" value="/dashboard" />
+            <input type="hidden" name="alertsOn" value={familyProfile.proposalAlertsOn ? "0" : "1"} />
+            <button className="text-sm text-stone-500 hover:text-ink" type="submit">
+              {familyProfile.proposalAlertsOn ? "Turn alerts off" : "Turn alerts on"}
+            </button>
+          </form>
+        ) : null}
         <ul className="mt-4 space-y-3">
           {isFamily ? (
             familyJobs.length === 0 ? (
@@ -958,6 +992,9 @@ export default async function DashboardPage({
                         Browse
                       </Link>
                       {job._count.invites ? ` · ${job._count.invites} invited` : ""}
+                      {job._count.proposals
+                        ? ` · ${job._count.proposals} pending ${job._count.proposals === 1 ? "proposal" : "proposals"}`
+                        : ""}
                     </span>
                   ) : job._count.invites ? (
                     <span className="mt-0.5 block text-sm text-stone-500">

@@ -1,5 +1,6 @@
 import { filterHref, parseFilters } from "./directory";
 import { formatDate, formatDateTime, parseSydneyDateTimeLocal, titleCaseSlug } from "./format";
+import { formatAud } from "./money";
 import type { DirectoryFilters } from "./queries";
 
 export const MAX_SAVED_SEARCHES = 20;
@@ -140,6 +141,51 @@ export function jobAlertLabel(delta: ReturnType<typeof savedSearchDelta>, alerts
     return `Alerts on · ${delta.newCount} new ${delta.newCount === 1 ? "job" : "jobs"} since last digest`;
   }
   return "Alerts on · no new jobs";
+}
+
+export function proposalAlertLabel(delta: ReturnType<typeof savedSearchDelta>, alertsOn: boolean) {
+  if (!alertsOn) return "Email alerts off";
+  if (delta.current === 0) {
+    return delta.unseen ? "Alerts on · no pending proposals yet" : "Alerts on · 0 pending proposals";
+  }
+  if (delta.unseen) {
+    return `Alerts on · ${delta.current} ${delta.current === 1 ? "proposal" : "proposals"} waiting for a first digest`;
+  }
+  if (delta.newCount > 0) {
+    return `Alerts on · ${delta.newCount} new ${delta.newCount === 1 ? "proposal" : "proposals"} since last digest`;
+  }
+  return "Alerts on · no new proposals";
+}
+
+export function proposalAlertRate(rateCents: number, counterRateCents?: number | null) {
+  const cents = counterRateCents ?? rateCents;
+  return counterRateCents != null ? `${formatAud(cents)}/hr counter` : `${formatAud(cents)}/hr`;
+}
+
+export function composeProposalAlert(
+  items: { title: string; href: string; carer: string; rate: string }[],
+  current: number,
+  newCount: number,
+) {
+  const subject =
+    newCount > 0
+      ? `CareProof: ${newCount} new ${newCount === 1 ? "proposal" : "proposals"} on your requests`
+      : "CareProof: no new proposals on your requests";
+  const listed = items.slice(0, 5);
+  const lines =
+    listed.length === 0
+      ? ["No pending proposals on your open requests right now."]
+      : listed.map((item) => `${item.title}\n${item.carer} · ${item.rate}\nOpen ${item.href}`);
+  const body = [
+    newCount > 0
+      ? `${current} pending ${current === 1 ? "proposal" : "proposals"} on your open requests · ${newCount} new since your last digest.`
+      : `${current} pending ${current === 1 ? "proposal" : "proposals"} on your open requests. None are new since your last digest.`,
+    "",
+    ...lines,
+    "",
+    "Turn proposal alerts off from your dashboard if you do not want another digest.",
+  ].join("\n");
+  return { subject, body, hasNew: newCount > 0 };
 }
 
 export function composeJobFitAlert(

@@ -1463,6 +1463,7 @@ function savedSearchReturnPath(raw: string) {
     raw === "/dashboard" ||
     raw === "/dashboard/alerts" ||
     raw === "/dashboard/job-alerts" ||
+    raw === "/dashboard/proposal-alerts" ||
     raw.startsWith("/dashboard?")
   ) {
     return raw;
@@ -1512,6 +1513,39 @@ export async function markJobAlertSentAction(formData: FormData) {
   });
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/job-alerts");
+  redirect(`${next}${next.includes("?") ? "&" : "?"}sent=1`);
+}
+
+export async function toggleProposalAlertsAction(formData: FormData) {
+  const user = await requireRole(ROLES.FAMILY);
+  if (!user?.familyProfile) redirect("/login?callbackUrl=/dashboard");
+  const next = savedSearchReturnPath(String(formData.get("next") ?? "/dashboard"));
+  const proposalAlertsOn = String(formData.get("alertsOn") ?? "") === "1";
+  await prisma.familyProfile.update({
+    where: { id: user.familyProfile.id },
+    data: { proposalAlertsOn },
+  });
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/proposal-alerts");
+  redirect(next);
+}
+
+export async function markProposalAlertSentAction(formData: FormData) {
+  const user = await requireRole(ROLES.FAMILY);
+  if (!user?.familyProfile) redirect("/login?callbackUrl=/dashboard/proposal-alerts");
+  const next = savedSearchReturnPath(String(formData.get("next") ?? "/dashboard/proposal-alerts"));
+  const count = await prisma.proposal.count({
+    where: {
+      status: "pending",
+      careRequest: { familyId: user.id, status: "open" },
+    },
+  });
+  await prisma.familyProfile.update({
+    where: { id: user.familyProfile.id },
+    data: { lastProposalAlertedCount: count, proposalAlertedAt: new Date() },
+  });
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/proposal-alerts");
   redirect(`${next}${next.includes("?") ? "&" : "?"}sent=1`);
 }
 

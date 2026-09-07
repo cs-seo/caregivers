@@ -42,6 +42,9 @@ model FamilyProfile {
   handoverAccess    String?
   handoverCare      String?
   handoverEmergency String?
+  proposalAlertsOn         Boolean   @default(true)
+  lastProposalAlertedCount Int       @default(0)
+  proposalAlertedAt        DateTime?
 }
 
 model State {

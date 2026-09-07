@@ -708,6 +708,24 @@ const LARA_COUNTER_NOTE = "Two nights is a long sit — $38 works if you can do 
 const ELENA_AWAITING_NOTE =
   "DEMO_AWAITING_PAY: Wednesday companion sit in Leichhardt — Elena accepted, waiting for escrow.";
 
+export async function seedDemoProposalAlerts(prisma: PrismaClient) {
+  const family = await prisma.user.findUnique({
+    where: { email: "family@careproof.com.au" },
+    include: { familyProfile: true },
+  });
+  if (!family?.familyProfile) return 0;
+  if (family.familyProfile.proposalAlertedAt) return 0;
+  await prisma.familyProfile.update({
+    where: { id: family.familyProfile.id },
+    data: {
+      proposalAlertsOn: true,
+      lastProposalAlertedCount: 0,
+      proposalAlertedAt: new Date("2026-09-01T00:00:00.000Z"),
+    },
+  });
+  return 1;
+}
+
 export async function seedDemoJobAlerts(prisma: PrismaClient) {
   const sarah = await prisma.caregiverProfile.findUnique({
     where: { slug: "sarah-nguyen-aged-care-sydney" },
@@ -972,8 +990,9 @@ async function main() {
   const passOn = await seedDemoPassOn(prisma);
   const awaitingPay = await seedDemoAwaitingPay(prisma);
   const jobAlerts = await seedDemoJobAlerts(prisma);
+  const proposalAlerts = await seedDemoProposalAlerts(prisma);
   console.log(
-    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}; notice ${notice}; jobStarts ${jobStarts}; hired ${hired}; invites ${invites}; jobMessages ${jobMessages}; passOn ${passOn}; awaitingPay ${awaitingPay}; jobAlerts ${jobAlerts}`,
+    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}; notice ${notice}; jobStarts ${jobStarts}; hired ${hired}; invites ${invites}; jobMessages ${jobMessages}; passOn ${passOn}; awaitingPay ${awaitingPay}; jobAlerts ${jobAlerts}; proposalAlerts ${proposalAlerts}`,
   );
   await prisma.$disconnect();
 }
