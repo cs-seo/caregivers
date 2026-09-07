@@ -8,6 +8,7 @@ import { signIn } from "@/auth";
 import { findSeriesOverlap } from "./booking-overlap";
 import { BOOKING_STATUS, ROLES } from "./constants";
 import { autoReleaseIfDue, holdPayment, refundPayment, releasePayment } from "./escrow";
+import { parseSydneyDateTimeLocal } from "./format";
 import { quoteBooking } from "./money";
 import { prisma } from "./prisma";
 import { requireRole, requireUser } from "./session";
@@ -95,7 +96,7 @@ export async function createBookingAction(formData: FormData) {
 
   const slug = String(formData.get("slug") ?? "");
   const specialtyId = String(formData.get("specialtyId") ?? "");
-  const startAt = new Date(String(formData.get("startAt") ?? ""));
+  const startAt = parseSydneyDateTimeLocal(String(formData.get("startAt") ?? ""));
   const hours = Number(formData.get("hours") ?? 0);
   const occasion = String(formData.get("occasion") ?? "").trim();
   const children = String(formData.get("children") ?? "").trim();

@@ -58,6 +58,31 @@ export function lastActiveLabel(value: Date | string) {
   return `Last active ${formatDate(date)}`;
 }
 
+export function parseSydneyDateTimeLocal(value: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(value.trim());
+  if (!match) return new Date(Number.NaN);
+  const wall = `${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}`;
+  for (const offset of ["+10:00", "+11:00"] as const) {
+    const date = new Date(`${wall}:00${offset}`);
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Australia/Sydney",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(date);
+    const year = parts.find((part) => part.type === "year")?.value;
+    const month = parts.find((part) => part.type === "month")?.value;
+    const day = parts.find((part) => part.type === "day")?.value;
+    const hour = parts.find((part) => part.type === "hour")?.value;
+    const minute = parts.find((part) => part.type === "minute")?.value;
+    if (`${year}-${month}-${day}T${hour}:${minute}` === wall) return date;
+  }
+  return new Date(`${wall}:00+10:00`);
+}
+
 export function sydneyDateTimeLocal(daysFromNow: number, hour: number) {
   const date = new Date(Date.now() + daysFromNow * 24 * 60 * 60 * 1000);
   const parts = new Intl.DateTimeFormat("en-CA", {
