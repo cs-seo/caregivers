@@ -70,3 +70,9 @@ test("bookingsToIcs writes all-day away events as DATE values", () => {
   assert.match(ics, /SUMMARY:Away · Sarah Nguyen/);
   assert.match(ics, /DESCRIPTION:CareProof day off\\nWeekend off/);
 });
+
+test("bookingsToIcs can advertise an hourly refresh", () => {
+  const ics = bookingsToIcs([], new Date("2026-09-07T00:00:00.000Z"), "CareProof roster", 1);
+  assert.match(ics, /X-PUBLISHED-TTL:PT1H/);
+  assert.match(ics, /REFRESH-INTERVAL;VALUE=DURATION:PT1H/);
+});

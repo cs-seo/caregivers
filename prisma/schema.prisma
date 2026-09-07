@@ -25,6 +25,7 @@ model User {
   messages         Message[]
   shortlists       Shortlist[]
   savedSearches    SavedSearch[]
+  calendarFeed     CalendarFeed?
 }
 
 model FamilyProfile {
@@ -284,6 +285,15 @@ model SavedSearch {
 
   @@unique([familyId, href])
   @@index([familyId])
+}
+
+model CalendarFeed {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Review {

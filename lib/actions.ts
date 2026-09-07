@@ -14,6 +14,7 @@ import { autoReleaseIfDue, holdPayment, refundPayment, releasePayment } from "./
 import { parseSydneyDateTimeLocal, sydneyDateKey } from "./format";
 import { quoteBooking } from "./money";
 import { prisma } from "./prisma";
+import { newCalendarToken } from "./calendar-feed";
 import { isSafeSearchHref, MAX_SAVED_SEARCHES } from "./saved-search";
 import { requireRole, requireUser } from "./session";
 
@@ -904,4 +905,15 @@ export async function deleteSavedSearchAction(formData: FormData) {
   await prisma.savedSearch.deleteMany({ where: { id, familyId: user.id } });
   revalidatePath("/dashboard");
   revalidatePath(next);
+}
+
+export async function rotateCalendarFeedAction() {
+  const user = await requireUser();
+  if (!user) redirect("/login?callbackUrl=/dashboard/calendar");
+  await prisma.calendarFeed.upsert({
+    where: { userId: user.id },
+    update: { token: newCalendarToken() },
+    create: { userId: user.id, token: newCalendarToken() },
+  });
+  revalidatePath("/dashboard/calendar");
 }

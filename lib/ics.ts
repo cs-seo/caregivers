@@ -109,7 +109,7 @@ export function awayToIcsEvent(
   };
 }
 
-export function bookingsToIcs(events: IcsEventInput[], now = new Date(), calendarName?: string) {
+export function bookingsToIcs(events: IcsEventInput[], now = new Date(), calendarName?: string, refreshHours?: number) {
   const header = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
@@ -119,6 +119,10 @@ export function bookingsToIcs(events: IcsEventInput[], now = new Date(), calenda
   ];
   if (calendarName) {
     header.push(`X-WR-CALNAME:${escapeIcsText(calendarName)}`);
+  }
+  if (refreshHours && refreshHours > 0) {
+    header.push(`X-PUBLISHED-TTL:PT${refreshHours}H`);
+    header.push(`REFRESH-INTERVAL;VALUE=DURATION:PT${refreshHours}H`);
   }
   return [...header, ...events.flatMap((event) => vevent(event, now)), "END:VCALENDAR", ""].join("\r\n");
 }
