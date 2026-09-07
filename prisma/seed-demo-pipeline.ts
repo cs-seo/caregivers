@@ -9,6 +9,9 @@ import { formatWeeklyHours, parseWeeklyHours } from "../lib/weekly-windows";
 
 const JAMES_PENDING_NOTE = "DEMO_PIPELINE: weekend community access — waiting on James to accept.";
 const JAMES_PENDING_REQUESTED_AT = parseSydneyDateTimeLocal("2026-09-04T09:00");
+const TESS_DECLINE_NOTE = "DEMO_DECLINE: Tess declined a Bondi date-night request-to-book.";
+const TESS_DECLINE_REASON = "I only take Saturday evenings when I have a free window — I am already booked that night.";
+const TESS_DECLINED_AT = parseSydneyDateTimeLocal("2026-08-27T10:00");
 
 export async function seedPendingRequestedAt(prisma: PrismaClient) {
   const booking = await prisma.booking.findFirst({
@@ -19,6 +22,57 @@ export async function seedPendingRequestedAt(prisma: PrismaClient) {
   await prisma.booking.update({
     where: { id: booking.id },
     data: { createdAt: JAMES_PENDING_REQUESTED_AT },
+  });
+  return 1;
+}
+
+export async function seedDemoDeclineReason(prisma: PrismaClient) {
+  const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
+  const tess = await prisma.caregiverProfile.findUnique({
+    where: { slug: "tess-okonkwo-babysitter-sydney" },
+    include: { specialties: true },
+  });
+  if (!family || !tess || !tess.specialties[0]) return 0;
+  const existing = await prisma.booking.findFirst({
+    where: { familyId: family.id, notes: TESS_DECLINE_NOTE },
+  });
+  if (existing) {
+    await prisma.booking.update({
+      where: { id: existing.id },
+      data: {
+        status: BOOKING_STATUS.CANCELLED,
+        declineNote: existing.declineNote || TESS_DECLINE_REASON,
+        declinedAt: existing.declinedAt ?? TESS_DECLINED_AT,
+      },
+    });
+    return 1;
+  }
+
+  const hours = 4;
+  const subtotal = tess.hourlyRateCents * hours;
+  const fee = Math.round(subtotal * 0.1);
+  const quote = {
+    hours,
+    rateCents: tess.hourlyRateCents,
+    subtotalCents: subtotal,
+    platformFeeCents: fee,
+    gstCents: Math.round(subtotal / 11),
+    totalCents: subtotal + fee,
+  };
+  await prisma.booking.create({
+    data: {
+      familyId: family.id,
+      caregiverId: tess.id,
+      specialtyId: tess.specialties[0].specialtyId,
+      startAt: parseSydneyDateTimeLocal("2026-08-29T18:00"),
+      endAt: parseSydneyDateTimeLocal("2026-08-29T22:00"),
+      notes: TESS_DECLINE_NOTE,
+      declineNote: TESS_DECLINE_REASON,
+      declinedAt: TESS_DECLINED_AT,
+      status: BOOKING_STATUS.CANCELLED,
+      createdAt: parseSydneyDateTimeLocal("2026-08-25T09:00"),
+      ...quote,
+    },
   });
   return 1;
 }
@@ -1149,11 +1203,12 @@ async function main() {
   const awaitingPay = await seedDemoAwaitingPay(prisma);
   const dispute = await seedDemoDispute(prisma);
   const pendingSince = await seedPendingRequestedAt(prisma);
+  const declineReason = await seedDemoDeclineReason(prisma);
   const jobAlerts = await seedDemoJobAlerts(prisma);
   const proposalAlerts = await seedDemoProposalAlerts(prisma);
   const inviteAlerts = await seedDemoInviteAlerts(prisma);
   console.log(
-    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}; notice ${notice}; jobStarts ${jobStarts}; expired ${expired}; hired ${hired}; invites ${invites}; jobMessages ${jobMessages}; passOn ${passOn}; awaitingPay ${awaitingPay}; dispute ${dispute}; pendingSince ${pendingSince}; jobAlerts ${jobAlerts}; proposalAlerts ${proposalAlerts}; inviteAlerts ${inviteAlerts}`,
+    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}; notice ${notice}; jobStarts ${jobStarts}; expired ${expired}; hired ${hired}; invites ${invites}; jobMessages ${jobMessages}; passOn ${passOn}; awaitingPay ${awaitingPay}; dispute ${dispute}; pendingSince ${pendingSince}; declineReason ${declineReason}; jobAlerts ${jobAlerts}; proposalAlerts ${proposalAlerts}; inviteAlerts ${inviteAlerts}`,
   );
   await prisma.$disconnect();
 }

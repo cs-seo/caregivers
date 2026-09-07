@@ -42,9 +42,11 @@ import { disputeReasonHint, disputeReplyHint, firstDisputeNote, firstDisputeRepl
 import {
   carerPendingAcceptanceBanner,
   carerPendingAcceptanceHint,
+  declineReasonHint,
   earliestPendingCreatedAt,
   familyPendingAcceptanceBanner,
   familyPendingAcceptanceHint,
+  firstDeclineNote,
   pendingAcceptanceCount,
   pendingSinceLabel,
 } from "@/lib/pending-acceptance";
@@ -111,6 +113,7 @@ function BookingList({
             const reasonHint = disputeReasonHint({ note: firstDisputeNote(group.weeks), isFamily });
             const replyHint = disputeReplyHint({ reply: firstDisputeReply(group.weeks), isFamily });
             const sinceLabel = pendingSinceLabel(earliestPendingCreatedAt(group.weeks));
+            const declineHint = declineReasonHint({ note: firstDeclineNote(group.weeks), isFamily });
             return (
             <li key={group.key} className="rounded-2xl border border-line bg-card p-4">
               <div className="flex flex-wrap items-start justify-between gap-2">
@@ -166,6 +169,7 @@ function BookingList({
               ) : null}
               {reasonHint ? <p className="mt-2 text-sm text-stone-600">{reasonHint}</p> : null}
               {replyHint ? <p className="mt-2 text-sm text-stone-600">{replyHint}</p> : null}
+              {declineHint ? <p className="mt-2 text-sm text-stone-600">{declineHint}</p> : null}
               {group.messageCount > 0 ? (
                 <p className={`mt-2 text-sm ${group.unreadCount ? "font-medium text-teal" : "text-stone-500"}`}>
                   {group.unreadCount

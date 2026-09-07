@@ -105,3 +105,34 @@ export function earliestPendingCreatedAt(weeks: { status: string; createdAt?: Da
     return at < earliest ? at : earliest;
   }, pending[0].createdAt!);
 }
+
+export const DECLINE_NOTE_LIMIT = 400;
+
+export function sanitizeDeclineNote(raw: string) {
+  return raw.trim().slice(0, DECLINE_NOTE_LIMIT);
+}
+
+export function canDeclinePending(args: { status: string; isCarer: boolean }) {
+  return args.isCarer && isPendingAcceptance(args.status);
+}
+
+export function firstDeclineNote(weeks: { declineNote?: string | null }[]) {
+  return weeks.find((week) => week.declineNote?.trim())?.declineNote?.trim() ?? null;
+}
+
+export function declineReasonNotice(args: {
+  note: string | null | undefined;
+  carerName: string;
+  isFamily: boolean;
+}) {
+  const note = (args.note ?? "").trim();
+  if (!note) return null;
+  return args.isFamily ? `${args.carerName} declined: “${note}”` : `You declined: “${note}”`;
+}
+
+export function declineReasonHint(args: { note: string | null | undefined; isFamily: boolean }) {
+  const note = (args.note ?? "").trim();
+  if (!note) return null;
+  const short = note.length > 140 ? `${note.slice(0, 137).trim()}…` : note;
+  return args.isFamily ? `The carer declined: “${short}”` : `You declined: “${short}”`;
+}

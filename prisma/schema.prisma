@@ -302,6 +302,8 @@ model Booking {
   disputedAt       DateTime?
   disputeReply     String?
   disputeRepliedAt DateTime?
+  declineNote      String?
+  declinedAt       DateTime?
   status           String
   recurringGroupId String?
   recurringIndex   Int       @default(1)

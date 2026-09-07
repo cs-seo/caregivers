@@ -12,6 +12,7 @@ import { findSeriesOverlap } from "./booking-overlap";
 import { BOOKING_STATUS, ROLES, UNPAID_BOOKING_STATUSES } from "./constants";
 import { isAcceptedDemoCard, readDemoCard } from "./demo-card";
 import { canWriteDisputeReply, sanitizeDisputeNote } from "./dispute";
+import { canDeclinePending, sanitizeDeclineNote } from "./pending-acceptance";
 import { autoReleaseIfDue, holdPayment, refundPayment, releasePayment } from "./escrow";
 import { parseSydneyDateTimeLocal, sydneyDateKey } from "./format";
 import { quoteBooking } from "./money";
@@ -340,30 +341,53 @@ export async function declineBookingAction(formData: FormData) {
   const user = await requireRole(ROLES.CAREGIVER);
   if (!user?.caregiverProfile) redirect("/login");
   const bookingId = String(formData.get("bookingId") ?? "");
+  const note = sanitizeDeclineNote(String(formData.get("declineNote") ?? ""));
   const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
   if (!booking || booking.caregiverId !== user.caregiverProfile.id) {
     throw new Error("Not allowed");
   }
+  if (!canDeclinePending({ status: booking.status, isCarer: true })) {
+    throw new Error("Booking is not waiting for you to accept");
+  }
+  if (!note) {
+    redirect(`/dashboard/bookings/${booking.id}?error=decline`);
+  }
   await prisma.booking.update({
     where: { id: booking.id },
-    data: { status: BOOKING_STATUS.CANCELLED },
+    data: { status: BOOKING_STATUS.CANCELLED, declineNote: note, declinedAt: new Date() },
   });
   revalidatePath("/dashboard");
+  revalidatePath(`/dashboard/bookings/${booking.id}`);
 }
 
 export async function declineSeriesAction(formData: FormData) {
   const user = await requireRole(ROLES.CAREGIVER);
   if (!user?.caregiverProfile) redirect("/login");
   const bookingId = String(formData.get("bookingId") ?? "");
+  const note = sanitizeDeclineNote(String(formData.get("declineNote") ?? ""));
   const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
   if (!booking || booking.caregiverId !== user.caregiverProfile.id || !booking.recurringGroupId) {
     throw new Error("Not allowed");
   }
+  const pendingWeek = await prisma.booking.findFirst({
+    where: {
+      recurringGroupId: booking.recurringGroupId,
+      caregiverId: user.caregiverProfile.id,
+      status: BOOKING_STATUS.PENDING_ACCEPTANCE,
+    },
+  });
+  if (!pendingWeek) {
+    throw new Error("Booking is not waiting for you to accept");
+  }
+  if (!note) {
+    redirect(`/dashboard/bookings/${booking.id}?error=decline`);
+  }
   await prisma.booking.updateMany({
     where: { recurringGroupId: booking.recurringGroupId, status: BOOKING_STATUS.PENDING_ACCEPTANCE },
-    data: { status: BOOKING_STATUS.CANCELLED },
+    data: { status: BOOKING_STATUS.CANCELLED, declineNote: note, declinedAt: new Date() },
   });
   revalidatePath("/dashboard");
+  revalidatePath(`/dashboard/bookings/${booking.id}`);
 }
 
 function isUnpaidStatus(status: string) {

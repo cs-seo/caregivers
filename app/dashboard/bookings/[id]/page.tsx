@@ -43,9 +43,13 @@ import {
   disputeReplyNotice,
 } from "@/lib/dispute";
 import {
+  DECLINE_NOTE_LIMIT,
+  canDeclinePending,
   carerPendingAcceptanceNotice,
+  declineReasonNotice,
   earliestPendingCreatedAt,
   familyPendingAcceptanceNotice,
+  firstDeclineNote,
   pendingAcceptanceCount,
   pendingSinceLabel,
 } from "@/lib/pending-acceptance";
@@ -114,6 +118,7 @@ export default async function BookingDetailPage({
           recurringTotal: true,
           totalCents: true,
           createdAt: true,
+          declineNote: true,
         },
       })
     : [];
@@ -153,6 +158,14 @@ export default async function BookingDetailPage({
     reply: booking.disputeReply,
     isCarer,
   });
+  const declineReason = declineReasonNotice({
+    note: firstDeclineNote(series.length ? series : [booking]),
+    carerName: booking.caregiver.user.name,
+    isFamily,
+  });
+  const showDeclineForm = canDeclinePending({ status: booking.status, isCarer });
+  const showDeclineSeries =
+    isCarer && series.some((week) => week.status === BOOKING_STATUS.PENDING_ACCEPTANCE);
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -234,6 +247,9 @@ export default async function BookingDetailPage({
       {pendingCopy ? (
         <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">{pendingCopy}</p>
       ) : null}
+      {declineReason ? (
+        <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">{declineReason}</p>
+      ) : null}
       {query.paid ? (
         <p className="mt-4 rounded-xl bg-sage p-3 text-sm">Payment collected and held in escrow.</p>
       ) : null}
@@ -249,6 +265,11 @@ export default async function BookingDetailPage({
       ) : null}
       {query.error === "dispute-reply" ? (
         <p className="mt-4 rounded-xl bg-clay/10 p-3 text-sm text-clay">Write a short reply before publishing.</p>
+      ) : null}
+      {query.error === "decline" ? (
+        <p className="mt-4 rounded-xl bg-clay/10 p-3 text-sm text-clay">
+          Write a short reason so the family can see why you cannot do this sit.
+        </p>
       ) : null}
       {query.released ? (
         <p className="mt-4 rounded-xl bg-sage p-3 text-sm">Funds released to the carer.</p>
@@ -320,16 +341,27 @@ export default async function BookingDetailPage({
               </li>
             ))}
           </ul>
-          {isCarer && series.some((week) => week.status === BOOKING_STATUS.PENDING_ACCEPTANCE) ? (
-            <div className="mt-4 flex flex-wrap gap-3">
+          {showDeclineSeries ? (
+            <div className="mt-4 space-y-3">
               <form action={acceptSeriesAction}>
                 <input type="hidden" name="bookingId" value={booking.id} />
                 <button className="rounded-lg bg-teal px-4 py-2 text-sm font-medium text-white" type="submit">
                   Accept every week
                 </button>
               </form>
-              <form action={declineSeriesAction}>
+              <form action={declineSeriesAction} className="space-y-2">
                 <input type="hidden" name="bookingId" value={booking.id} />
+                <label className="block text-xs text-stone-500">
+                  Reason for declining the series
+                  <textarea
+                    name="declineNote"
+                    rows={3}
+                    required
+                    maxLength={DECLINE_NOTE_LIMIT}
+                    placeholder="Hours, suburb, or why you cannot do these weeks."
+                    className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm text-ink"
+                  />
+                </label>
                 <button className="rounded-lg border border-line px-4 py-2 text-sm" type="submit">
                   Decline the series
                 </button>
@@ -412,7 +444,7 @@ export default async function BookingDetailPage({
       ) : null}
 
       <div className="mt-6 flex flex-wrap gap-3">
-        {isCarer && booking.status === BOOKING_STATUS.PENDING_ACCEPTANCE ? (
+        {showDeclineForm ? (
           <>
             <form action={acceptBookingAction}>
               <input type="hidden" name="bookingId" value={booking.id} />
@@ -420,8 +452,19 @@ export default async function BookingDetailPage({
                 Accept booking
               </button>
             </form>
-            <form action={declineBookingAction}>
+            <form action={declineBookingAction} className="min-w-[16rem] flex-1 space-y-2">
               <input type="hidden" name="bookingId" value={booking.id} />
+              <label className="block text-xs text-stone-500">
+                Reason for declining
+                <textarea
+                  name="declineNote"
+                  rows={3}
+                  required
+                  maxLength={DECLINE_NOTE_LIMIT}
+                  placeholder="Hours, suburb, or why you cannot do this sit."
+                  className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm text-ink"
+                />
+              </label>
               <button className="rounded-lg border border-line px-4 py-2 text-sm" type="submit">
                 Decline
               </button>

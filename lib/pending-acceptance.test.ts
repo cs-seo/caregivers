@@ -2,17 +2,22 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { BOOKING_STATUS } from "./constants";
 import {
+  canDeclinePending,
   carerPendingAcceptanceBanner,
   carerPendingAcceptanceHint,
   carerPendingAcceptanceNotice,
+  declineReasonHint,
+  declineReasonNotice,
   familyPendingAcceptanceBanner,
   familyPendingAcceptanceHint,
   familyPendingAcceptanceNotice,
   earliestPendingCreatedAt,
+  firstDeclineNote,
   isPendingAcceptance,
   pendingAcceptanceCount,
   pendingSinceDays,
   pendingSinceLabel,
+  sanitizeDeclineNote,
 } from "./pending-acceptance";
 
 test("isPendingAcceptance is only the request-to-book hold", () => {
@@ -155,4 +160,45 @@ test("earliestPendingCreatedAt uses the oldest waiting week", () => {
     ])?.toISOString(),
     first.toISOString(),
   );
+});
+
+test("sanitizeDeclineNote trims and caps length", () => {
+  assert.equal(sanitizeDeclineNote("  Saturday is already booked.  "), "Saturday is already booked.");
+  assert.equal(sanitizeDeclineNote("x".repeat(500)).length, 400);
+  assert.equal(sanitizeDeclineNote("   "), "");
+});
+
+test("canDeclinePending is only the carer on a waiting sit", () => {
+  assert.equal(canDeclinePending({ status: BOOKING_STATUS.PENDING_ACCEPTANCE, isCarer: true }), true);
+  assert.equal(canDeclinePending({ status: BOOKING_STATUS.PENDING_ACCEPTANCE, isCarer: false }), false);
+  assert.equal(canDeclinePending({ status: BOOKING_STATUS.AWAITING_PAYMENT, isCarer: true }), false);
+  assert.equal(canDeclinePending({ status: BOOKING_STATUS.CANCELLED, isCarer: true }), false);
+});
+
+test("declineReasonNotice quotes the carer reason for each side", () => {
+  const note = "I am already booked that evening.";
+  assert.equal(declineReasonNotice({ note: "", carerName: "Tess Okonkwo", isFamily: true }), null);
+  assert.equal(
+    declineReasonNotice({ note, carerName: "Tess Okonkwo", isFamily: true }),
+    "Tess Okonkwo declined: “I am already booked that evening.”",
+  );
+  assert.equal(
+    declineReasonNotice({ note, carerName: "Tess Okonkwo", isFamily: false }),
+    "You declined: “I am already booked that evening.”",
+  );
+});
+
+test("declineReasonHint shortens a long decline on the dashboard card", () => {
+  assert.equal(declineReasonHint({ note: "Already booked.", isFamily: true }), "The carer declined: “Already booked.”");
+  assert.equal(declineReasonHint({ note: "Already booked.", isFamily: false }), "You declined: “Already booked.”");
+  const long = `${"I am already booked that evening. ".repeat(8)}Ask me next Saturday.`;
+  const hinted = declineReasonHint({ note: long, isFamily: true });
+  assert.ok(hinted?.startsWith("The carer declined: “"));
+  assert.ok(hinted?.includes("…"));
+  assert.ok((hinted?.length ?? 0) < 180);
+});
+
+test("firstDeclineNote picks the first week that has a reason", () => {
+  assert.equal(firstDeclineNote([{ declineNote: null }, { declineNote: "  Already booked.  " }]), "Already booked.");
+  assert.equal(firstDeclineNote([{ declineNote: "" }]), null);
 });
