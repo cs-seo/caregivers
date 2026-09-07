@@ -140,6 +140,17 @@ test("canAttachJob only links an open request owned by the family", () => {
   assert.equal(canAttachJob(null, "alex"), false);
 });
 
+test("bookHref keeps a start clock when the family picks another free day", () => {
+  assert.equal(
+    bookHref("sarah-nguyen-aged-care-sydney", {
+      start: "2026-09-16",
+      at: "08:00",
+      job: "weekday-aged-care-marrickville",
+    }),
+    "/caregiver/sarah-nguyen-aged-care-sydney/book?start=2026-09-16&at=08:00&job=weekday-aged-care-marrickville",
+  );
+});
+
 test("bookHref keeps a safe job slug on error redirects", () => {
   assert.equal(
     bookHref("sarah-nguyen-aged-care-sydney", {

@@ -9,6 +9,8 @@ import {
   inviteButtonLabel,
   inviteStatusLabel,
   isSafeInviteReturnPath,
+  defaultInviteJobSlug,
+  invitableOpenJobs,
 } from "./job-invite";
 
 test("canInviteToJob only allows the family on an open request", () => {
@@ -64,6 +66,27 @@ test("isSafeInviteReturnPath stays on local marketplace pages", () => {
   );
   assert.equal(isSafeInviteReturnPath("/care-requests/weekday-aged-care-marrickville"), true);
   assert.equal(isSafeInviteReturnPath("/dashboard"), true);
+  assert.equal(isSafeInviteReturnPath("/dashboard/shortlist"), true);
   assert.equal(isSafeInviteReturnPath("https://evil.example/caregiver/x"), false);
   assert.equal(isSafeInviteReturnPath("//evil"), false);
+});
+
+test("invitableOpenJobs skips hired, proposed and already-invited requests", () => {
+  const jobs = [
+    { slug: "weekday-aged-care-marrickville", title: "Marrickville", familyId: "alex", status: "open" },
+    {
+      slug: "overnight-respite-adelaide",
+      title: "Norwood",
+      familyId: "alex",
+      status: "open",
+      existing: { status: INVITE_STATUS.PENDING },
+    },
+    { slug: "midweek-respite-leichhardt", title: "Leichhardt", familyId: "alex", status: "hired" },
+  ];
+  assert.deepEqual(
+    invitableOpenJobs(jobs, "alex").map((job) => job.slug),
+    ["weekday-aged-care-marrickville"],
+  );
+  assert.equal(defaultInviteJobSlug(jobs, "alex", "overnight-respite-adelaide"), "weekday-aged-care-marrickville");
+  assert.equal(defaultInviteJobSlug(jobs, "alex", "weekday-aged-care-marrickville"), "weekday-aged-care-marrickville");
 });

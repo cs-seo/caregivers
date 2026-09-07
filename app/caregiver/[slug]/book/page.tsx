@@ -116,7 +116,12 @@ export default async function BookPage({
         <p className="text-sm font-medium text-ink">Pick a free day</p>
         <p className="mt-1 text-xs text-stone-500">This month and next. Away, closed and booked days cannot be selected.</p>
         <div className="mt-3">
-          <DaysOffCalendar days={upcoming} bookSlug={carer.slug} bookJob={job?.slug} />
+          <DaysOffCalendar
+            days={upcoming}
+            bookSlug={carer.slug}
+            bookJob={job?.slug}
+            bookAt={startClock || undefined}
+          />
         </div>
       </div>
       {checkAlerts.length ? (

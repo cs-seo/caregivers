@@ -64,6 +64,26 @@ export function isSafeInviteReturnPath(path: string) {
     path.startsWith("/caregivers") ||
     path.startsWith("/care-requests/") ||
     path === "/dashboard" ||
-    path.startsWith("/dashboard?")
+    path.startsWith("/dashboard?") ||
+    path.startsWith("/dashboard/shortlist")
   );
+}
+
+export type InviteJobOption = {
+  slug: string;
+  title: string;
+  familyId: string;
+  status: string;
+  existing?: { status: string } | null;
+  proposed?: boolean;
+};
+
+export function invitableOpenJobs<T extends InviteJobOption>(jobs: T[], familyId: string) {
+  return jobs.filter((job) => canCreateInvite(job, familyId, job.existing, job.proposed));
+}
+
+export function defaultInviteJobSlug(jobs: InviteJobOption[], familyId: string, preferred?: string) {
+  const open = invitableOpenJobs(jobs, familyId);
+  if (preferred && open.some((job) => job.slug === preferred)) return preferred;
+  return open[0]?.slug ?? "";
 }

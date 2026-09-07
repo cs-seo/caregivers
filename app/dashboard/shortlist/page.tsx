@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Badge, CredentialBadges } from "@/components/badges";
 import { CaregiverCardView } from "@/components/caregiver-card";
+import { InviteJobPicker } from "@/components/invite-job-picker";
 import { fortnightLabel, isInstantBookLive, summariseFortnight } from "@/lib/availability";
 import { formatAud } from "@/lib/money";
 import { caregiverCardInclude, getUpcomingAvailability, withTrust } from "@/lib/queries";
@@ -33,6 +34,18 @@ export default async function ShortlistPage() {
     carers.map(async (carer) => [carer.id, summariseFortnight(await getUpcomingAvailability(carer.id))] as const),
   );
   const availability = new Map(fortnights);
+  const openJobs = await prisma.careRequest.findMany({
+    where: { familyId: user.id, status: "open" },
+    select: {
+      slug: true,
+      title: true,
+      familyId: true,
+      status: true,
+      proposals: { select: { caregiverId: true } },
+      invites: { select: { caregiverId: true, status: true } },
+    },
+    orderBy: { startDate: "asc" },
+  });
 
   return (
     <div>
@@ -44,7 +57,8 @@ export default async function ShortlistPage() {
       <h1 className="mt-3 text-3xl font-semibold text-ink">Your shortlist</h1>
       <p className="mt-2 max-w-2xl text-stone-600">
         Save carers from the directory, compare rates, checks and who is free in the next fortnight, then Instant Book
-        the one who fits. This is the family-side equivalent of an agency roster — yours to keep.
+        or invite them to one of your open requests. This is the family-side equivalent of an agency roster — yours to
+        keep.
       </p>
 
       {carers.length === 0 ? (
@@ -69,6 +83,7 @@ export default async function ShortlistPage() {
                     <th className="px-4 py-3 font-medium">Next 14 days</th>
                     <th className="px-4 py-3 font-medium">Checks</th>
                     <th className="px-4 py-3 font-medium">Book</th>
+                    <th className="px-4 py-3 font-medium">Invite</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -114,6 +129,22 @@ export default async function ShortlistPage() {
                             : "Request"}
                         </Link>
                       </td>
+                      <td className="px-4 py-3">
+                        <InviteJobPicker
+                          caregiverId={carer.id}
+                          jobs={openJobs.map((job) => ({
+                            slug: job.slug,
+                            title: job.title,
+                            familyId: job.familyId,
+                            status: job.status,
+                            existing: job.invites.find((invite) => invite.caregiverId === carer.id) ?? null,
+                            proposed: job.proposals.some((proposal) => proposal.caregiverId === carer.id),
+                          }))}
+                          familyId={user.id}
+                          next="/dashboard/shortlist"
+                          signedIn
+                        />
+                      </td>
                     </tr>
                     );
                   })}
@@ -146,6 +177,21 @@ export default async function ShortlistPage() {
                 <Link href={`/caregiver/${carer.slug}/book`} className="inline-block text-sm text-teal">
                   Book {carer.user.name}
                 </Link>
+                <InviteJobPicker
+                  caregiverId={carer.id}
+                  caregiverName={carer.user.name}
+                  jobs={openJobs.map((job) => ({
+                    slug: job.slug,
+                    title: job.title,
+                    familyId: job.familyId,
+                    status: job.status,
+                    existing: job.invites.find((invite) => invite.caregiverId === carer.id) ?? null,
+                    proposed: job.proposals.some((proposal) => proposal.caregiverId === carer.id),
+                  }))}
+                  familyId={user.id}
+                  next="/dashboard/shortlist"
+                  signedIn
+                />
               </div>
             ))}
           </div>
