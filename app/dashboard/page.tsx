@@ -14,6 +14,7 @@ import { formatDateTime, plural, snippet } from "@/lib/format";
 import { buildRoster } from "@/lib/roster";
 import { formatAud } from "@/lib/money";
 import { deleteSavedSearchAction } from "@/lib/actions";
+import { comingUpBookings, comingUpKind } from "@/lib/coming-up";
 import { unreadCountsByBooking } from "@/lib/messages";
 import { australianFinancialYear, statementTotals, toStatementRows } from "@/lib/statement";
 import { profileChecklist } from "@/lib/profile";
@@ -167,6 +168,8 @@ export default async function DashboardPage({
     : [];
 
   const { action: needsAction, active, history } = groupDashboardBookings(groupedSource);
+  const comingUp = comingUpBookings(bookings).slice(0, 4);
+  const comingUpLabel = { now: "Happening now", soon: "Starts soon", week: "This week" } as const;
   const escrowStatuses = new Set<string>([
     BOOKING_STATUS.ESCROW_HELD,
     BOOKING_STATUS.IN_PROGRESS,
@@ -272,6 +275,37 @@ export default async function DashboardPage({
           </p>
         </div>
       </section>
+
+      {comingUp.length ? (
+        <section className="mt-6 rounded-2xl border border-line bg-card p-5">
+          <h2 className="font-semibold text-ink">Coming up</h2>
+          <p className="mt-1 text-sm text-stone-600">
+            {isFamily
+              ? "Sits in progress or starting in the next 7 days. Open the thread for keys, parking or handover notes."
+              : "Your next sits. Confirm access notes before you travel."}
+          </p>
+          <ul className="mt-4 space-y-3">
+            {comingUp.map((booking) => (
+              <li key={booking.id} className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <Link href={`/dashboard/bookings/${booking.id}`} className="font-medium text-ink hover:text-teal">
+                    {booking.specialty.name} with {isFamily ? booking.caregiver.user.name : booking.family.name}
+                  </Link>
+                  <p className="text-sm text-stone-500">{formatDateTime(booking.startAt)}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Badge tone={comingUpKind(booking) === "now" ? "clay" : "sage"}>
+                    {comingUpLabel[comingUpKind(booking)]}
+                  </Badge>
+                  <Link href={`/dashboard/bookings/${booking.id}`} className="text-sm text-teal">
+                    Handover
+                  </Link>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <section className="mt-6 rounded-2xl border border-line bg-card p-5">
         <div className="flex flex-wrap items-end justify-between gap-2">

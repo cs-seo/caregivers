@@ -19,6 +19,7 @@ import {
 } from "@/lib/actions";
 import { BOOKING_STATUS, BOOKING_STATUS_LABELS, UNPAID_BOOKING_STATUSES } from "@/lib/constants";
 import { autoReleaseIfDue } from "@/lib/escrow";
+import { comingUpKind, isComingUp } from "@/lib/coming-up";
 import { formatDateTime } from "@/lib/format";
 import { isUnreadFor, markThreadRead } from "@/lib/messages";
 import { formatAud } from "@/lib/money";
@@ -87,6 +88,13 @@ export default async function BookingDetailPage({
         {isFamily ? booking.caregiver.user.name : booking.family.name} · {formatDateTime(booking.startAt)} –{" "}
         {formatDateTime(booking.endAt)} · {booking.hours} hours
       </p>
+      {isComingUp(booking) ? (
+        <p className="mt-3 rounded-xl bg-sage p-3 text-sm text-teal-deep">
+          {comingUpKind(booking) === "now"
+            ? "This sit is underway. Confirm completion or raise a dispute from the actions below."
+            : "This sit is coming up. Use Messages for keys, parking or handover notes."}
+        </p>
+      ) : null}
       <div className="mt-3 flex flex-wrap gap-2">
         {booking.recurringTotal > 1 ? (
           <Badge tone="clay">

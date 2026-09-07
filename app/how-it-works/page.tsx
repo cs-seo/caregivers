@@ -45,6 +45,10 @@ const faqs = [
     q: "Can I save a search for later?",
     a: "Yes. On any directory page, families can save the current filters — specialty, suburb, Needed on, Instant Book or checks. Open the search again from the dashboard.",
   },
+  {
+    q: "How do I prepare for an upcoming sit?",
+    a: "The dashboard Coming up list shows sits in progress or starting in the next 7 days. Open Handover to leave keys, parking or allergy notes on the private thread.",
+  },
 ];
 
 export default function HowItWorksPage() {
