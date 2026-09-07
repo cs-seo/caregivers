@@ -28,6 +28,7 @@ import { formatDateTime } from "@/lib/format";
 import { isUnreadFor, markThreadRead } from "@/lib/messages";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
+import { familyPendingAcceptanceNotice, pendingAcceptanceCount } from "@/lib/pending-acceptance";
 import { canReplyToReview } from "@/lib/reviews";
 import { requireUser } from "@/lib/session";
 import { pageMeta } from "@/lib/seo";
@@ -93,6 +94,14 @@ export default async function BookingDetailPage({
   );
   const cancelledWeeks = series.length - liveWeeks.length;
   const seriesTotalCents = liveWeeks.reduce((sum, week) => sum + week.totalCents, 0);
+  const pendingWeeks = pendingAcceptanceCount(series.length ? series : [booking]);
+  const pendingNotice = isFamily
+    ? familyPendingAcceptanceNotice({
+        carerName: booking.caregiver.user.name,
+        pendingWeeks,
+        seriesTotal: booking.recurringTotal,
+      })
+    : null;
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -132,6 +141,9 @@ export default async function BookingDetailPage({
         ) : null}
         <Badge tone="teal">{BOOKING_STATUS_LABELS[booking.status] ?? booking.status}</Badge>
       </div>
+      {pendingNotice ? (
+        <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">{pendingNotice}</p>
+      ) : null}
       {query.paid ? (
         <p className="mt-4 rounded-xl bg-sage p-3 text-sm">Payment collected and held in escrow.</p>
       ) : null}

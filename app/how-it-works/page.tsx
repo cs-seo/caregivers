@@ -15,7 +15,7 @@ const faqs = [
   },
   {
     q: "When is the carer paid?",
-    a: "Never up front. After the carer accepts a request-to-book sit, the family pays into escrow with a card. This demo has no live Stripe keys — use Visa 4242 4242 4242 4242, any expiry in this month or later, and any 3-digit CVC. CareProof holds the funds and releases them after you confirm — or automatically 72 hours after the booking ends if there is no dispute. Instant Book still collects on the book page.",
+    a: "Never up front. After the carer accepts a request-to-book sit, the family pays into escrow with a card. Until they accept, the family dashboard and the sit show that you are waiting — you cannot pay yet, and you can cancel unpaid weeks if you need to withdraw. This demo has no live Stripe keys — use Visa 4242 4242 4242 4242, any expiry in this month or later, and any 3-digit CVC. CareProof holds the funds and releases them after you confirm — or automatically 72 hours after the booking ends if there is no dispute. Instant Book still collects on the book page.",
   },
   {
     q: "What makes a carer verified?",
@@ -98,7 +98,7 @@ export default function HowItWorksPage() {
           <h2 className="text-xl font-semibold">3. Book in a few steps</h2>
           <p className="mt-2 text-stone-600">
             Instant Book pays into escrow immediately if the start is outside the carer’s notice window. A sit that
-            starts too soon becomes a request to book instead. Days off pause Instant Book for that calendar day in
+            starts too soon becomes a request to book instead — the family waits for the carer to accept before paying. Days off pause Instant Book for that calendar day in
             Australia/Sydney. Usual weekly hours close weekdays the carer does not work, so a start time has to fall
             inside a window. Job posts collect proposals you can hire with one click — add a welcome note so the carer
             sees gate, parking or the first-morning plan on the booking. Browse matches from a request

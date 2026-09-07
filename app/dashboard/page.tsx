@@ -29,6 +29,11 @@ import { formatJobStart, jobDirectoryFilters, jobDirectoryHref, matchingJobs } f
 import { buildRoster, canToggleRosterAway } from "@/lib/roster";
 import { formatAud } from "@/lib/money";
 import {
+  familyPendingAcceptanceBanner,
+  familyPendingAcceptanceHint,
+  pendingAcceptanceCount,
+} from "@/lib/pending-acceptance";
+import {
   declineInviteAction,
   deleteSavedSearchAction,
   toggleInviteAlertsAction,
@@ -125,6 +130,11 @@ function BookingList({
                   <a href={`${group.href}/ics?series=1`} className="text-teal hover:underline">
                     Calendar
                   </a>
+                </p>
+              ) : null}
+              {isFamily && pendingAcceptanceCount(group.weeks) > 0 ? (
+                <p className="mt-2 text-sm text-stone-600">
+                  {familyPendingAcceptanceHint(pendingAcceptanceCount(group.weeks))}
                 </p>
               ) : null}
               {group.messageCount > 0 ? (
@@ -276,6 +286,16 @@ export default async function DashboardPage({
   }).length;
 
   const { action: needsAction, active, history } = groupDashboardBookings(groupedSource);
+  const pendingAcceptanceItems = isFamily
+    ? needsAction
+        .map((group) => ({
+          carerName: group.caregiverName,
+          pendingWeeks: pendingAcceptanceCount(group.weeks),
+          href: group.href,
+        }))
+        .filter((item) => item.pendingWeeks > 0)
+    : [];
+  const pendingAcceptanceCopy = familyPendingAcceptanceBanner(pendingAcceptanceItems);
   const comingUp = comingUpBookings(bookings).slice(0, 4);
   const comingUpLabel = { now: "Happening now", soon: "Starts soon", week: "This week" } as const;
   const escrowStatuses = new Set<string>([
@@ -433,6 +453,14 @@ export default async function DashboardPage({
       {unrepliedReviews.length > 0 ? (
         <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
           {plural(unrepliedReviews.length, "review")} waiting for a public reply.
+        </p>
+      ) : null}
+      {pendingAcceptanceCopy && pendingAcceptanceItems[0] ? (
+        <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
+          {pendingAcceptanceCopy}{" "}
+          <Link href={pendingAcceptanceItems[0].href} className="font-medium text-teal">
+            {pendingAcceptanceItems.length === 1 ? "Open the sit" : "Open the first sit"}
+          </Link>
         </p>
       ) : null}
       {reviewsDue.length > 0 ? (
