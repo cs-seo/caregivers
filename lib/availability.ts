@@ -19,6 +19,25 @@ export function defaultWeeklyHours(specialties: string[]) {
   return "Mon–Fri 9am–5pm";
 }
 
+export function summariseFortnight(days: { key: string; booked: boolean; blocked: boolean }[]) {
+  const free = days.filter((day) => !day.booked && !day.blocked);
+  const booked = days.filter((day) => day.booked);
+  const away = days.filter((day) => day.blocked && !day.booked);
+  return {
+    free: free.length,
+    booked: booked.length,
+    away: away.length,
+    nextFree: free[0]?.key ?? null,
+  };
+}
+
+export function fortnightLabel(summary: ReturnType<typeof summariseFortnight>) {
+  const parts = [`${summary.free} free`];
+  if (summary.booked) parts.push(`${summary.booked} booked`);
+  if (summary.away) parts.push(`${summary.away} away`);
+  return parts.join(" · ");
+}
+
 export function weeklyHourChips(weeklyHours?: string | null) {
   if (!weeklyHours) return [];
   return weeklyHours

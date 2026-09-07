@@ -2,8 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Badge, CredentialBadges } from "@/components/badges";
 import { CaregiverCardView } from "@/components/caregiver-card";
+import { fortnightLabel, summariseFortnight } from "@/lib/availability";
 import { formatAud } from "@/lib/money";
-import { caregiverCardInclude, withTrust } from "@/lib/queries";
+import { caregiverCardInclude, getUpcomingAvailability, withTrust } from "@/lib/queries";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
 import { pageMeta } from "@/lib/seo";
@@ -28,6 +29,10 @@ export default async function ShortlistPage() {
     },
   });
   const carers = saved.map((row) => withTrust(row.caregiver));
+  const fortnights = await Promise.all(
+    carers.map(async (carer) => [carer.id, summariseFortnight(await getUpcomingAvailability(carer.id))] as const),
+  );
+  const availability = new Map(fortnights);
 
   return (
     <div>
@@ -38,8 +43,8 @@ export default async function ShortlistPage() {
       </p>
       <h1 className="mt-3 text-3xl font-semibold text-ink">Your shortlist</h1>
       <p className="mt-2 max-w-2xl text-stone-600">
-        Save carers from the directory, compare rates and checks, then Instant Book the one who fits. This is the
-        family-side equivalent of an agency roster — yours to keep.
+        Save carers from the directory, compare rates, checks and who is free in the next fortnight, then Instant Book
+        the one who fits. This is the family-side equivalent of an agency roster — yours to keep.
       </p>
 
       {carers.length === 0 ? (
@@ -61,12 +66,15 @@ export default async function ShortlistPage() {
                     <th className="px-4 py-3 font-medium">Rate</th>
                     <th className="px-4 py-3 font-medium">Experience</th>
                     <th className="px-4 py-3 font-medium">Usual hours</th>
+                    <th className="px-4 py-3 font-medium">Next 14 days</th>
                     <th className="px-4 py-3 font-medium">Checks</th>
                     <th className="px-4 py-3 font-medium">Book</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {carers.map((carer) => (
+                  {carers.map((carer) => {
+                    const fortnight = availability.get(carer.id)!;
+                    return (
                     <tr key={carer.id} className="border-t border-line">
                       <td className="px-4 py-3">
                         <Link href={`/caregiver/${carer.slug}`} className="font-medium text-ink hover:text-teal">
@@ -80,6 +88,19 @@ export default async function ShortlistPage() {
                       <td className="px-4 py-3 font-medium text-teal">{formatAud(carer.hourlyRateCents)}/hr</td>
                       <td className="px-4 py-3 text-stone-600">{carer.yearsExperience} yrs</td>
                       <td className="px-4 py-3 text-stone-600">{carer.weeklyHours ?? "Ask when you book"}</td>
+                      <td className="px-4 py-3 text-stone-600">
+                        {fortnightLabel(fortnight)}
+                        {fortnight.nextFree ? (
+                          <Link
+                            href={`/caregiver/${carer.slug}/book?start=${fortnight.nextFree}`}
+                            className="mt-1 block text-xs text-teal hover:underline"
+                          >
+                            Next free day
+                          </Link>
+                        ) : (
+                          <span className="mt-1 block text-xs text-stone-400">No free day this fortnight</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3">
                         <CredentialBadges credentials={carer.credentials} abn={carer.abn} />
                       </td>
@@ -89,7 +110,8 @@ export default async function ShortlistPage() {
                         </Link>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </section>
@@ -102,6 +124,20 @@ export default async function ShortlistPage() {
                   caregiver={carer}
                   shortlist={{ saved: true, signedIn: true, next: "/dashboard/shortlist" }}
                 />
+                <p className="text-sm text-stone-600">
+                  Next 14 days: {fortnightLabel(availability.get(carer.id)!)}
+                  {availability.get(carer.id)?.nextFree ? (
+                    <>
+                      {" · "}
+                      <Link
+                        href={`/caregiver/${carer.slug}/book?start=${availability.get(carer.id)!.nextFree}`}
+                        className="text-teal"
+                      >
+                        Book the next free day
+                      </Link>
+                    </>
+                  ) : null}
+                </p>
                 <Link href={`/caregiver/${carer.slug}/book`} className="inline-block text-sm text-teal">
                   Book {carer.user.name}
                 </Link>
