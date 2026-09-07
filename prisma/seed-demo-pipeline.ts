@@ -2,6 +2,8 @@ import { PrismaClient } from "@prisma/client";
 import { BOOKING_STATUS } from "../lib/constants";
 import { DEMO_PORTRAITS } from "../lib/photos";
 import { invoiceNumberMap, STATEMENT_STATUSES, australianFinancialYear } from "../lib/statement";
+import { parseSydneyDateTimeLocal } from "../lib/format";
+import { isUtcDateOnly } from "../lib/job-match";
 import { formatWeeklyHours, parseWeeklyHours } from "../lib/weekly-windows";
 
 export async function seedDemoPipeline(prisma: PrismaClient) {
@@ -548,6 +550,25 @@ export async function seedDemoWeeklyWindows(prisma: PrismaClient) {
   return updated;
 }
 
+export async function seedDemoJobStarts(prisma: PrismaClient) {
+  const times: Record<string, Date> = {
+    "weekday-aged-care-marrickville": parseSydneyDateTimeLocal("2026-09-15T08:00"),
+    "after-school-nanny-brunswick": parseSydneyDateTimeLocal("2026-09-22T15:20"),
+    "ndis-weekend-community-access-brisbane": parseSydneyDateTimeLocal("2026-09-20T10:00"),
+    "overnight-respite-adelaide": parseSydneyDateTimeLocal("2026-09-18T18:00"),
+    "saturday-babysitter-sydney": parseSydneyDateTimeLocal("2026-09-12T18:00"),
+  };
+  let updated = 0;
+  for (const [slug, startDate] of Object.entries(times)) {
+    const job = await prisma.careRequest.findUnique({ where: { slug } });
+    if (!job) continue;
+    if (!isUtcDateOnly(job.startDate) && job.startDate.getTime() === startDate.getTime()) continue;
+    await prisma.careRequest.update({ where: { slug }, data: { startDate } });
+    updated += 1;
+  }
+  return updated;
+}
+
 export async function seedDemoSavedSearches(prisma: PrismaClient) {
   const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
   if (!family) return 0;
@@ -615,8 +636,9 @@ async function main() {
   const portraits = await seedDemoPortraits(prisma);
   const weekly = await seedDemoWeeklyWindows(prisma);
   const notice = await seedDemoNoticeHours(prisma);
+  const jobStarts = await seedDemoJobStarts(prisma);
   console.log(
-    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}; notice ${notice}`,
+    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}; notice ${notice}; jobStarts ${jobStarts}`,
   );
   await prisma.$disconnect();
 }

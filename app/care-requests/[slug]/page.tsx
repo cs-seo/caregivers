@@ -4,8 +4,7 @@ import { auth } from "@/auth";
 import { Badge } from "@/components/badges";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { createProposalAction, hireProposalAction } from "@/lib/actions";
-import { formatDate } from "@/lib/format";
-import { jobFitsCarer, jobMissLabel, jobMissReason } from "@/lib/job-match";
+import { formatJobStart, jobFitsCarer, jobMissLabel, jobMissReason } from "@/lib/job-match";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { pageMeta } from "@/lib/seo";
@@ -84,12 +83,12 @@ export default async function CareRequestPage({
           {matchCarer ? <Badge tone={fit ? "teal" : "stone"}>{jobMissLabel(miss)}</Badge> : null}
         </div>
         <p className="mt-2 text-stone-600">
-          {job.specialty.name} · {job.city.name}, {job.city.state.abbrev} · starts {formatDate(job.startDate)}
+          {job.specialty.name} · {job.city.name}, {job.city.state.abbrev} · starts {formatJobStart(job.startDate)}
         </p>
         {matchCarer ? (
           <p className={`mt-3 text-sm ${fit ? "text-teal-deep" : "text-stone-600"}`}>
             {fit
-              ? "This start day is in your city, one of your specialties, and inside your usual weekly hours."
+              ? "This start time is in your city, one of your specialties, and inside your usual weekly hours."
               : `${jobMissLabel(miss)}. You can still send a proposal if the family is flexible.`}
           </p>
         ) : null}

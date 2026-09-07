@@ -47,7 +47,7 @@ const faqs = [
   },
   {
     q: "Which care requests should a carer propose on?",
-    a: "CareProof marks jobs that match your city, specialties and usual weekly hours. Days you marked away and weekdays your roster is closed are skipped. The board can show only jobs that fit, and the carer dashboard lists those matches so you are not reading every post in another state. You can still propose on a mismatch if the family is flexible.",
+    a: "CareProof marks jobs that match your city, specialties and usual weekly hours, including the start clock time the family set. A Saturday 6pm sit does not fit a carer who only works Saturday mornings. Days you marked away and weekdays your roster is closed are skipped. The board can show only jobs that fit, and the carer dashboard lists those matches so you are not reading every post in another state. You can still propose on a mismatch if the family is flexible.",
   },
   {
     q: "How do I prepare for an upcoming sit?",

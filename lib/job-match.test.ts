@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { jobFitsCarer, jobMissLabel, jobMissReason, matchingJobs } from "./job-match";
+import { parseSydneyDateTimeLocal } from "./format";
+import { formatJobStart, isUtcDateOnly, jobFitsCarer, jobMissLabel, jobMissReason, matchingJobs } from "./job-match";
 import { parseWeeklyHours } from "./weekly-windows";
 
 const sarah = {
@@ -50,4 +51,36 @@ test("empty weekly hours stay unspecified and still fit a Saturday", () => {
   const openRoster = { cityId: "sydney", specialtyIds: ["aged-care"], windows: [] };
   const saturday = { cityId: "sydney", specialtyId: "aged-care", startDate: new Date("2026-09-12T00:00:00.000Z") };
   assert.equal(jobMissReason(saturday, openRoster), null);
+});
+
+test("a timed Saturday evening sit misses Priya's morning window", () => {
+  const priya = {
+    cityId: "sydney",
+    specialtyIds: ["babysitters", "nannies"],
+    windows: parseWeeklyHours("Mon–Fri 3pm–7pm · Sat mornings"),
+  };
+  const tess = {
+    cityId: "sydney",
+    specialtyIds: ["babysitters"],
+    windows: parseWeeklyHours("Thu–Sun 5pm–midnight"),
+  };
+  const bondi = {
+    cityId: "sydney",
+    specialtyId: "babysitters",
+    startDate: parseSydneyDateTimeLocal("2026-09-12T18:00"),
+  };
+  assert.equal(isUtcDateOnly(bondi.startDate), false);
+  assert.equal(jobMissReason(bondi, priya), "hours");
+  assert.equal(jobMissReason(bondi, tess), null);
+  assert.equal(formatJobStart(bondi.startDate), "12 Sept 2026, 6:00 pm");
+});
+
+test("a timed Tuesday morning sit still fits Sarah", () => {
+  const job = {
+    cityId: "sydney",
+    specialtyId: "aged-care",
+    startDate: parseSydneyDateTimeLocal("2026-09-15T08:00"),
+  };
+  assert.equal(jobMissReason(job, sarah), null);
+  assert.equal(formatJobStart(job.startDate), "15 Sept 2026, 8:00 am");
 });

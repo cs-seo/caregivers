@@ -467,10 +467,12 @@ export async function createCareRequestAction(formData: FormData) {
   const specialtyId = String(formData.get("specialtyId") ?? "");
   const cityId = String(formData.get("cityId") ?? "");
   const budgetCents = Math.round(Number(formData.get("budget")) * 100);
-  const startDate = new Date(String(formData.get("startDate") ?? ""));
+  const dateKey = String(formData.get("startDate") ?? "");
+  const clock = String(formData.get("startAt") ?? "08:00");
+  const startDate = parseSydneyDateTimeLocal(`${dateKey}T${clock}`);
   const hoursEstimate = Number(formData.get("hoursEstimate") ?? 0);
 
-  if (!title || !description || !specialtyId || !cityId || !budgetCents) {
+  if (!title || !description || !specialtyId || !cityId || !budgetCents || Number.isNaN(startDate.getTime())) {
     redirect("/post-a-job?error=invalid");
   }
 

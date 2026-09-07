@@ -1,5 +1,5 @@
-import { sydneyDateKey } from "./format";
-import { isDateClosed, type WeeklyWindow } from "./weekly-windows";
+import { formatDate, formatDateTime, sydneyDateKey } from "./format";
+import { isDateClosed, isOpenAtMinutes, sydneyMinutes, type WeeklyWindow } from "./weekly-windows";
 
 export type JobMatchCarer = {
   cityId: string;
@@ -23,13 +23,30 @@ export const JOB_MISS = {
 
 export type JobMiss = keyof typeof JOB_MISS;
 
+export function isUtcDateOnly(value: Date) {
+  return (
+    value.getUTCHours() === 0 &&
+    value.getUTCMinutes() === 0 &&
+    value.getUTCSeconds() === 0 &&
+    value.getUTCMilliseconds() === 0
+  );
+}
+
+export function formatJobStart(value: Date) {
+  return isUtcDateOnly(value) ? formatDate(value) : formatDateTime(value);
+}
+
 export function jobMissReason(job: JobMatchJob, carer: JobMatchCarer): JobMiss | null {
   if (job.cityId !== carer.cityId) return "city";
   if (carer.specialtyIds.length && !carer.specialtyIds.includes(job.specialtyId)) return "specialty";
   const dateKey = sydneyDateKey(job.startDate);
   const blocked = carer.blockedKeys instanceof Set ? carer.blockedKeys : new Set(carer.blockedKeys ?? []);
   if (blocked.has(dateKey)) return "away";
-  if (isDateClosed(carer.windows, dateKey)) return "hours";
+  if (isUtcDateOnly(job.startDate)) {
+    if (isDateClosed(carer.windows, dateKey)) return "hours";
+    return null;
+  }
+  if (!isOpenAtMinutes(carer.windows, dateKey, sydneyMinutes(job.startDate))) return "hours";
   return null;
 }
 

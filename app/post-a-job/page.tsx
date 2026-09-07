@@ -72,6 +72,13 @@ export default async function PostJobPage({
             <input name="startDate" type="date" required className="mt-1 w-full rounded-lg border border-line px-3 py-2" />
           </label>
           <label className="block text-sm">
+            Start time
+            <input name="startAt" type="time" required defaultValue="08:00" className="mt-1 w-full rounded-lg border border-line px-3 py-2" />
+            <span className="mt-1 block text-xs text-stone-500">
+              Carers see whether this clock time falls inside their usual weekly hours.
+            </span>
+          </label>
+          <label className="block text-sm">
             Hourly budget (AUD)
             <input name="budget" type="number" min={25} step={1} required className="mt-1 w-full rounded-lg border border-line px-3 py-2" />
           </label>

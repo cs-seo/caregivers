@@ -2,8 +2,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { Badge } from "@/components/badges";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { formatDate } from "@/lib/format";
-import { jobFitsCarer, jobMissLabel, jobMissReason } from "@/lib/job-match";
+import { formatJobStart, jobFitsCarer, jobMissLabel, jobMissReason } from "@/lib/job-match";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { pageMeta } from "@/lib/seo";
@@ -110,7 +109,7 @@ export default async function CareRequestsPage({
                 ) : null}
               </div>
               <p className="mt-1 text-sm text-stone-600">
-                {job.specialty.name} · {job.city.name}, {job.city.state.abbrev} · from {formatDate(job.startDate)}
+                {job.specialty.name} · {job.city.name}, {job.city.state.abbrev} · from {formatJobStart(job.startDate)}
               </p>
               <p className="mt-2 line-clamp-2 text-sm text-stone-700">{job.description}</p>
               <p className="mt-3 text-sm text-stone-500">

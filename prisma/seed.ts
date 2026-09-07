@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { featuredCarers } from "./data/featured-carers";
 import { generateCarers } from "./data/generate-carers";
 import { SUBURBS_BY_CITY, slugifySuburb } from "./data/suburbs";
+import { parseSydneyDateTimeLocal } from "../lib/format";
 import { insertCarer } from "./insert-carer";
 import {
   seedDemoBlockedDates,
@@ -19,6 +20,7 @@ import {
   seedDemoWeeklyWindows,
   seedDemoNoticeHours,
   seedDemoSavedSearches,
+  seedDemoJobStarts,
   seedDemoUnreadMessages,
 } from "./seed-demo-pipeline";
 
@@ -390,7 +392,7 @@ async function main() {
           "Looking for a verified carer 3 mornings a week (Mon/Wed/Fri, 8am–12pm) to help with showering, breakfast and a short walk. Mum is 82, mobile with a stick, and likes a quiet routine. WWCC not required; aged care screening and police check preferred.",
         budgetType: "hourly",
         budgetCents: 6500,
-        startDate: new Date("2026-09-15"),
+        startDate: parseSydneyDateTimeLocal("2026-09-15T08:00"),
         hoursEstimate: 12,
         status: "open",
       },
@@ -406,7 +408,7 @@ async function main() {
           "Pick-up from Brunswick South Primary at 3.20pm, homework, snacks and dinner by 6.30pm. Tuesday–Thursday. WWCC Victoria essential. Our kids are 6 and 8.",
         budgetType: "hourly",
         budgetCents: 4400,
-        startDate: new Date("2026-09-22"),
+        startDate: parseSydneyDateTimeLocal("2026-09-22T15:20"),
         hoursEstimate: 10,
         status: "open",
       },
@@ -422,7 +424,7 @@ async function main() {
           "Saturday community access for my brother (26, intellectual disability). Bowling, markets or a swim, then home. NDIS screening and Blue Card required. Own reliable car preferred.",
         budgetType: "hourly",
         budgetCents: 5400,
-        startDate: new Date("2026-09-20"),
+        startDate: parseSydneyDateTimeLocal("2026-09-20T10:00"),
         hoursEstimate: 6,
         status: "open",
       },
@@ -438,7 +440,7 @@ async function main() {
           "Need two overnight sits so I can stay with family interstate. Client is 79, lives alone, no overnight behaviours of concern. Must have aged care screening.",
         budgetType: "hourly",
         budgetCents: 4800,
-        startDate: new Date("2026-09-18"),
+        startDate: parseSydneyDateTimeLocal("2026-09-18T18:00"),
         hoursEstimate: 16,
         status: "open",
       },
@@ -454,7 +456,7 @@ async function main() {
           "Two children (4 and 7), 6pm–11pm most Saturdays. Dinner is leftover, bedtime 7.30/8. WWCC required.",
         budgetType: "hourly",
         budgetCents: 4000,
-        startDate: new Date("2026-09-12"),
+        startDate: parseSydneyDateTimeLocal("2026-09-12T18:00"),
         hoursEstimate: 5,
         status: "open",
       },
@@ -737,8 +739,9 @@ async function main() {
   const portraits = await seedDemoPortraits(prisma);
   const weekly = await seedDemoWeeklyWindows(prisma);
   const notice = await seedDemoNoticeHours(prisma);
+  const jobStarts = await seedDemoJobStarts(prisma);
   console.log(
-    `Seeded ${carerProfiles.length} featured carers + ${generatedCount} generated profiles, ${familyUsers.length} families, ${requests.length} jobs, ${suburbCount} suburbs, ${pipeline.created} live demo bookings, ${shortlisted} shortlisted, ${recurring} recurring weeks, ${expiring} expiring checks, ${series} series weeks, ${blocked} days off, ${funding} funding refs, ${unread} unread messages, ${searches} saved searches, ${handover} handover notes, ${invoices} invoice numbers, ${replies} review replies, ${portraits} portraits, ${weekly} weekly windows, ${notice} notice hours.`,
+    `Seeded ${carerProfiles.length} featured carers + ${generatedCount} generated profiles, ${familyUsers.length} families, ${requests.length} jobs, ${suburbCount} suburbs, ${pipeline.created} live demo bookings, ${shortlisted} shortlisted, ${recurring} recurring weeks, ${expiring} expiring checks, ${series} series weeks, ${blocked} days off, ${funding} funding refs, ${unread} unread messages, ${searches} saved searches, ${handover} handover notes, ${invoices} invoice numbers, ${replies} review replies, ${portraits} portraits, ${weekly} weekly windows, ${notice} notice hours, ${jobStarts} job start times.`,
   );
   console.log("Demo logins: family@careproof.com.au / carer@careproof.com.au / CareProof123!");
 }

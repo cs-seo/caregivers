@@ -10,8 +10,8 @@ import {
   isClosedStatus,
   type DashboardBookingGroup,
 } from "@/lib/dashboard-groups";
-import { formatDate, formatDateTime, plural, snippet } from "@/lib/format";
-import { matchingJobs } from "@/lib/job-match";
+import { formatDateTime, plural, snippet } from "@/lib/format";
+import { formatJobStart, matchingJobs } from "@/lib/job-match";
 import { buildRoster } from "@/lib/roster";
 import { formatAud } from "@/lib/money";
 import { deleteSavedSearchAction, applyHouseholdHandoverAction } from "@/lib/actions";
@@ -558,7 +558,7 @@ export default async function DashboardPage({
                       {job.title}
                     </Link>
                     <span className="mt-0.5 block text-stone-500">
-                      {job.specialty.name} · {job.city.name} · from {formatDate(job.startDate)}
+                      {job.specialty.name} · {job.city.name} · from {formatJobStart(job.startDate)}
                       {proposedJobIds.has(job.id) ? " · proposed" : ""}
                     </span>
                   </span>
