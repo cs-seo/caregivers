@@ -72,7 +72,10 @@ async function main() {
         if (profile) {
           await prisma.caregiverProfile.update({
             where: { id: profile.id },
-            data: { weeklyHours: formatWeeklyHours(windows) || carer.weeklyHours },
+            data: {
+              weeklyHours: formatWeeklyHours(windows) || carer.weeklyHours,
+              ...(carer.noticeHours != null ? { noticeHours: carer.noticeHours } : {}),
+            },
           });
           await prisma.caregiverWeeklyWindow.deleteMany({ where: { caregiverId: profile.id } });
           if (windows.length) {

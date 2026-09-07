@@ -498,6 +498,23 @@ export async function seedDemoPortraits(prisma: PrismaClient) {
   return updated;
 }
 
+export async function seedDemoNoticeHours(prisma: PrismaClient) {
+  const rows = [
+    { slug: "sarah-nguyen-aged-care-sydney", noticeHours: 12 },
+    { slug: "priya-nair-nanny-sydney", noticeHours: 4 },
+    { slug: "james-okafor-disability-support-sydney", noticeHours: 24 },
+  ];
+  let updated = 0;
+  for (const row of rows) {
+    const result = await prisma.caregiverProfile.updateMany({
+      where: { slug: row.slug },
+      data: { noticeHours: row.noticeHours },
+    });
+    updated += result.count;
+  }
+  return updated;
+}
+
 export async function seedDemoWeeklyWindows(prisma: PrismaClient) {
   const carers = await prisma.caregiverProfile.findMany({
     select: {
@@ -569,8 +586,9 @@ async function main() {
   const replies = await seedDemoReviewReplies(prisma);
   const portraits = await seedDemoPortraits(prisma);
   const weekly = await seedDemoWeeklyWindows(prisma);
+  const notice = await seedDemoNoticeHours(prisma);
   console.log(
-    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}`,
+    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}; notice ${notice}`,
   );
   await prisma.$disconnect();
 }

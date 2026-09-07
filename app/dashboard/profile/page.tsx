@@ -91,6 +91,10 @@ export default async function CarerProfileEditorPage({
         <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
           Check each weekly window — start and end need to be at least 30 minutes apart.
         </p>
+      ) : query.error === "notice" ? (
+        <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
+          Instant Book notice must be between 0 and 72 hours.
+        </p>
       ) : query.error ? (
         <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
           Check the required fields and try again.
@@ -234,6 +238,20 @@ export default async function CarerProfileEditorPage({
             Available now
           </label>
         </div>
+        <label className="block text-sm">
+          Instant Book notice (hours)
+          <input
+            name="noticeHours"
+            type="number"
+            min={0}
+            max={72}
+            defaultValue={profile.noticeHours}
+            className="mt-1 w-full rounded-lg border border-line px-3 py-2 sm:max-w-xs"
+          />
+          <span className="mt-1 block text-xs text-stone-500">
+            Starts sooner than this become a request to book instead of Instant Book. 0 means same-hour Instant Book.
+          </span>
+        </label>
         <WeeklyHoursField windows={profile.weeklyWindows} />
         <label className="block text-sm">
           Availability note (optional)

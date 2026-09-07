@@ -3,9 +3,16 @@ import { BookingForm } from "@/components/booking-form";
 import { DaysOffCalendar } from "@/components/days-off-calendar";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { auth } from "@/auth";
-import { fortnightLabel, isInstantBookLive, summariseFortnight, weeklyHourChips } from "@/lib/availability";
+import {
+  fortnightLabel,
+  instantBookForStart,
+  isInstantBookLive,
+  noticeLabel,
+  summariseFortnight,
+  weeklyHourChips,
+} from "@/lib/availability";
 import { credentialWatchlist, watchLabel } from "@/lib/credentials";
-import { lastActiveLabel, sydneyDateTimeLocal } from "@/lib/format";
+import { lastActiveLabel, parseSydneyDateTimeLocal, sydneyDateTimeLocal } from "@/lib/format";
 import { formatAud } from "@/lib/money";
 import { getCaregiverBySlug, getUpcomingAvailability } from "@/lib/queries";
 import { suggestedStartLocal } from "@/lib/weekly-windows";
@@ -38,7 +45,6 @@ export default async function BookPage({
   const fortnight = summariseFortnight(upcoming.slice(0, 14));
   const blockedKeys = upcoming.filter((day) => day.blocked).map((day) => day.key);
   const awayToday = upcoming[0]?.blocked === true;
-  const liveInstant = isInstantBookLive(carer.instantBook, blockedKeys);
   const hourChips = weeklyHourChips(carer.weeklyHours);
   const checkAlerts = credentialWatchlist(carer.credentials);
   const startDate = query.start && /^\d{4}-\d{2}-\d{2}$/.test(query.start) ? query.start : "";
@@ -48,6 +54,10 @@ export default async function BookPage({
     startDate && !startIsBlocked && !startIsClosed
       ? suggestedStartLocal(startDate, carer.weeklyWindows)
       : sydneyDateTimeLocal(1, 9);
+  const defaultStartAt = parseSydneyDateTimeLocal(defaultStart);
+  const liveAway = isInstantBookLive(carer.instantBook, blockedKeys);
+  const liveInstant = instantBookForStart(carer.instantBook, blockedKeys, defaultStartAt, carer.noticeHours);
+  const noticePaused = liveAway && !liveInstant && carer.instantBook;
   const bookPath = startDate ? `/caregiver/${carer.slug}/book?start=${startDate}` : `/caregiver/${carer.slug}/book`;
 
   return (
@@ -64,10 +74,13 @@ export default async function BookPage({
         {carer.suburb}, {carer.city.name} · {formatAud(carer.hourlyRateCents)}/hr inc GST.{" "}
         {liveInstant
           ? "Instant Book confirms immediately."
-          : carer.instantBook && awayToday
-            ? "Away today — Instant Book is paused, so this sit waits for the carer to accept."
-            : "The carer will accept before you pay."}{" "}
+          : noticePaused
+            ? "This start is inside the notice window, so the sit waits for the carer to accept."
+            : carer.instantBook && awayToday
+              ? "Away today — Instant Book is paused, so this sit waits for the carer to accept."
+              : "The carer will accept before you pay."}{" "}
         Next 14 days: {fortnightLabel(fortnight)}.
+        {carer.instantBook ? ` ${noticeLabel(carer.noticeHours)}.` : ""}
       </p>
       {hourChips.length ? (
         <div className="mt-3 rounded-xl bg-sage p-3">

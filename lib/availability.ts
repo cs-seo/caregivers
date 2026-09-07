@@ -45,8 +45,51 @@ export function isAwayToday(blockedKeys: Iterable<string>, now = new Date()) {
   return set.has(today);
 }
 
+export const NOTICE_HOURS_MAX = 72;
+
+export function defaultNoticeHours(specialties: string[]) {
+  if (specialties.includes("babysitters")) return 2;
+  if (specialties.includes("after-school-care") || specialties.includes("nannies")) return 4;
+  if (specialties.includes("nursing") || specialties.includes("aged-care")) return 12;
+  if (specialties.includes("disability-support") || specialties.includes("special-needs")) return 24;
+  return 4;
+}
+
+export function clampNoticeHours(value: unknown) {
+  const hours = Math.round(Number(value));
+  if (!Number.isFinite(hours) || hours < 0 || hours > NOTICE_HOURS_MAX) return null;
+  return hours;
+}
+
+export function startIsInFuture(startAt: Date, now = new Date(), graceMs = 60_000) {
+  return startAt.getTime() > now.getTime() - graceMs;
+}
+
+export function instantBookNoticeOk(noticeHours: number, startAt: Date, now = new Date()) {
+  if (noticeHours <= 0) return startIsInFuture(startAt, now);
+  return startAt.getTime() >= now.getTime() + noticeHours * 36e5;
+}
+
 export function isInstantBookLive(instantBook: boolean, blockedKeys: Iterable<string>, now = new Date()) {
   return instantBook && !isAwayToday(blockedKeys, now);
+}
+
+export function instantBookForStart(
+  instantBook: boolean,
+  blockedKeys: Iterable<string>,
+  startAt: Date,
+  noticeHours = 0,
+  now = new Date(),
+) {
+  return isInstantBookLive(instantBook, blockedKeys, now) && instantBookNoticeOk(noticeHours, startAt, now);
+}
+
+export function noticeLabel(hours: number) {
+  if (hours <= 0) return "Same-hour Instant Book";
+  if (hours === 1) return "1 hour’s notice for Instant Book";
+  if (hours === 24) return "24 hours’ notice for Instant Book";
+  if (hours > 24 && hours % 24 === 0) return `${hours / 24} days’ notice for Instant Book`;
+  return `${hours} hours’ notice for Instant Book`;
 }
 
 export function weeklyHourChips(weeklyHours?: string | null) {

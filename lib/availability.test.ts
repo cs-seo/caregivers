@@ -2,10 +2,16 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   WEEKLY_HOUR_PRESETS,
+  clampNoticeHours,
+  defaultNoticeHours,
   defaultWeeklyHours,
   fortnightLabel,
+  instantBookForStart,
+  instantBookNoticeOk,
   isAwayToday,
   isInstantBookLive,
+  noticeLabel,
+  startIsInFuture,
   summariseFortnight,
   weeklyHourChips,
 } from "./availability";
@@ -44,4 +50,27 @@ test("isInstantBookLive pauses Instant Book while today is a day off", () => {
   assert.equal(isInstantBookLive(true, ["2026-09-07"], now), false);
   assert.equal(isInstantBookLive(true, ["2026-09-13"], now), true);
   assert.equal(isInstantBookLive(false, [], now), false);
+});
+
+test("defaultNoticeHours is shorter for babysitting than aged care", () => {
+  assert.equal(defaultNoticeHours(["babysitters"]), 2);
+  assert.equal(defaultNoticeHours(["aged-care", "nursing"]), 12);
+  assert.equal(defaultNoticeHours(["disability-support"]), 24);
+  assert.equal(clampNoticeHours(4), 4);
+  assert.equal(clampNoticeHours(80), null);
+  assert.equal(noticeLabel(12), "12 hours’ notice for Instant Book");
+  assert.equal(noticeLabel(24), "24 hours’ notice for Instant Book");
+});
+
+test("Instant Book falls back when the start is inside the notice window", () => {
+  const now = new Date("2026-09-07T10:00:00.000Z");
+  const inTwoHours = new Date("2026-09-07T12:00:00.000Z");
+  const inTwoDays = new Date("2026-09-09T10:00:00.000Z");
+  assert.equal(startIsInFuture(inTwoHours, now), true);
+  assert.equal(startIsInFuture(new Date("2026-09-07T09:00:00.000Z"), now), false);
+  assert.equal(instantBookNoticeOk(12, inTwoHours, now), false);
+  assert.equal(instantBookNoticeOk(12, inTwoDays, now), true);
+  assert.equal(instantBookForStart(true, [], inTwoHours, 12, now), false);
+  assert.equal(instantBookForStart(true, [], inTwoDays, 12, now), true);
+  assert.equal(instantBookForStart(true, ["2026-09-07"], inTwoDays, 12, now), false);
 });

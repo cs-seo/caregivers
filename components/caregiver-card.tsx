@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { isAwayToday, isInstantBookLive, weeklyHourChips } from "@/lib/availability";
+import { isAwayToday, isInstantBookLive, noticeLabel, weeklyHourChips } from "@/lib/availability";
 import { formatDate, lastActiveLabel, parseSydneyDateTimeLocal } from "@/lib/format";
 import { formatAud } from "@/lib/money";
 import { trustLabel } from "@/lib/trust";
@@ -68,6 +68,9 @@ export function CaregiverCardView({
             <Badge tone="teal">{trustLabel(caregiver.trustScore)}</Badge>
             {liveInstant ? <Badge tone="clay">Instant Book</Badge> : null}
             {caregiver.instantBook && awayToday ? <Badge tone="stone">Instant Book paused</Badge> : null}
+            {caregiver.instantBook && caregiver.noticeHours > 0 ? (
+              <Badge tone="stone">{noticeLabel(caregiver.noticeHours)}</Badge>
+            ) : null}
             {awayToday ? <Badge>Away today</Badge> : caregiver.availableNow ? <Badge>Available now</Badge> : null}
             <span className="text-xs text-stone-500">{lastActiveLabel(caregiver.lastActiveAt)}</span>
             {caregiver.reviewCount > 0 ? (

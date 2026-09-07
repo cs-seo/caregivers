@@ -11,7 +11,7 @@ export const metadata = pageMeta({
 const faqs = [
   {
     q: "How do I book a carer?",
-    a: "Open a profile and use Instant Book, or post a care request and hire a proposal. Either path creates one escrow-backed booking.",
+    a: "Open a profile and use Instant Book, or post a care request and hire a proposal. Either path creates one escrow-backed booking. Instant Book needs the carer’s notice window — 2 hours for many babysitters, 12 for aged care — and falls back to a request if you need someone sooner.",
   },
   {
     q: "When is the carer paid?",
@@ -85,11 +85,12 @@ export default function HowItWorksPage() {
         <li>
           <h2 className="text-xl font-semibold">3. Book in a few steps</h2>
           <p className="mt-2 text-stone-600">
-            Instant Book pays into escrow immediately. Request to book waits for the carer. Days off pause Instant Book
-            for that calendar day in Australia/Sydney. Usual weekly hours close weekdays the carer does not work, so a
-            start time has to fall inside a window. Job posts collect proposals you can hire with one click. For
-            babysitting, pick a date night, last-minute sit, overnight or a standing weekly series — the hourly rate
-            does not rise with a second child.
+            Instant Book pays into escrow immediately if the start is outside the carer’s notice window. A sit that
+            starts too soon becomes a request to book instead. Days off pause Instant Book for that calendar day in
+            Australia/Sydney. Usual weekly hours close weekdays the carer does not work, so a start time has to fall
+            inside a window. Job posts collect proposals you can hire with one click. For babysitting, pick a date
+            night, last-minute sit, overnight or a standing weekly series — the hourly rate does not rise with a second
+            child.
           </p>
         </li>
         <li>

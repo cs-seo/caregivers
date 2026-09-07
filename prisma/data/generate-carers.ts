@@ -188,6 +188,7 @@ export function generateCarers(count = 480, templates: FeaturedCarer[] = feature
         : undefined,
       instantBook: template.instantBook,
       availableNow,
+      noticeHours: template.noticeHours,
       availabilityNote: defaultAvailabilityNote(template, place, availableNow),
       weeklyHours: template.weeklyHours || defaultWeeklyHours(template.specialties),
       specialties: [...template.specialties],

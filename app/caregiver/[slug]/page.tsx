@@ -9,7 +9,7 @@ import { MobileBookBar } from "@/components/mobile-book-bar";
 import { Portrait } from "@/components/portrait";
 import { ReviewCard, ReviewReplyForm } from "@/components/review-card";
 import { ShortlistButton } from "@/components/shortlist-button";
-import { fortnightLabel, isInstantBookLive, summariseFortnight, weeklyHourChips } from "@/lib/availability";
+import { fortnightLabel, isInstantBookLive, noticeLabel, summariseFortnight, weeklyHourChips } from "@/lib/availability";
 import { lastActiveLabel, monthYear } from "@/lib/format";
 import { formatAud } from "@/lib/money";
 import { getCaregiverBySlug, getShortlistedIds, getUpcomingAvailability, similarCaregivers } from "@/lib/queries";
@@ -168,6 +168,7 @@ export default async function CaregiverProfilePage({
                 <Badge tone="teal">{trustLabel(carer.trustScore)} · {carer.trustScore}/100</Badge>
                 {liveInstant ? <Badge tone="clay">Instant Book</Badge> : null}
                 {carer.instantBook && awayToday ? <Badge tone="stone">Instant Book paused</Badge> : null}
+                {carer.instantBook && carer.noticeHours > 0 ? <Badge tone="stone">{noticeLabel(carer.noticeHours)}</Badge> : null}
                 {awayToday ? <Badge>Away today</Badge> : carer.availableNow ? <Badge>Available now</Badge> : null}
                 <span className="text-sm text-stone-500">{lastActiveLabel(carer.lastActiveAt)}</span>
                 {carer.reviewCount > 0 ? (
@@ -298,6 +299,7 @@ export default async function CaregiverProfilePage({
           </p>
           <p className="mt-3 text-sm text-stone-600">{fortnightLabel(fortnight)} in the next fortnight.</p>
           {carer.weeklyHours ? <p className="mt-3 text-sm font-medium text-teal-deep">{carer.weeklyHours}</p> : null}
+          {carer.instantBook ? <p className="mt-2 text-sm text-stone-600">{noticeLabel(carer.noticeHours)}.</p> : null}
           {carer.availabilityNote ? <p className="mt-3 text-sm text-stone-700">{carer.availabilityNote}</p> : null}
           <p className="mt-2 text-xs text-stone-500">{lastActiveLabel(carer.lastActiveAt)}</p>
           <Link

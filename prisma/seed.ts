@@ -17,6 +17,7 @@ import {
   seedDemoReviewReplies,
   seedDemoPortraits,
   seedDemoWeeklyWindows,
+  seedDemoNoticeHours,
   seedDemoSavedSearches,
   seedDemoUnreadMessages,
 } from "./seed-demo-pipeline";
@@ -735,8 +736,9 @@ async function main() {
   const replies = await seedDemoReviewReplies(prisma);
   const portraits = await seedDemoPortraits(prisma);
   const weekly = await seedDemoWeeklyWindows(prisma);
+  const notice = await seedDemoNoticeHours(prisma);
   console.log(
-    `Seeded ${carerProfiles.length} featured carers + ${generatedCount} generated profiles, ${familyUsers.length} families, ${requests.length} jobs, ${suburbCount} suburbs, ${pipeline.created} live demo bookings, ${shortlisted} shortlisted, ${recurring} recurring weeks, ${expiring} expiring checks, ${series} series weeks, ${blocked} days off, ${funding} funding refs, ${unread} unread messages, ${searches} saved searches, ${handover} handover notes, ${invoices} invoice numbers, ${replies} review replies, ${portraits} portraits, ${weekly} weekly windows.`,
+    `Seeded ${carerProfiles.length} featured carers + ${generatedCount} generated profiles, ${familyUsers.length} families, ${requests.length} jobs, ${suburbCount} suburbs, ${pipeline.created} live demo bookings, ${shortlisted} shortlisted, ${recurring} recurring weeks, ${expiring} expiring checks, ${series} series weeks, ${blocked} days off, ${funding} funding refs, ${unread} unread messages, ${searches} saved searches, ${handover} handover notes, ${invoices} invoice numbers, ${replies} review replies, ${portraits} portraits, ${weekly} weekly windows, ${notice} notice hours.`,
   );
   console.log("Demo logins: family@careproof.com.au / carer@careproof.com.au / CareProof123!");
 }

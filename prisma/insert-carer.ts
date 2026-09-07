@@ -1,5 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
-import { defaultWeeklyHours } from "../lib/availability";
+import { defaultNoticeHours, defaultWeeklyHours } from "../lib/availability";
 import { formatWeeklyHours, parseWeeklyHours } from "../lib/weekly-windows";
 import type { GeneratedCarer } from "./data/generate-carers";
 
@@ -38,6 +38,7 @@ export async function insertCarer(
           abn: carer.abn,
           instantBook: carer.instantBook,
           availableNow: carer.availableNow,
+          noticeHours: carer.noticeHours ?? defaultNoticeHours(carer.specialties),
           availabilityNote:
             carer.availabilityNote ||
             (carer.availableNow

@@ -5,7 +5,7 @@ import { AuthError } from "next-auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { signIn } from "@/auth";
-import { isInstantBookLive } from "./availability";
+import { clampNoticeHours, instantBookForStart, startIsInFuture } from "./availability";
 import { dateKeysInWindows, firstBlockedKey, isDateKey } from "./blocked-dates";
 import { normalizeFundingRef } from "./funding";
 import { findSeriesOverlap } from "./booking-overlap";
@@ -127,7 +127,7 @@ export async function createBookingAction(formData: FormData) {
     include: { specialties: true },
   });
   if (!caregiver) throw new Error("Carer not found");
-  if (!specialtyId || Number.isNaN(startAt.getTime()) || hours < 1 || hours > 24) {
+  if (!specialtyId || Number.isNaN(startAt.getTime()) || hours < 1 || hours > 24 || !startIsInFuture(startAt)) {
     redirect(`/caregiver/${slug}/book?error=invalid`);
   }
 
@@ -137,7 +137,12 @@ export async function createBookingAction(formData: FormData) {
     where: { caregiverId: caregiver.id, dateKey: todayKey },
     select: { dateKey: true },
   });
-  const liveInstant = isInstantBookLive(caregiver.instantBook, awayToday ? [todayKey] : []);
+  const liveInstant = instantBookForStart(
+    caregiver.instantBook,
+    awayToday ? [todayKey] : [],
+    startAt,
+    caregiver.noticeHours,
+  );
   const status = liveInstant ? BOOKING_STATUS.AWAITING_PAYMENT : BOOKING_STATUS.PENDING_ACCEPTANCE;
   const groupId = weeks > 1 ? crypto.randomUUID() : null;
   const windows = Array.from({ length: weeks }, (_, index) => {
@@ -809,6 +814,8 @@ export async function updateCaregiverProfileAction(formData: FormData) {
   const specialtyIds = formData.getAll("specialtyId").map(String).filter(Boolean);
   const instantBook = formData.get("instantBook") === "1";
   const availableNow = formData.get("availableNow") === "1";
+  const noticeHours = clampNoticeHours(formData.get("noticeHours") ?? 4);
+  if (noticeHours == null) redirect("/dashboard/profile?error=notice");
   const availabilityNote = String(formData.get("availabilityNote") ?? "").trim().slice(0, 240);
   const weeklyParsed = windowsFromForm(formData.getAll("weeklyWindow").map(String));
   if (!weeklyParsed.ok) redirect("/dashboard/profile?error=hours");
@@ -837,6 +844,7 @@ export async function updateCaregiverProfileAction(formData: FormData) {
         yearsExperience: Math.round(yearsExperience),
         instantBook,
         availableNow,
+        noticeHours,
         availabilityNote: availabilityNote || null,
         weeklyHours,
         photoUrl,

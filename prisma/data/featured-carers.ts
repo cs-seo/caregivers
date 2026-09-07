@@ -15,6 +15,7 @@ export type FeaturedCarer = {
   availableNow: boolean;
   availabilityNote?: string;
   weeklyHours?: string;
+  noticeHours?: number;
   photoUrl?: string;
   specialties: string[];
   credentials: { type: string; issuingState?: string; number?: string; months: number }[];
@@ -46,6 +47,7 @@ export const featuredCarers: FeaturedCarer[] = [
     abn: "84 123 456 781",
     instantBook: true,
     availableNow: true,
+    noticeHours: 12,
     availabilityNote: "Weekday mornings in Marrickville and the inner west. Overnight respite with 48 hours’ notice.",
     weeklyHours: "Mon–Fri 7am–1pm · overnight by arrangement",
     specialties: ["aged-care", "nursing", "personal-care", "respite"],
@@ -91,6 +93,7 @@ export const featuredCarers: FeaturedCarer[] = [
     abn: "37 991 204 118",
     instantBook: true,
     availableNow: true,
+    noticeHours: 4,
     availabilityNote: "After school and weekends around Bondi and the eastern suburbs. School-holiday cover with a week’s notice.",
     weeklyHours: "Mon–Fri 3pm–7pm · Sat mornings",
     specialties: ["nannies", "after-school-care", "babysitters"],
@@ -127,6 +130,7 @@ export const featuredCarers: FeaturedCarer[] = [
     abn: "51 204 883 019",
     instantBook: false,
     availableNow: true,
+    noticeHours: 24,
     availabilityNote: "Community access and weekend social shifts around Parramatta. Mid-week evenings with 24 hours’ notice.",
     weeklyHours: "Wed–Sun 9am–5pm",
     specialties: ["disability-support", "special-needs", "personal-care"],
