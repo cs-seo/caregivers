@@ -36,7 +36,7 @@ export default async function BookPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ error?: string; start?: string }>;
+  searchParams: Promise<{ error?: string; start?: string; at?: string }>;
 }) {
   const [{ slug }, query, session] = await Promise.all([params, searchParams, auth()]);
   const carer = await getCaregiverBySlug(slug);
@@ -48,12 +48,15 @@ export default async function BookPage({
   const hourChips = weeklyHourChips(carer.weeklyHours);
   const checkAlerts = credentialWatchlist(carer.credentials);
   const startDate = query.start && /^\d{4}-\d{2}-\d{2}$/.test(query.start) ? query.start : "";
+  const startClock = /^([01]\d|2[0-3]):([0-5]\d)$/.test(query.at ?? "") ? query.at : "";
   const startIsBlocked = startDate ? blockedKeys.includes(startDate) : false;
   const startIsClosed = startDate ? upcoming.some((day) => day.key === startDate && day.closed) : false;
   const defaultStart =
-    startDate && !startIsBlocked && !startIsClosed
-      ? suggestedStartLocal(startDate, carer.weeklyWindows)
-      : sydneyDateTimeLocal(1, 9);
+    startDate && startClock && !startIsBlocked && !startIsClosed
+      ? `${startDate}T${startClock}`
+      : startDate && !startIsBlocked && !startIsClosed
+        ? suggestedStartLocal(startDate, carer.weeklyWindows)
+        : sydneyDateTimeLocal(1, 9);
   const defaultStartAt = parseSydneyDateTimeLocal(defaultStart);
   const liveAway = isInstantBookLive(carer.instantBook, blockedKeys);
   const liveInstant = instantBookForStart(carer.instantBook, blockedKeys, defaultStartAt, carer.noticeHours);

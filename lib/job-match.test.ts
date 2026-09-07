@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { parseSydneyDateTimeLocal } from "./format";
-import { formatJobStart, isUtcDateOnly, jobDirectoryHref, jobFitsCarer, jobMissLabel, jobMissReason, matchingJobs } from "./job-match";
+import { formatJobStart, isUtcDateOnly, jobBookHref, jobDirectoryHref, jobFitsCarer, jobMissLabel, jobMissReason, matchingJobs } from "./job-match";
 import { parseWeeklyHours } from "./weekly-windows";
 
 const sarah = {
@@ -102,4 +102,13 @@ test("jobDirectoryHref points at Needed on with the start clock time", () => {
     }),
     "/caregivers/babysitters/nsw/sydney?availableOn=2026-09-12",
   );
+});
+
+test("jobBookHref prefills the job start clock time", () => {
+  assert.equal(
+    jobBookHref("sarah-nguyen-aged-care-sydney", parseSydneyDateTimeLocal("2026-09-15T08:00")),
+    "/caregiver/sarah-nguyen-aged-care-sydney/book?start=2026-09-15&at=08:00",
+  );
+  assert.equal(jobMissLabel(null, "family"), "Fits this start");
+  assert.equal(jobMissLabel("hours", "family"), "Outside their usual weekly hours");
 });

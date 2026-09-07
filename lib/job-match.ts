@@ -58,9 +58,22 @@ export function matchingJobs<T extends JobMatchJob>(jobs: T[], carer: JobMatchCa
   return jobs.filter((job) => jobFitsCarer(job, carer));
 }
 
-export function jobMissLabel(reason: JobMiss | null) {
-  if (!reason) return "Fits your roster";
+export function jobMissLabel(reason: JobMiss | null, audience: "carer" | "family" = "carer") {
+  if (!reason) return audience === "family" ? "Fits this start" : "Fits your roster";
+  if (audience === "family") {
+    if (reason === "specialty") return "Not one of their specialties";
+    if (reason === "away") return "They marked that day away";
+    if (reason === "hours") return "Outside their usual weekly hours";
+  }
   return JOB_MISS[reason];
+}
+
+export function jobBookHref(slug: string, startDate: Date) {
+  const dateKey = sydneyDateKey(startDate);
+  const clock = isUtcDateOnly(startDate) ? undefined : minutesToInput(sydneyMinutes(startDate));
+  return clock
+    ? `/caregiver/${slug}/book?start=${dateKey}&at=${clock}`
+    : `/caregiver/${slug}/book?start=${dateKey}`;
 }
 
 export function jobDirectoryFilters(job: {

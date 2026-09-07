@@ -6,6 +6,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { createProposalAction, hireProposalAction } from "@/lib/actions";
 import {
   formatJobStart,
+  jobBookHref,
   jobDirectoryFilters,
   jobDirectoryHref,
   jobFitsCarer,
@@ -46,7 +47,17 @@ export default async function CareRequestPage({
       city: { include: { state: true } },
       family: { select: { id: true, name: true } },
       proposals: {
-        include: { caregiver: { include: { user: true, city: true } } },
+        include: {
+          caregiver: {
+            include: {
+              user: true,
+              city: true,
+              specialties: { select: { specialtyId: true } },
+              weeklyWindows: { select: { weekday: true, startMin: true, endMin: true } },
+              blockedDates: { select: { dateKey: true } },
+            },
+          },
+        },
         orderBy: { createdAt: "desc" },
       },
     },
@@ -127,7 +138,12 @@ export default async function CareRequestPage({
                     <Link href={`/caregiver/${carer.slug}`} className="font-medium text-teal hover:underline">
                       {carer.user.name}
                     </Link>
-                    <span className="text-stone-500">{formatAud(carer.hourlyRateCents)}/hr</span>
+                    <span className="flex items-center gap-3 text-stone-500">
+                      {formatAud(carer.hourlyRateCents)}/hr
+                      <Link href={jobBookHref(carer.slug, job.startDate)} className="font-medium text-teal hover:underline">
+                        Book
+                      </Link>
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -149,12 +165,22 @@ export default async function CareRequestPage({
           <section className="mt-10">
             <h2 className="text-xl font-semibold">Proposals</h2>
             <ul className="mt-4 space-y-4">
-              {job.proposals.map((proposal) => (
+              {job.proposals.map((proposal) => {
+                const proposalMiss = jobMissReason(job, {
+                  cityId: proposal.caregiver.cityId,
+                  specialtyIds: proposal.caregiver.specialties.map((item) => item.specialtyId),
+                  windows: proposal.caregiver.weeklyWindows,
+                  blockedKeys: proposal.caregiver.blockedDates.map((row) => row.dateKey),
+                });
+                return (
                 <li key={proposal.id} className="rounded-2xl border border-line bg-card p-4">
                   <p className="font-semibold">
                     <Link href={`/caregiver/${proposal.caregiver.slug}`}>{proposal.caregiver.user.name}</Link>
                     <span className="ml-2 text-sm font-normal text-stone-500">
                       {formatAud(proposal.rateCents)}/hr
+                    </span>
+                    <span className="ml-2 align-middle">
+                      <Badge tone={proposalMiss ? "stone" : "teal"}>{jobMissLabel(proposalMiss, "family")}</Badge>
                     </span>
                   </p>
                   <p className="mt-2 text-sm text-stone-700">{proposal.coverLetter}</p>
@@ -169,7 +195,8 @@ export default async function CareRequestPage({
                     <p className="mt-2 text-xs uppercase text-stone-500">{proposal.status}</p>
                   )}
                 </li>
-              ))}
+                );
+              })}
             </ul>
           </section>
         ) : (
