@@ -1,16 +1,33 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
+import { bookingsToIcs, shouldIncludeInCalendar, type IcsEventInput } from "@/lib/ics";
 
-function icsDate(value: Date) {
-  return value.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+function toEvent(booking: {
+  id: string;
+  startAt: Date;
+  endAt: Date;
+  notes: string | null;
+  recurringIndex: number;
+  recurringTotal: number;
+  specialty: { name: string };
+  caregiver: { user: { name: string } };
+  family: { name: string };
+}): IcsEventInput {
+  return {
+    id: booking.id,
+    startAt: booking.startAt,
+    endAt: booking.endAt,
+    specialtyName: booking.specialty.name,
+    caregiverName: booking.caregiver.user.name,
+    familyName: booking.family.name,
+    notes: booking.notes,
+    recurringIndex: booking.recurringIndex,
+    recurringTotal: booking.recurringTotal,
+  };
 }
 
-function escapeText(value: string) {
-  return value.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
-}
-
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
   if (!user) {
     return NextResponse.redirect(new URL("/login", process.env.AUTH_URL ?? "http://localhost:3000"));
@@ -28,33 +45,36 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const allowed = booking.familyId === user.id || booking.caregiver.userId === user.id;
   if (!allowed) return new NextResponse("Forbidden", { status: 403 });
 
-  const week =
-    booking.recurringTotal > 1 ? ` (week ${booking.recurringIndex} of ${booking.recurringTotal})` : "";
-  const summary = escapeText(`${booking.specialty.name} with ${booking.caregiver.user.name}${week}`);
-  const description = escapeText(
-    [`CareProof escrow booking`, booking.notes ?? "", `Family: ${booking.family.name}`].filter(Boolean).join("\n"),
-  );
-  const ics = [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//CareProof//Bookings//EN",
-    "CALSCALE:GREGORIAN",
-    "BEGIN:VEVENT",
-    `UID:${booking.id}@careproof.com.au`,
-    `DTSTAMP:${icsDate(new Date())}`,
-    `DTSTART:${icsDate(booking.startAt)}`,
-    `DTEND:${icsDate(booking.endAt)}`,
-    `SUMMARY:${summary}`,
-    `DESCRIPTION:${description}`,
-    "END:VEVENT",
-    "END:VCALENDAR",
-    "",
-  ].join("\r\n");
+  const wantSeries = new URL(request.url).searchParams.get("series") === "1";
+  const weeks =
+    wantSeries && booking.recurringGroupId
+      ? await prisma.booking.findMany({
+          where: { recurringGroupId: booking.recurringGroupId },
+          include: {
+            caregiver: { include: { user: true } },
+            family: { select: { name: true } },
+            specialty: true,
+          },
+          orderBy: { recurringIndex: "asc" },
+        })
+      : [booking];
+  const events = weeks.filter((week) => shouldIncludeInCalendar(week.status)).map(toEvent);
+  if (events.length === 0) return new NextResponse("No calendar weeks", { status: 404 });
+
+  const calendarName =
+    events.length > 1
+      ? `CareProof · ${booking.specialty.name} with ${booking.caregiver.user.name}`
+      : undefined;
+  const ics = bookingsToIcs(events, new Date(), calendarName);
+  const filename =
+    events.length > 1 && booking.recurringGroupId
+      ? `careproof-series-${booking.recurringGroupId}.ics`
+      : `careproof-${booking.id}.ics`;
 
   return new NextResponse(ics, {
     headers: {
       "Content-Type": "text/calendar; charset=utf-8",
-      "Content-Disposition": `attachment; filename="careproof-${booking.id}.ics"`,
+      "Content-Disposition": `attachment; filename="${filename}"`,
     },
   });
 }

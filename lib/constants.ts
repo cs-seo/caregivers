@@ -23,6 +23,11 @@ export const BOOKING_STATUS = {
   REFUNDED: "refunded",
 } as const;
 
+export const UNPAID_BOOKING_STATUSES = [
+  BOOKING_STATUS.PENDING_ACCEPTANCE,
+  BOOKING_STATUS.AWAITING_PAYMENT,
+] as const;
+
 export const PAYMENT_STATUS = {
   PENDING: "pending",
   HELD: "held",

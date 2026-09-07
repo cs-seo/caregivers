@@ -97,9 +97,14 @@ function BookingList({
   );
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ cancelled?: string }>;
+}) {
   const user = await requireUser();
   if (!user) redirect("/login?callbackUrl=/dashboard");
+  const query = await searchParams;
 
   const isFamily = user.role === "FAMILY";
   const bookings = await prisma.booking.findMany({
@@ -194,6 +199,9 @@ export default async function DashboardPage() {
           )}
         </div>
       </div>
+      {query.cancelled ? (
+        <p className="mt-4 rounded-xl bg-sage p-3 text-sm">Unpaid weeks were cancelled. Funded escrow holds are unchanged.</p>
+      ) : null}
 
       <section className="mt-6 grid gap-3 sm:grid-cols-2">
         <div className="rounded-2xl border border-line bg-card p-5">

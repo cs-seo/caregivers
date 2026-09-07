@@ -27,7 +27,7 @@ const faqs = [
   },
   {
     q: "Can I book a standing weekly sit?",
-    a: "Yes. On the book page choose 2 to 12 weeks. CareProof creates one escrow booking per week so you can cancel or dispute a single Friday without touching the rest of the series.",
+    a: "Yes. On the book page choose 2 to 12 weeks. CareProof creates one escrow booking per week so you can cancel or dispute a single Friday without touching the rest of the series. Download one calendar file for every week, or cancel unpaid remaining weeks while funded holds stay in escrow.",
   },
   {
     q: "Can I search for a carer who is free on a specific night?",

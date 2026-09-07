@@ -4,6 +4,8 @@ import { Badge } from "@/components/badges";
 import {
   acceptBookingAction,
   acceptSeriesAction,
+  cancelRemainingSeriesAction,
+  cancelUnpaidBookingAction,
   confirmCompleteAction,
   declineSeriesAction,
   createReviewAction,
@@ -15,7 +17,7 @@ import {
   sendMessageAction,
   startBookingAction,
 } from "@/lib/actions";
-import { BOOKING_STATUS, BOOKING_STATUS_LABELS } from "@/lib/constants";
+import { BOOKING_STATUS, BOOKING_STATUS_LABELS, UNPAID_BOOKING_STATUSES } from "@/lib/constants";
 import { autoReleaseIfDue } from "@/lib/escrow";
 import { formatDateTime } from "@/lib/format";
 import { formatAud } from "@/lib/money";
@@ -35,7 +37,7 @@ export default async function BookingDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ paid?: string; released?: string; error?: string }>;
+  searchParams: Promise<{ paid?: string; released?: string; cancelled?: string; error?: string }>;
 }) {
   const user = await requireUser();
   if (!user) redirect("/login");
@@ -88,6 +90,11 @@ export default async function BookingDetailPage({
       ) : null}
       {query.released ? (
         <p className="mt-4 rounded-xl bg-sage p-3 text-sm">Funds released to the carer.</p>
+      ) : null}
+      {query.cancelled ? (
+        <p className="mt-4 rounded-xl bg-sage p-3 text-sm">
+          Unpaid weeks were cancelled. Funded escrow holds are unchanged.
+        </p>
       ) : null}
 
       <dl className="mt-6 space-y-2 rounded-2xl border border-line bg-card p-5 text-sm">
@@ -160,6 +167,20 @@ export default async function BookingDetailPage({
               </button>
             </form>
           ) : null}
+          {isFamily &&
+          series.some((week) => (UNPAID_BOOKING_STATUSES as readonly string[]).includes(week.status)) ? (
+            <form action={cancelRemainingSeriesAction} className="mt-4">
+              <input type="hidden" name="bookingId" value={booking.id} />
+              <button className="rounded-lg border border-line px-4 py-2 text-sm" type="submit">
+                Cancel unpaid weeks
+              </button>
+            </form>
+          ) : null}
+          <p className="mt-4 text-sm">
+            <a href={`/dashboard/bookings/${booking.id}/ics?series=1`} className="text-teal hover:underline">
+              Add the whole series to your calendar
+            </a>
+          </p>
         </section>
       ) : null}
       <p className="mt-4 text-sm">
@@ -198,6 +219,14 @@ export default async function BookingDetailPage({
             <input type="hidden" name="bookingId" value={booking.id} />
             <button className="rounded-lg bg-teal px-4 py-2 text-sm font-medium text-white" type="submit">
               Pay into escrow
+            </button>
+          </form>
+        ) : null}
+        {isFamily && (UNPAID_BOOKING_STATUSES as readonly string[]).includes(booking.status) ? (
+          <form action={cancelUnpaidBookingAction}>
+            <input type="hidden" name="bookingId" value={booking.id} />
+            <button className="rounded-lg border border-line px-4 py-2 text-sm" type="submit">
+              Cancel this week
             </button>
           </form>
         ) : null}

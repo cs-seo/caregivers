@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { signIn } from "@/auth";
 import { findSeriesOverlap } from "./booking-overlap";
-import { BOOKING_STATUS, ROLES } from "./constants";
+import { BOOKING_STATUS, ROLES, UNPAID_BOOKING_STATUSES } from "./constants";
 import { autoReleaseIfDue, holdPayment, refundPayment, releasePayment } from "./escrow";
 import { parseSydneyDateTimeLocal } from "./format";
 import { quoteBooking } from "./money";
@@ -265,6 +265,68 @@ export async function declineSeriesAction(formData: FormData) {
     data: { status: BOOKING_STATUS.CANCELLED },
   });
   revalidatePath("/dashboard");
+}
+
+function isUnpaidStatus(status: string) {
+  return (UNPAID_BOOKING_STATUSES as readonly string[]).includes(status);
+}
+
+async function redirectAfterSeriesCancel(groupId: string | null, fallbackId: string) {
+  if (groupId) {
+    const remaining = await prisma.booking.findFirst({
+      where: {
+        recurringGroupId: groupId,
+        status: { notIn: [BOOKING_STATUS.CANCELLED, BOOKING_STATUS.REFUNDED] },
+      },
+      orderBy: { recurringIndex: "asc" },
+    });
+    if (remaining) {
+      revalidatePath("/dashboard");
+      redirect(`/dashboard/bookings/${remaining.id}?cancelled=1`);
+    }
+  }
+  revalidatePath("/dashboard");
+  if (fallbackId) {
+    const stillOpen = await prisma.booking.findUnique({ where: { id: fallbackId } });
+    if (stillOpen && stillOpen.status !== BOOKING_STATUS.CANCELLED && stillOpen.status !== BOOKING_STATUS.REFUNDED) {
+      redirect(`/dashboard/bookings/${fallbackId}?cancelled=1`);
+    }
+  }
+  redirect("/dashboard?cancelled=1");
+}
+
+export async function cancelUnpaidBookingAction(formData: FormData) {
+  const user = await requireUser();
+  if (!user) redirect("/login");
+  const bookingId = String(formData.get("bookingId") ?? "");
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+  if (!booking || booking.familyId !== user.id) throw new Error("Not allowed");
+  if (!isUnpaidStatus(booking.status)) {
+    throw new Error("Only unpaid weeks can be cancelled here");
+  }
+  await prisma.booking.update({
+    where: { id: booking.id },
+    data: { status: BOOKING_STATUS.CANCELLED },
+  });
+  await redirectAfterSeriesCancel(booking.recurringGroupId, booking.id);
+}
+
+export async function cancelRemainingSeriesAction(formData: FormData) {
+  const user = await requireUser();
+  if (!user) redirect("/login");
+  const bookingId = String(formData.get("bookingId") ?? "");
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+  if (!booking || booking.familyId !== user.id || !booking.recurringGroupId) {
+    throw new Error("Not allowed");
+  }
+  await prisma.booking.updateMany({
+    where: {
+      recurringGroupId: booking.recurringGroupId,
+      status: { in: [...UNPAID_BOOKING_STATUSES] },
+    },
+    data: { status: BOOKING_STATUS.CANCELLED },
+  });
+  await redirectAfterSeriesCancel(booking.recurringGroupId, booking.id);
 }
 
 export async function startBookingAction(formData: FormData) {
