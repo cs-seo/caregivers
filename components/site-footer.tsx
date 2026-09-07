@@ -6,7 +6,7 @@ export async function SiteFooter() {
   const [specialties, states] = await Promise.all([getSpecialties(), getStates()]);
 
   return (
-    <footer className="mt-16 border-t border-line bg-teal-deep text-sage">
+    <footer className="mt-16 border-t border-line bg-teal-deep text-sage print:hidden">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 md:grid-cols-4">
         <div>
           <p className="text-lg font-semibold text-white">{SITE_NAME}</p>

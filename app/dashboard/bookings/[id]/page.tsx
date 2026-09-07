@@ -139,6 +139,14 @@ export default async function BookingDetailPage({
         <a href={`/dashboard/bookings/${booking.id}/ics`} className="text-teal hover:underline">
           Add this sit to your calendar
         </a>
+        {booking.payment ? (
+          <>
+            {" · "}
+            <Link href={`/dashboard/bookings/${booking.id}/invoice`} className="text-teal hover:underline">
+              Tax invoice (GST)
+            </Link>
+          </>
+        ) : null}
       </p>
 
       <div className="mt-6 flex flex-wrap gap-3">

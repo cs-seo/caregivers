@@ -5,6 +5,7 @@ import { AuthError } from "next-auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { signIn } from "@/auth";
+import { findSeriesOverlap } from "./booking-overlap";
 import { BOOKING_STATUS, ROLES } from "./constants";
 import { autoReleaseIfDue, holdPayment, refundPayment, releasePayment } from "./escrow";
 import { quoteBooking } from "./money";
@@ -121,11 +122,20 @@ export async function createBookingAction(formData: FormData) {
     ? BOOKING_STATUS.AWAITING_PAYMENT
     : BOOKING_STATUS.PENDING_ACCEPTANCE;
   const groupId = weeks > 1 ? crypto.randomUUID() : null;
+  const windows = Array.from({ length: weeks }, (_, index) => {
+    const weekStart = new Date(startAt.getTime() + index * 7 * 24 * 60 * 60 * 1000);
+    const weekEnd = new Date(weekStart.getTime() + hours * 60 * 60 * 1000);
+    return { startAt: weekStart, endAt: weekEnd };
+  });
+  const overlap = await findSeriesOverlap(caregiver.id, windows);
+  if (overlap) {
+    redirect(`/caregiver/${slug}/book?error=overlap`);
+  }
 
   const created = [];
   for (let index = 0; index < weeks; index += 1) {
-    const weekStart = new Date(startAt.getTime() + index * 7 * 24 * 60 * 60 * 1000);
-    const weekEnd = new Date(weekStart.getTime() + hours * 60 * 60 * 1000);
+    const weekStart = windows[index].startAt;
+    const weekEnd = windows[index].endAt;
     const weekNotes =
       weeks > 1
         ? [`Week ${index + 1} of ${weeks}`, notes].filter(Boolean).join("\n")

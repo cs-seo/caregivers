@@ -60,9 +60,9 @@ export default function TrustPage() {
       <section>
         <h2 className="text-xl font-semibold">My Aged Care and NDIS invoices</h2>
         <p className="mt-2 text-stone-700">
-          Independent carers list an ABN where they have one. The family receipt shows the care rate, the 10% CareProof
-          fee on top, and GST already included in the advertised rate. That is the split coordinators and plan managers
-          need when they reconcile a Home Care Package or a self-managed NDIS plan.
+          Independent carers list an ABN where they have one. After escrow is funded, the booking tax invoice shows the
+          care rate, GST as 1/11, the 10% CareProof fee on top, and the carer payout. That is the split coordinators
+          and plan managers need when they reconcile a Home Care Package or a self-managed NDIS plan.
         </p>
       </section>
       <section>

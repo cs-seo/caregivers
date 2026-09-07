@@ -1,5 +1,7 @@
 export const SITE_NAME = "CareProof";
 export const SITE_TAGLINE = "Verified carers across Australia";
+export const PLATFORM_ENTITY = "CareProof Pty Ltd";
+export const PLATFORM_ABN = "11 222 333 444";
 export const PLATFORM_FEE_BPS = Number(process.env.PLATFORM_FEE_BPS ?? "1000");
 export const AUTO_RELEASE_HOURS = 72;
 export const DEMO_PASSWORD = "CareProof123!";

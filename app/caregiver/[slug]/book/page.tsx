@@ -61,7 +61,11 @@ export default async function BookPage({
       ) : null}
       {carer.availabilityNote ? <p className="mt-3 rounded-xl bg-sage p-3 text-sm text-stone-700">{carer.availabilityNote}</p> : null}
       <p className="mt-2 text-xs text-stone-500">{lastActiveLabel(carer.lastActiveAt)}</p>
-      {query.error ? (
+      {query.error === "overlap" ? (
+        <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
+          That time overlaps a booking already held for this carer. Pick another start, or a different week.
+        </p>
+      ) : query.error ? (
         <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">Please check the date, hours and care type.</p>
       ) : null}
       {!session?.user ? (

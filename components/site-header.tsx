@@ -14,7 +14,7 @@ export async function SiteHeader() {
   const session = await auth();
 
   return (
-    <header className="border-b border-line bg-card/90 backdrop-blur">
+    <header className="border-b border-line bg-card/90 backdrop-blur print:hidden">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-4 py-4">
         <Link href="/" className="flex items-baseline gap-2 no-underline">
           <span className="text-xl font-semibold tracking-tight text-teal">{SITE_NAME}</span>
