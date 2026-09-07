@@ -51,6 +51,12 @@ export async function DirectoryResults({
         where: { familyId_href: { familyId: viewer!.id, href: searchHref } },
       })
     : null;
+  if (savedSearch) {
+    await prisma.savedSearch.update({
+      where: { id: savedSearch.id },
+      data: { lastSeenCount: stats.count, seenAt: new Date() },
+    });
+  }
 
   return (
     <div>
@@ -110,7 +116,8 @@ export async function DirectoryResults({
       {canShortlist ? (
         savedSearch ? (
           <p className="mt-3 text-sm text-teal-deep">
-            Saved as “{savedSearch.name}”.{" "}
+            Saved as “{savedSearch.name}”. This visit marks the list as seen — new carers will show on your dashboard
+            next time the count grows.{" "}
             <Link href="/dashboard" className="text-teal">
               Open on your dashboard
             </Link>

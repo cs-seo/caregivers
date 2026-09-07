@@ -14,6 +14,8 @@ import { formatDateTime, plural, snippet } from "@/lib/format";
 import { buildRoster } from "@/lib/roster";
 import { formatAud } from "@/lib/money";
 import { deleteSavedSearchAction, applyHouseholdHandoverAction } from "@/lib/actions";
+import { directoryStats } from "@/lib/queries";
+import { filtersFromSearchHref, savedSearchDelta, savedSearchDeltaLabel } from "@/lib/saved-search";
 import { comingUpBookings, comingUpKind } from "@/lib/coming-up";
 import { canFillFromHousehold, hasHandover } from "@/lib/handover";
 import { unreadCountsByBooking } from "@/lib/messages";
@@ -178,6 +180,15 @@ export default async function DashboardPage({
         orderBy: { createdAt: "desc" },
       })
     : [];
+  const savedSearchMatches = await Promise.all(
+    savedSearches.map(async (search) => {
+      const filters = filtersFromSearchHref(search.href);
+      const current = filters ? (await directoryStats(filters)).count : 0;
+      return { id: search.id, ...savedSearchDelta(current, search.lastSeenCount, search.seenAt) };
+    }),
+  );
+  const savedSearchMatchById = new Map(savedSearchMatches.map((row) => [row.id, row]));
+  const newSearchHits = savedSearchMatches.filter((row) => row.newCount > 0).length;
 
   const { action: needsAction, active, history } = groupDashboardBookings(groupedSource);
   const comingUp = comingUpBookings(bookings).slice(0, 4);
@@ -439,7 +450,11 @@ export default async function DashboardPage({
         <section className="mt-6 rounded-2xl border border-line bg-card p-5">
           <h2 className="font-semibold text-ink">Saved searches</h2>
           <p className="mt-1 text-sm text-stone-600">
-            Keep a specialty, suburb or Needed on filter and open it again without rebuilding the form.
+            Keep a specialty, suburb or Needed on filter and open it again without rebuilding the form. Opening a
+            search clears the new-carer count.
+            {newSearchHits
+              ? ` ${newSearchHits} ${newSearchHits === 1 ? "search has" : "searches have"} new matches.`
+              : ""}
           </p>
           {savedSearches.length === 0 ? (
             <Link href="/caregivers" className="mt-3 inline-block text-sm font-medium text-teal">
@@ -447,11 +462,20 @@ export default async function DashboardPage({
             </Link>
           ) : (
             <ul className="mt-3 space-y-2">
-              {savedSearches.map((search) => (
+              {savedSearches.map((search) => {
+                const delta = savedSearchMatchById.get(search.id);
+                return (
                 <li key={search.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                  <Link href={search.href} className="font-medium text-teal hover:underline">
-                    {search.name}
-                  </Link>
+                  <span>
+                    <Link href={search.href} className="font-medium text-teal hover:underline">
+                      {search.name}
+                    </Link>
+                    {delta ? (
+                      <span className={delta.newCount > 0 ? "mt-0.5 block text-clay" : "mt-0.5 block text-stone-500"}>
+                        {savedSearchDeltaLabel(delta)}
+                      </span>
+                    ) : null}
+                  </span>
                   <form action={deleteSavedSearchAction}>
                     <input type="hidden" name="id" value={search.id} />
                     <input type="hidden" name="next" value="/dashboard" />
@@ -460,7 +484,8 @@ export default async function DashboardPage({
                     </button>
                   </form>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
         </section>

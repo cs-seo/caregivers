@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { defaultSearchName, isSafeSearchHref, savedSearchHref } from "./saved-search";
+import {
+  defaultSearchName,
+  filtersFromSearchHref,
+  isSafeSearchHref,
+  savedSearchDelta,
+  savedSearchDeltaLabel,
+  savedSearchHref,
+} from "./saved-search";
 
 test("savedSearchHref keeps path segments and drops page", () => {
   assert.equal(
@@ -26,4 +33,26 @@ test("defaultSearchName adds needed-on and Instant Book", () => {
     defaultSearchName("Aged care carers in Sydney", { availableOn: "2026-09-12", instantBook: true }),
     "Aged care carers in Sydney · needed 12 Sept 2026 · Instant Book",
   );
+});
+
+test("filtersFromSearchHref reads path segments and query flags", () => {
+  const filters = filtersFromSearchHref("/caregivers/aged-care/nsw/sydney?availableOn=2026-09-12");
+  assert.equal(filters?.specialty, "aged-care");
+  assert.equal(filters?.state, "nsw");
+  assert.equal(filters?.city, "sydney");
+  assert.equal(filters?.availableOn, "2026-09-12");
+  const nannies = filtersFromSearchHref("/caregivers/nannies?instantBook=1");
+  assert.equal(nannies?.specialty, "nannies");
+  assert.equal(nannies?.instantBook, true);
+  assert.equal(filtersFromSearchHref("/dashboard"), null);
+});
+
+test("savedSearchDelta treats a never-opened search as all new", () => {
+  const unseen = savedSearchDelta(8, 0, null);
+  assert.deepEqual(unseen, { current: 8, newCount: 8, unseen: true });
+  assert.equal(savedSearchDeltaLabel(unseen), "8 carers · not opened yet");
+  const grown = savedSearchDelta(10, 7, new Date("2026-09-01"));
+  assert.equal(grown.newCount, 3);
+  assert.equal(savedSearchDeltaLabel(grown), "10 carers · 3 new");
+  assert.equal(savedSearchDeltaLabel(savedSearchDelta(7, 7, new Date("2026-09-01"))), "7 carers");
 });

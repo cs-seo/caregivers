@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "SavedSearch" ADD COLUMN "lastSeenCount" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "SavedSearch" ADD COLUMN "seenAt" DATETIME;

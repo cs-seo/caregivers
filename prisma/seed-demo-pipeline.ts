@@ -555,16 +555,38 @@ export async function seedDemoSavedSearches(prisma: PrismaClient) {
     {
       name: "Aged care in Sydney · needed 12 Sept 2026",
       href: "/caregivers/aged-care/nsw/sydney?availableOn=2026-09-12",
+      unseen: true,
     },
-    { name: "Instant Book nannies", href: "/caregivers/nannies?instantBook=1" },
+    { name: "Instant Book nannies", href: "/caregivers/nannies?instantBook=1", unseen: false },
   ];
   let saved = 0;
   for (const row of rows) {
-    await prisma.savedSearch.upsert({
+    const existing = await prisma.savedSearch.findUnique({
       where: { familyId_href: { familyId: family.id, href: row.href } },
-      update: { name: row.name },
-      create: { familyId: family.id, name: row.name, href: row.href },
     });
+    if (existing) {
+      await prisma.savedSearch.update({
+        where: { id: existing.id },
+        data: {
+          name: row.name,
+          ...(row.unseen && !existing.seenAt
+            ? { lastSeenCount: 0, seenAt: null }
+            : !row.unseen && !existing.seenAt
+              ? { lastSeenCount: 999, seenAt: new Date("2026-09-01T00:00:00.000Z") }
+              : {}),
+        },
+      });
+    } else {
+      await prisma.savedSearch.create({
+        data: {
+          familyId: family.id,
+          name: row.name,
+          href: row.href,
+          lastSeenCount: row.unseen ? 0 : 999,
+          seenAt: row.unseen ? null : new Date("2026-09-01T00:00:00.000Z"),
+        },
+      });
+    }
     saved += 1;
   }
   return saved;

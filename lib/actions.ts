@@ -18,7 +18,8 @@ import { newCalendarToken } from "./calendar-feed";
 import { handoverFromForm, handoverToDb, fillEmptyHandover, canFillFromHousehold } from "./handover";
 import { sanitizePhotoUrl } from "./photos";
 import { isSafeReviewReturnPath, sanitizeReviewReply, hasReviewReply } from "./reviews";
-import { isSafeSearchHref, MAX_SAVED_SEARCHES } from "./saved-search";
+import { directoryStats } from "./queries";
+import { filtersFromSearchHref, isSafeSearchHref, MAX_SAVED_SEARCHES } from "./saved-search";
 import { requireRole, requireUser } from "./session";
 import {
   firstSitOutsideHours,
@@ -1087,7 +1088,13 @@ export async function saveSearchAction(formData: FormData) {
   const existing = await prisma.savedSearch.findUnique({
     where: { familyId_href: { familyId: user.id, href } },
   });
+  const filters = filtersFromSearchHref(href);
+  const matches = filters ? (await directoryStats(filters)).count : 0;
   if (existing) {
+    await prisma.savedSearch.update({
+      where: { id: existing.id },
+      data: { name, lastSeenCount: matches, seenAt: new Date() },
+    });
     revalidatePath("/dashboard");
     return;
   }
@@ -1095,7 +1102,7 @@ export async function saveSearchAction(formData: FormData) {
   if (count >= MAX_SAVED_SEARCHES) redirect(`${next}${next.includes("?") ? "&" : "?"}error=saved-limit`);
 
   await prisma.savedSearch.create({
-    data: { familyId: user.id, name, href },
+    data: { familyId: user.id, name, href, lastSeenCount: matches, seenAt: new Date() },
   });
   revalidatePath("/dashboard");
   revalidatePath(next);

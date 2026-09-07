@@ -298,12 +298,14 @@ model Shortlist {
 }
 
 model SavedSearch {
-  id        String   @id @default(cuid())
-  familyId  String
-  family    User     @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  name      String
-  href      String
-  createdAt DateTime @default(now())
+  id            String    @id @default(cuid())
+  familyId      String
+  family        User      @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  name          String
+  href          String
+  lastSeenCount Int       @default(0)
+  seenAt        DateTime?
+  createdAt     DateTime  @default(now())
 
   @@unique([familyId, href])
   @@index([familyId])
