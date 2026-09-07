@@ -1,10 +1,15 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { BOOKING_STATUS } from "./constants";
 import {
   DISPUTE_NOTE_LIMIT,
+  canWriteDisputeReply,
   disputeReasonHint,
   disputeReasonNotice,
+  disputeReplyHint,
+  disputeReplyNotice,
   firstDisputeNote,
+  firstDisputeReply,
   sanitizeDisputeNote,
 } from "./dispute";
 
@@ -60,4 +65,25 @@ test("firstDisputeNote picks the first week that has a reason", () => {
     ]),
     "Finished early.",
   );
+});
+
+test("canWriteDisputeReply is only the carer, once, on a live dispute", () => {
+  assert.equal(canWriteDisputeReply({ status: BOOKING_STATUS.DISPUTED, reply: null, isCarer: true }), true);
+  assert.equal(canWriteDisputeReply({ status: BOOKING_STATUS.DISPUTED, reply: "I stayed.", isCarer: true }), false);
+  assert.equal(canWriteDisputeReply({ status: BOOKING_STATUS.DISPUTED, reply: null, isCarer: false }), false);
+  assert.equal(canWriteDisputeReply({ status: BOOKING_STATUS.IN_PROGRESS, reply: null, isCarer: true }), false);
+});
+
+test("disputeReplyNotice quotes the carer reply for each side", () => {
+  assert.equal(disputeReplyNotice({ reply: null, carerName: "Chloe Bennett", isFamily: true }), null);
+  assert.equal(
+    disputeReplyNotice({ reply: "I stayed until 1pm.", carerName: "Chloe Bennett", isFamily: true }),
+    "Chloe Bennett replied: “I stayed until 1pm.”",
+  );
+  assert.equal(
+    disputeReplyNotice({ reply: "I stayed until 1pm.", carerName: "Chloe Bennett", isFamily: false }),
+    "You replied: “I stayed until 1pm.”",
+  );
+  assert.equal(disputeReplyHint({ reply: "I stayed until 1pm.", isFamily: true }), "The carer replied: “I stayed until 1pm.”");
+  assert.equal(firstDisputeReply([{ disputeReply: "  " }, { disputeReply: "I stayed." }]), "I stayed.");
 });

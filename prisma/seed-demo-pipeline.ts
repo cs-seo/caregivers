@@ -813,6 +813,8 @@ const CHLOE_DISPUTE_NOTE =
   "DEMO_DISPUTE: Friday aged care in Norwood — disputed, auto-release paused.";
 const CHLOE_DISPUTE_REASON =
   "The sit finished early and mum's afternoon medication was not recorded. Holding funds until we sort it out.";
+const CHLOE_DISPUTE_REPLY =
+  "I stayed until 1:00 pm and recorded the morning medication. Happy to walk through the afternoon notes.";
 
 export async function seedDemoDispute(prisma: PrismaClient) {
   const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
@@ -822,6 +824,7 @@ export async function seedDemoDispute(prisma: PrismaClient) {
   });
   if (!family || !chloe || !chloe.specialties[0]) return 0;
   const disputedAt = parseSydneyDateTimeLocal("2026-08-28T14:00");
+  const disputeRepliedAt = parseSydneyDateTimeLocal("2026-08-28T16:00");
   const existing = await prisma.booking.findFirst({
     where: { familyId: family.id, notes: CHLOE_DISPUTE_NOTE },
   });
@@ -832,6 +835,8 @@ export async function seedDemoDispute(prisma: PrismaClient) {
         status: BOOKING_STATUS.DISPUTED,
         disputeNote: existing.disputeNote || CHLOE_DISPUTE_REASON,
         disputedAt: existing.disputedAt ?? disputedAt,
+        disputeReply: existing.disputeReply || CHLOE_DISPUTE_REPLY,
+        disputeRepliedAt: existing.disputeRepliedAt ?? disputeRepliedAt,
       },
     });
     return 1;
@@ -858,6 +863,8 @@ export async function seedDemoDispute(prisma: PrismaClient) {
       notes: CHLOE_DISPUTE_NOTE,
       disputeNote: CHLOE_DISPUTE_REASON,
       disputedAt,
+      disputeReply: CHLOE_DISPUTE_REPLY,
+      disputeRepliedAt,
       status: BOOKING_STATUS.DISPUTED,
       ...quote,
       payment: {

@@ -1,3 +1,5 @@
+import { BOOKING_STATUS } from "./constants";
+
 export const DISPUTE_NOTE_LIMIT = 400;
 
 export function sanitizeDisputeNote(raw: string) {
@@ -23,4 +25,37 @@ export function disputeReasonHint(args: { note: string | null | undefined; isFam
   if (!note) return null;
   const short = note.length > 140 ? `${note.slice(0, 137).trim()}…` : note;
   return args.isFamily ? `You wrote: “${short}”` : `The family wrote: “${short}”`;
+}
+
+export function firstDisputeReply(weeks: { disputeReply?: string | null }[]) {
+  return weeks.find((week) => week.disputeReply?.trim())?.disputeReply?.trim() ?? null;
+}
+
+export function hasDisputeReply(reply?: string | null) {
+  return Boolean(reply?.trim());
+}
+
+export function canWriteDisputeReply(args: {
+  status: string;
+  reply?: string | null;
+  isCarer: boolean;
+}) {
+  return args.isCarer && args.status === BOOKING_STATUS.DISPUTED && !hasDisputeReply(args.reply);
+}
+
+export function disputeReplyNotice(args: {
+  reply: string | null | undefined;
+  carerName: string;
+  isFamily: boolean;
+}) {
+  const reply = (args.reply ?? "").trim();
+  if (!reply) return null;
+  return args.isFamily ? `${args.carerName} replied: “${reply}”` : `You replied: “${reply}”`;
+}
+
+export function disputeReplyHint(args: { reply: string | null | undefined; isFamily: boolean }) {
+  const reply = (args.reply ?? "").trim();
+  if (!reply) return null;
+  const short = reply.length > 140 ? `${reply.slice(0, 137).trim()}…` : reply;
+  return args.isFamily ? `The carer replied: “${short}”` : `You replied: “${short}”`;
 }

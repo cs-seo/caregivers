@@ -11,7 +11,7 @@ import { normalizeFundingRef } from "./funding";
 import { findSeriesOverlap } from "./booking-overlap";
 import { BOOKING_STATUS, ROLES, UNPAID_BOOKING_STATUSES } from "./constants";
 import { isAcceptedDemoCard, readDemoCard } from "./demo-card";
-import { sanitizeDisputeNote } from "./dispute";
+import { canWriteDisputeReply, sanitizeDisputeNote } from "./dispute";
 import { autoReleaseIfDue, holdPayment, refundPayment, releasePayment } from "./escrow";
 import { parseSydneyDateTimeLocal, sydneyDateKey } from "./format";
 import { quoteBooking } from "./money";
@@ -505,6 +505,37 @@ export async function disputeBookingAction(formData: FormData) {
     data: { status: BOOKING_STATUS.DISPUTED, disputeNote: note, disputedAt: new Date() },
   });
   revalidatePath(`/dashboard/bookings/${booking.id}`);
+}
+
+export async function replyToDisputeAction(formData: FormData) {
+  const user = await requireUser();
+  if (!user) redirect("/login");
+  const bookingId = String(formData.get("bookingId") ?? "");
+  const reply = sanitizeDisputeNote(String(formData.get("disputeReply") ?? ""));
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { caregiver: true },
+  });
+  if (!booking) throw new Error("Not found");
+  const isCarer = booking.caregiver.userId === user.id;
+  if (
+    !canWriteDisputeReply({
+      status: booking.status,
+      reply: booking.disputeReply,
+      isCarer,
+    })
+  ) {
+    throw new Error("Not allowed");
+  }
+  if (!reply) {
+    redirect(`/dashboard/bookings/${booking.id}?error=dispute-reply`);
+  }
+  await prisma.booking.update({
+    where: { id: booking.id },
+    data: { disputeReply: reply, disputeRepliedAt: new Date() },
+  });
+  revalidatePath(`/dashboard/bookings/${booking.id}`);
+  revalidatePath("/dashboard");
 }
 
 export async function resolveDisputeAction(formData: FormData) {

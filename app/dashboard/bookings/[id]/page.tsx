@@ -11,6 +11,7 @@ import {
   createReviewAction,
   declineBookingAction,
   disputeBookingAction,
+  replyToDisputeAction,
   payBookingAction,
   paySeriesAction,
   resolveDisputeAction,
@@ -35,7 +36,12 @@ import { formatDateTime } from "@/lib/format";
 import { isUnreadFor, markThreadRead } from "@/lib/messages";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
-import { DISPUTE_NOTE_LIMIT, disputeReasonNotice } from "@/lib/dispute";
+import {
+  DISPUTE_NOTE_LIMIT,
+  canWriteDisputeReply,
+  disputeReasonNotice,
+  disputeReplyNotice,
+} from "@/lib/dispute";
 import {
   carerPendingAcceptanceNotice,
   familyPendingAcceptanceNotice,
@@ -125,6 +131,16 @@ export default async function BookingDetailPage({
     familyName: booking.family.name,
     isFamily,
   });
+  const disputeReply = disputeReplyNotice({
+    reply: booking.disputeReply,
+    carerName: booking.caregiver.user.name,
+    isFamily,
+  });
+  const showDisputeReplyForm = canWriteDisputeReply({
+    status: booking.status,
+    reply: booking.disputeReply,
+    isCarer,
+  });
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -162,6 +178,31 @@ export default async function BookingDetailPage({
               {booking.disputedAt ? ` Opened ${formatDateTime(booking.disputedAt)}.` : ""}
             </p>
           ) : null}
+          {disputeReply ? (
+            <p className="rounded-xl bg-sage p-3 text-sm text-teal-deep">
+              {disputeReply}
+              {booking.disputeRepliedAt ? ` ${formatDateTime(booking.disputeRepliedAt)}.` : ""}
+            </p>
+          ) : null}
+          {showDisputeReplyForm ? (
+            <form action={replyToDisputeAction} className="rounded-xl border border-line bg-card p-3 space-y-2">
+              <input type="hidden" name="bookingId" value={booking.id} />
+              <label className="block text-xs text-stone-500">
+                One public reply the family will see
+                <textarea
+                  name="disputeReply"
+                  required
+                  rows={3}
+                  maxLength={DISPUTE_NOTE_LIMIT}
+                  placeholder="What happened on the sit, from your side."
+                  className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm text-ink"
+                />
+              </label>
+              <button className="rounded-lg bg-teal px-4 py-2 text-sm font-medium text-white" type="submit">
+                Publish reply
+              </button>
+            </form>
+          ) : null}
         </div>
       ) : showsAutoReleaseNotice(booking.status) ? (
         <p className="mt-3 rounded-xl border border-line bg-card p-3 text-sm text-stone-600">
@@ -193,6 +234,9 @@ export default async function BookingDetailPage({
         <p className="mt-4 rounded-xl bg-clay/10 p-3 text-sm text-clay">
           Write a short reason so the carer can see why auto-release is paused.
         </p>
+      ) : null}
+      {query.error === "dispute-reply" ? (
+        <p className="mt-4 rounded-xl bg-clay/10 p-3 text-sm text-clay">Write a short reply before publishing.</p>
       ) : null}
       {query.released ? (
         <p className="mt-4 rounded-xl bg-sage p-3 text-sm">Funds released to the carer.</p>
