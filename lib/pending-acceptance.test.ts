@@ -115,7 +115,7 @@ test("carerPendingAcceptanceBanner summarises one or many waiting families", () 
       { familyName: "Alex Martin", pendingWeeks: 1 },
       { familyName: "Priya Shah", pendingWeeks: 1 },
     ]),
-    "2 families are waiting for you to accept a request-to-book sit.",
+    "2 request-to-book sits are waiting for you to accept.",
   );
 });
 

@@ -70,7 +70,7 @@ export function carerPendingAcceptanceBanner(items: { familyName: string; pendin
       ? `${familyName} is waiting for you to accept ${pendingWeeks} weeks.`
       : `${familyName} is waiting for you to accept this sit.`;
   }
-  return `${items.length} families are waiting for you to accept a request-to-book sit.`;
+  return `${items.length} request-to-book sits are waiting for you to accept.`;
 }
 
 export function carerPendingAcceptanceHint(pendingWeeks: number) {
