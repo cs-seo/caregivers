@@ -179,6 +179,54 @@ export async function seedDemoRecurring(prisma: PrismaClient) {
   return created;
 }
 
+export async function seedDemoSeriesActions(prisma: PrismaClient) {
+  const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
+  const james = await prisma.caregiverProfile.findUnique({
+    where: { slug: "james-okafor-disability-support-sydney" },
+    include: { specialties: true },
+  });
+  if (!family || !james) return 0;
+  const existing = await prisma.booking.count({
+    where: { familyId: family.id, notes: { startsWith: "DEMO_SERIES:" } },
+  });
+  if (existing > 0) return 0;
+
+  const hours = 4;
+  const subtotal = james.hourlyRateCents * hours;
+  const fee = Math.round(subtotal * 0.1);
+  const quote = {
+    hours,
+    rateCents: james.hourlyRateCents,
+    subtotalCents: subtotal,
+    platformFeeCents: fee,
+    gstCents: Math.round(subtotal / 11),
+    totalCents: subtotal + fee,
+  };
+  const groupId = "demo-series-james-saturdays";
+  const first = new Date("2026-10-10T10:00:00+10:00");
+  let created = 0;
+  for (let index = 0; index < 3; index += 1) {
+    const startAt = new Date(first.getTime() + index * 7 * 24 * 60 * 60 * 1000);
+    await prisma.booking.create({
+      data: {
+        familyId: family.id,
+        caregiverId: james.id,
+        specialtyId: james.specialties[0].specialtyId,
+        startAt,
+        endAt: new Date(startAt.getTime() + hours * 60 * 60 * 1000),
+        notes: `DEMO_SERIES: Saturday community access · week ${index + 1} of 3`,
+        status: BOOKING_STATUS.PENDING_ACCEPTANCE,
+        recurringGroupId: groupId,
+        recurringIndex: index + 1,
+        recurringTotal: 3,
+        ...quote,
+      },
+    });
+    created += 1;
+  }
+  return created;
+}
+
 export async function seedDemoExpiringChecks(prisma: PrismaClient) {
   const sarah = await prisma.caregiverProfile.findUnique({
     where: { slug: "sarah-nguyen-aged-care-sydney" },
@@ -220,8 +268,9 @@ async function main() {
   const saved = await seedDemoShortlist(prisma);
   const recurring = await seedDemoRecurring(prisma);
   const expiring = await seedDemoExpiringChecks(prisma);
+  const series = await seedDemoSeriesActions(prisma);
   console.log(
-    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}`,
+    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}`,
   );
   await prisma.$disconnect();
 }

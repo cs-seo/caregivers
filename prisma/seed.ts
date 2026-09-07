@@ -4,7 +4,13 @@ import { featuredCarers } from "./data/featured-carers";
 import { generateCarers } from "./data/generate-carers";
 import { SUBURBS_BY_CITY, slugifySuburb } from "./data/suburbs";
 import { insertCarer } from "./insert-carer";
-import { seedDemoExpiringChecks, seedDemoPipeline, seedDemoRecurring, seedDemoShortlist } from "./seed-demo-pipeline";
+import {
+  seedDemoExpiringChecks,
+  seedDemoPipeline,
+  seedDemoRecurring,
+  seedDemoSeriesActions,
+  seedDemoShortlist,
+} from "./seed-demo-pipeline";
 
 const prisma = new PrismaClient();
 const DEMO_PASSWORD = "CareProof123!";
@@ -705,8 +711,9 @@ async function main() {
   const shortlisted = await seedDemoShortlist(prisma);
   const recurring = await seedDemoRecurring(prisma);
   const expiring = await seedDemoExpiringChecks(prisma);
+  const series = await seedDemoSeriesActions(prisma);
   console.log(
-    `Seeded ${carerProfiles.length} featured carers + ${generatedCount} generated profiles, ${familyUsers.length} families, ${requests.length} jobs, ${suburbCount} suburbs, ${pipeline.created} live demo bookings, ${shortlisted} shortlisted, ${recurring} recurring weeks, ${expiring} expiring checks.`,
+    `Seeded ${carerProfiles.length} featured carers + ${generatedCount} generated profiles, ${familyUsers.length} families, ${requests.length} jobs, ${suburbCount} suburbs, ${pipeline.created} live demo bookings, ${shortlisted} shortlisted, ${recurring} recurring weeks, ${expiring} expiring checks, ${series} series weeks.`,
   );
   console.log("Demo logins: family@careproof.com.au / carer@careproof.com.au / CareProof123!");
 }

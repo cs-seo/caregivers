@@ -187,6 +187,25 @@ export async function payBookingAction(formData: FormData) {
   redirect(`/dashboard/bookings/${booking.id}?paid=1`);
 }
 
+export async function paySeriesAction(formData: FormData) {
+  const user = await requireUser();
+  if (!user) redirect("/login");
+  const bookingId = String(formData.get("bookingId") ?? "");
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+  if (!booking || booking.familyId !== user.id || !booking.recurringGroupId) {
+    throw new Error("Not allowed");
+  }
+  const weeks = await prisma.booking.findMany({
+    where: { recurringGroupId: booking.recurringGroupId, status: BOOKING_STATUS.AWAITING_PAYMENT },
+    orderBy: { recurringIndex: "asc" },
+  });
+  for (const week of weeks) {
+    await holdPayment(week.id);
+  }
+  revalidatePath("/dashboard");
+  redirect(`/dashboard/bookings/${booking.id}?paid=1`);
+}
+
 export async function acceptBookingAction(formData: FormData) {
   const user = await requireRole(ROLES.CAREGIVER);
   if (!user?.caregiverProfile) redirect("/login");
@@ -202,6 +221,22 @@ export async function acceptBookingAction(formData: FormData) {
   revalidatePath(`/dashboard/bookings/${booking.id}`);
 }
 
+export async function acceptSeriesAction(formData: FormData) {
+  const user = await requireRole(ROLES.CAREGIVER);
+  if (!user?.caregiverProfile) redirect("/login");
+  const bookingId = String(formData.get("bookingId") ?? "");
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+  if (!booking || booking.caregiverId !== user.caregiverProfile.id || !booking.recurringGroupId) {
+    throw new Error("Not allowed");
+  }
+  await prisma.booking.updateMany({
+    where: { recurringGroupId: booking.recurringGroupId, status: BOOKING_STATUS.PENDING_ACCEPTANCE },
+    data: { status: BOOKING_STATUS.AWAITING_PAYMENT },
+  });
+  revalidatePath("/dashboard");
+  revalidatePath(`/dashboard/bookings/${booking.id}`);
+}
+
 export async function declineBookingAction(formData: FormData) {
   const user = await requireRole(ROLES.CAREGIVER);
   if (!user?.caregiverProfile) redirect("/login");
@@ -212,6 +247,21 @@ export async function declineBookingAction(formData: FormData) {
   }
   await prisma.booking.update({
     where: { id: booking.id },
+    data: { status: BOOKING_STATUS.CANCELLED },
+  });
+  revalidatePath("/dashboard");
+}
+
+export async function declineSeriesAction(formData: FormData) {
+  const user = await requireRole(ROLES.CAREGIVER);
+  if (!user?.caregiverProfile) redirect("/login");
+  const bookingId = String(formData.get("bookingId") ?? "");
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+  if (!booking || booking.caregiverId !== user.caregiverProfile.id || !booking.recurringGroupId) {
+    throw new Error("Not allowed");
+  }
+  await prisma.booking.updateMany({
+    where: { recurringGroupId: booking.recurringGroupId, status: BOOKING_STATUS.PENDING_ACCEPTANCE },
     data: { status: BOOKING_STATUS.CANCELLED },
   });
   revalidatePath("/dashboard");

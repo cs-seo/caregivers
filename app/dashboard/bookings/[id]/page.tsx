@@ -3,11 +3,14 @@ import { notFound, redirect } from "next/navigation";
 import { Badge } from "@/components/badges";
 import {
   acceptBookingAction,
+  acceptSeriesAction,
   confirmCompleteAction,
+  declineSeriesAction,
   createReviewAction,
   declineBookingAction,
   disputeBookingAction,
   payBookingAction,
+  paySeriesAction,
   resolveDisputeAction,
   sendMessageAction,
   startBookingAction,
@@ -133,6 +136,30 @@ export default async function BookingDetailPage({
               </li>
             ))}
           </ul>
+          {isCarer && series.some((week) => week.status === BOOKING_STATUS.PENDING_ACCEPTANCE) ? (
+            <div className="mt-4 flex flex-wrap gap-3">
+              <form action={acceptSeriesAction}>
+                <input type="hidden" name="bookingId" value={booking.id} />
+                <button className="rounded-lg bg-teal px-4 py-2 text-sm font-medium text-white" type="submit">
+                  Accept every week
+                </button>
+              </form>
+              <form action={declineSeriesAction}>
+                <input type="hidden" name="bookingId" value={booking.id} />
+                <button className="rounded-lg border border-line px-4 py-2 text-sm" type="submit">
+                  Decline the series
+                </button>
+              </form>
+            </div>
+          ) : null}
+          {isFamily && series.some((week) => week.status === BOOKING_STATUS.AWAITING_PAYMENT) ? (
+            <form action={paySeriesAction} className="mt-4">
+              <input type="hidden" name="bookingId" value={booking.id} />
+              <button className="rounded-lg bg-teal px-4 py-2 text-sm font-medium text-white" type="submit">
+                Pay remaining weeks into escrow
+              </button>
+            </form>
+          ) : null}
         </section>
       ) : null}
       <p className="mt-4 text-sm">
