@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { BookingForm } from "@/components/booking-form";
+import { DaysOffCalendar } from "@/components/days-off-calendar";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { auth } from "@/auth";
 import { fortnightLabel, isInstantBookLive, summariseFortnight, weeklyHourChips } from "@/lib/availability";
@@ -32,8 +33,8 @@ export default async function BookPage({
   const [{ slug }, query, session] = await Promise.all([params, searchParams, auth()]);
   const carer = await getCaregiverBySlug(slug);
   if (!carer) notFound();
-  const upcoming = await getUpcomingAvailability(carer.id);
-  const fortnight = summariseFortnight(upcoming);
+  const upcoming = await getUpcomingAvailability(carer.id, 70);
+  const fortnight = summariseFortnight(upcoming.slice(0, 14));
   const blockedKeys = upcoming.filter((day) => day.blocked).map((day) => day.key);
   const awayToday = upcoming[0]?.blocked === true;
   const liveInstant = isInstantBookLive(carer.instantBook, blockedKeys);
@@ -76,6 +77,13 @@ export default async function BookPage({
         </div>
       ) : null}
       {carer.availabilityNote ? <p className="mt-3 rounded-xl bg-sage p-3 text-sm text-stone-700">{carer.availabilityNote}</p> : null}
+      <div className="mt-4 rounded-2xl border border-line bg-card p-4">
+        <p className="text-sm font-medium text-ink">Pick a free day</p>
+        <p className="mt-1 text-xs text-stone-500">This month and next. Away and booked days cannot be selected.</p>
+        <div className="mt-3">
+          <DaysOffCalendar days={upcoming} bookSlug={carer.slug} />
+        </div>
+      </div>
       {checkAlerts.length ? (
         <div className="mt-3 rounded-xl bg-orange-50 p-3 text-sm text-clay">
           <p className="font-medium">Checks to review before you book</p>

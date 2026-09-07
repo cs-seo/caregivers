@@ -4,6 +4,7 @@ import { Badge, CredentialDetails } from "@/components/badges";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { CaregiverCardView } from "@/components/caregiver-card";
 import { JsonLd } from "@/components/json-ld";
+import { DaysOffCalendar } from "@/components/days-off-calendar";
 import { MobileBookBar } from "@/components/mobile-book-bar";
 import { Portrait } from "@/components/portrait";
 import { ShortlistButton } from "@/components/shortlist-button";
@@ -45,11 +46,11 @@ export default async function CaregiverProfilePage({
       carer.specialties.map((s) => s.specialtyId),
     ),
     getShortlistedIds(viewer?.role === "FAMILY" ? viewer.id : null),
-    getUpcomingAvailability(carer.id),
+    getUpcomingAvailability(carer.id, 70),
   ]);
   const primary = carer.specialties[0]?.specialty;
   const canShortlist = viewer?.role === "FAMILY";
-  const fortnight = summariseFortnight(upcoming);
+  const fortnight = summariseFortnight(upcoming.slice(0, 14));
   const blockedKeys = upcoming.filter((day) => day.blocked).map((day) => day.key);
   const awayToday = upcoming[0]?.blocked === true;
   const liveInstant = isInstantBookLive(carer.instantBook, blockedKeys);
@@ -197,32 +198,12 @@ export default async function CaregiverProfilePage({
                 </div>
               ) : null}
               {carer.availabilityNote ? <p className="mt-2 text-stone-700">{carer.availabilityNote}</p> : null}
-              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-7">
-                {upcoming.map((day) =>
-                  day.booked ? (
-                    <div key={day.key} className="rounded-xl bg-orange-50 px-2 py-2 text-center text-xs text-clay">
-                      <p className="font-medium">{day.label}</p>
-                      <p className="mt-0.5">Booked</p>
-                    </div>
-                  ) : day.blocked ? (
-                    <div key={day.key} className="rounded-xl bg-stone-100 px-2 py-2 text-center text-xs text-stone-600">
-                      <p className="font-medium">{day.label}</p>
-                      <p className="mt-0.5">Away</p>
-                    </div>
-                  ) : (
-                    <Link
-                      key={day.key}
-                      href={`/caregiver/${carer.slug}/book?start=${day.key}`}
-                      className="rounded-xl bg-sage px-2 py-2 text-center text-xs text-teal-deep no-underline hover:bg-sage/80"
-                    >
-                      <p className="font-medium">{day.label}</p>
-                      <p className="mt-0.5">Free · Book</p>
-                    </Link>
-                  ),
-                )}
+              <div className="mt-4">
+                <DaysOffCalendar days={upcoming} bookSlug={carer.slug} />
               </div>
               <p className="mt-2 text-xs text-stone-500">
-                Booked days already have a sit in escrow. Away days are marked off by the carer. Search{" "}
+                Free days open the book form. Booked days already have a sit in escrow. Away days are marked off by the
+                carer. Search{" "}
                 <Link href={`/caregivers?availableOn=${upcoming.find((day) => !day.booked && !day.blocked)?.key ?? ""}`} className="text-teal">
                   carers free on another day
                 </Link>

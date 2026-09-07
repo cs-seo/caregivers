@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { addBlockedDateAction, removeBlockedDateAction } from "@/lib/actions";
 import { sydneyDateKey } from "@/lib/format";
 import {
@@ -11,7 +12,15 @@ import {
 
 type DayState = { key: string; booked: boolean; blocked: boolean };
 
-export function DaysOffCalendar({ days, now = new Date() }: { days: DayState[]; now?: Date }) {
+export function DaysOffCalendar({
+  days,
+  now = new Date(),
+  bookSlug,
+}: {
+  days: DayState[];
+  now?: Date;
+  bookSlug?: string;
+}) {
   const todayKey = sydneyDateKey(now);
   const current = sydneyYearMonth(now);
   const months = [current, addMonths(current, 1)];
@@ -35,6 +44,12 @@ export function DaysOffCalendar({ days, now = new Date() }: { days: DayState[]; 
               const blocked = info?.blocked ?? false;
               const booked = info?.booked ?? false;
               const muted = !cell.inMonth || past;
+              const tone = blocked
+                ? "bg-stone-100 font-medium text-stone-700"
+                : booked
+                  ? "bg-orange-50 font-medium text-clay"
+                  : "bg-sage text-teal-deep hover:bg-sage/80";
+              const label = blocked ? "Away" : booked ? "Booked" : bookSlug ? "Free" : "Open";
               if (muted) {
                 return (
                   <div
@@ -45,6 +60,30 @@ export function DaysOffCalendar({ days, now = new Date() }: { days: DayState[]; 
                   >
                     {cell.day}
                   </div>
+                );
+              }
+              if (bookSlug) {
+                if (blocked || booked) {
+                  return (
+                    <div
+                      key={cell.key}
+                      className={`rounded-lg px-1 py-2 text-center text-xs ${tone} ${today ? "ring-1 ring-teal" : ""}`}
+                    >
+                      <span className="block">{cell.day}</span>
+                      <span className="mt-0.5 block text-[10px] leading-tight">{label}</span>
+                    </div>
+                  );
+                }
+                return (
+                  <Link
+                    key={cell.key}
+                    href={`/caregiver/${bookSlug}/book?start=${cell.key}`}
+                    title={`${cell.key} · free · book`}
+                    className={`block rounded-lg px-1 py-2 text-center text-xs no-underline ${tone} ${today ? "ring-1 ring-teal" : ""}`}
+                  >
+                    <span className="block">{cell.day}</span>
+                    <span className="mt-0.5 block text-[10px] leading-tight">{label}</span>
+                  </Link>
                 );
               }
               return (
@@ -62,18 +101,10 @@ export function DaysOffCalendar({ days, now = new Date() }: { days: DayState[]; 
                           ? `${cell.key} · booked · mark away`
                           : `${cell.key} · open · mark away`
                     }
-                    className={`w-full rounded-lg px-1 py-2 text-xs ${
-                      blocked
-                        ? "bg-stone-100 font-medium text-stone-700"
-                        : booked
-                          ? "bg-orange-50 font-medium text-clay"
-                          : "bg-sage text-teal-deep hover:bg-sage/80"
-                    } ${today ? "ring-1 ring-teal" : ""}`}
+                    className={`w-full rounded-lg px-1 py-2 text-xs ${tone} ${today ? "ring-1 ring-teal" : ""}`}
                   >
                     <span className="block">{cell.day}</span>
-                    <span className="mt-0.5 block text-[10px] leading-tight">
-                      {blocked ? "Away" : booked ? "Booked" : "Open"}
-                    </span>
+                    <span className="mt-0.5 block text-[10px] leading-tight">{label}</span>
                   </button>
                 </form>
               );
