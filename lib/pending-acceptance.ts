@@ -43,3 +43,39 @@ export function familyPendingAcceptanceHint(pendingWeeks: number) {
     ? "You cannot pay until the carer accepts. Cancel unpaid weeks if you need to withdraw."
     : "You cannot pay until the carer accepts. Cancel if you need to withdraw.";
 }
+
+export function carerPendingAcceptanceNotice(args: {
+  familyName: string;
+  pendingWeeks: number;
+  seriesTotal?: number;
+}) {
+  if (args.pendingWeeks <= 0) return null;
+  const series = Boolean(args.seriesTotal && args.seriesTotal > 1);
+  if (series && args.pendingWeeks === args.seriesTotal) {
+    return `${args.familyName} is waiting for you to accept this ${args.seriesTotal}-week request-to-book series. Accept so they can pay into escrow, or decline if you cannot do it.`;
+  }
+  if (series) {
+    return `${args.familyName} is waiting for you to accept ${args.pendingWeeks} ${
+      args.pendingWeeks === 1 ? "week" : "weeks"
+    } of this series. Accept so they can pay into escrow, or decline if you cannot do it.`;
+  }
+  return `${args.familyName} is waiting for you to accept this request-to-book sit. Accept so they can pay into escrow, or decline if you cannot do it.`;
+}
+
+export function carerPendingAcceptanceBanner(items: { familyName: string; pendingWeeks: number }[]) {
+  if (!items.length) return null;
+  if (items.length === 1) {
+    const { familyName, pendingWeeks } = items[0];
+    return pendingWeeks > 1
+      ? `${familyName} is waiting for you to accept ${pendingWeeks} weeks.`
+      : `${familyName} is waiting for you to accept this sit.`;
+  }
+  return `${items.length} families are waiting for you to accept a request-to-book sit.`;
+}
+
+export function carerPendingAcceptanceHint(pendingWeeks: number) {
+  if (pendingWeeks <= 0) return null;
+  return pendingWeeks > 1
+    ? "Accept every week so the family can pay into escrow, or decline the series if you cannot do it."
+    : "Accept so the family can pay into escrow, or decline if you cannot do it.";
+}

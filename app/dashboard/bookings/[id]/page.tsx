@@ -34,7 +34,11 @@ import { formatDateTime } from "@/lib/format";
 import { isUnreadFor, markThreadRead } from "@/lib/messages";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
-import { familyPendingAcceptanceNotice, pendingAcceptanceCount } from "@/lib/pending-acceptance";
+import {
+  carerPendingAcceptanceNotice,
+  familyPendingAcceptanceNotice,
+  pendingAcceptanceCount,
+} from "@/lib/pending-acceptance";
 import { canReplyToReview } from "@/lib/reviews";
 import { requireUser } from "@/lib/session";
 import { pageMeta } from "@/lib/seo";
@@ -107,7 +111,13 @@ export default async function BookingDetailPage({
         pendingWeeks,
         seriesTotal: booking.recurringTotal,
       })
-    : null;
+    : isCarer
+      ? carerPendingAcceptanceNotice({
+          familyName: booking.family.name,
+          pendingWeeks,
+          seriesTotal: booking.recurringTotal,
+        })
+      : null;
 
   return (
     <div className="mx-auto max-w-2xl">

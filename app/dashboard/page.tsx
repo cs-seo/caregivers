@@ -30,6 +30,8 @@ import { buildRoster, canToggleRosterAway } from "@/lib/roster";
 import { disputePauseBanner, isAutoReleasePaused } from "@/lib/escrow";
 import { formatAud } from "@/lib/money";
 import {
+  carerPendingAcceptanceBanner,
+  carerPendingAcceptanceHint,
   familyPendingAcceptanceBanner,
   familyPendingAcceptanceHint,
   pendingAcceptanceCount,
@@ -133,9 +135,11 @@ function BookingList({
                   </a>
                 </p>
               ) : null}
-              {isFamily && pendingAcceptanceCount(group.weeks) > 0 ? (
+              {pendingAcceptanceCount(group.weeks) > 0 ? (
                 <p className="mt-2 text-sm text-stone-600">
-                  {familyPendingAcceptanceHint(pendingAcceptanceCount(group.weeks))}
+                  {isFamily
+                    ? familyPendingAcceptanceHint(pendingAcceptanceCount(group.weeks))
+                    : carerPendingAcceptanceHint(pendingAcceptanceCount(group.weeks))}
                 </p>
               ) : null}
               {group.messageCount > 0 ? (
@@ -287,16 +291,17 @@ export default async function DashboardPage({
   }).length;
 
   const { action: needsAction, active, history } = groupDashboardBookings(groupedSource);
-  const pendingAcceptanceItems = isFamily
-    ? needsAction
-        .map((group) => ({
-          carerName: group.caregiverName,
-          pendingWeeks: pendingAcceptanceCount(group.weeks),
-          href: group.href,
-        }))
-        .filter((item) => item.pendingWeeks > 0)
-    : [];
-  const pendingAcceptanceCopy = familyPendingAcceptanceBanner(pendingAcceptanceItems);
+  const pendingAcceptanceItems = needsAction
+    .map((group) => ({
+      carerName: group.caregiverName,
+      familyName: group.familyName,
+      pendingWeeks: pendingAcceptanceCount(group.weeks),
+      href: group.href,
+    }))
+    .filter((item) => item.pendingWeeks > 0);
+  const pendingAcceptanceCopy = isFamily
+    ? familyPendingAcceptanceBanner(pendingAcceptanceItems)
+    : carerPendingAcceptanceBanner(pendingAcceptanceItems);
   const disputedItems = isFamily
     ? needsAction
         .filter((group) => group.weeks.some((week) => isAutoReleasePaused(week.status)))
