@@ -921,6 +921,41 @@ export async function seedDemoInvites(prisma: PrismaClient) {
   return 1;
 }
 
+export async function seedDemoExpiredJob(prisma: PrismaClient) {
+  const slug = "sunday-companion-newtown";
+  const startDate = parseSydneyDateTimeLocal("2026-09-06T09:00");
+  const existing = await prisma.careRequest.findUnique({ where: { slug } });
+  if (existing) {
+    if (existing.startDate.getTime() !== startDate.getTime() || existing.status !== "open") {
+      await prisma.careRequest.update({ where: { slug }, data: { startDate, status: "open" } });
+    }
+    return 1;
+  }
+  const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
+  const specialty = await prisma.specialty.findUnique({ where: { slug: "companion-care" } });
+  const city = await prisma.city.findFirst({
+    where: { slug: "sydney", state: { slug: "nsw" } },
+  });
+  if (!family || !specialty || !city) return 0;
+  await prisma.careRequest.create({
+    data: {
+      slug,
+      familyId: family.id,
+      specialtyId: specialty.id,
+      cityId: city.id,
+      title: "Sunday companion sit in Newtown",
+      description:
+        "One Sunday morning companion visit in Newtown — tea, a short walk around the park, and company while I was interstate. The sit has already started.",
+      budgetType: "hourly",
+      budgetCents: 4500,
+      startDate,
+      hoursEstimate: 3,
+      status: "open",
+    },
+  });
+  return 1;
+}
+
 export async function seedDemoJobStarts(prisma: PrismaClient) {
   const times: Record<string, Date> = {
     "weekday-aged-care-marrickville": parseSydneyDateTimeLocal("2026-09-15T08:00"),
@@ -928,6 +963,7 @@ export async function seedDemoJobStarts(prisma: PrismaClient) {
     "ndis-weekend-community-access-brisbane": parseSydneyDateTimeLocal("2026-09-20T10:00"),
     "overnight-respite-adelaide": parseSydneyDateTimeLocal("2026-09-18T18:00"),
     "saturday-babysitter-sydney": parseSydneyDateTimeLocal("2026-09-12T18:00"),
+    "sunday-companion-newtown": parseSydneyDateTimeLocal("2026-09-06T09:00"),
   };
   let updated = 0;
   for (const [slug, startDate] of Object.entries(times)) {
@@ -1015,6 +1051,7 @@ async function main() {
   const weekly = await seedDemoWeeklyWindows(prisma);
   const notice = await seedDemoNoticeHours(prisma);
   const jobStarts = await seedDemoJobStarts(prisma);
+  const expired = await seedDemoExpiredJob(prisma);
   const hired = await seedDemoHiredRequest(prisma);
   const invites = await seedDemoInvites(prisma);
   const jobMessages = await seedDemoJobMessages(prisma);
@@ -1024,7 +1061,7 @@ async function main() {
   const proposalAlerts = await seedDemoProposalAlerts(prisma);
   const inviteAlerts = await seedDemoInviteAlerts(prisma);
   console.log(
-    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}; notice ${notice}; jobStarts ${jobStarts}; hired ${hired}; invites ${invites}; jobMessages ${jobMessages}; passOn ${passOn}; awaitingPay ${awaitingPay}; jobAlerts ${jobAlerts}; proposalAlerts ${proposalAlerts}; inviteAlerts ${inviteAlerts}`,
+    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}; notice ${notice}; jobStarts ${jobStarts}; expired ${expired}; hired ${hired}; invites ${invites}; jobMessages ${jobMessages}; passOn ${passOn}; awaitingPay ${awaitingPay}; jobAlerts ${jobAlerts}; proposalAlerts ${proposalAlerts}; inviteAlerts ${inviteAlerts}`,
   );
   await prisma.$disconnect();
 }

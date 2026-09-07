@@ -62,7 +62,7 @@ export async function DirectoryResults({
     canShortlist && filters.job
       ? await prisma.careRequest.findUnique({
           where: { slug: filters.job },
-          select: { id: true, slug: true, title: true, familyId: true, status: true },
+          select: { id: true, slug: true, title: true, familyId: true, status: true, startDate: true },
         })
       : null;
   const jobTitle =

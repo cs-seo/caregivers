@@ -25,6 +25,14 @@ test("canInviteToJob only allows the family on an open request", () => {
   assert.equal(canInviteToJob({ familyId: "alex", status: "hired" }, "alex"), false);
   assert.equal(canInviteToJob({ familyId: "alex", status: "open" }, "other"), false);
   assert.equal(canInviteToJob(null, "alex"), false);
+  assert.equal(
+    canInviteToJob(
+      { familyId: "alex", status: "open", startDate: new Date("2026-09-06T09:00:00+10:00") },
+      "alex",
+      new Date("2026-09-08T00:00:00.000Z"),
+    ),
+    false,
+  );
 });
 
 test("canWithdrawInvite is only for a pending invite on the family's open request", () => {

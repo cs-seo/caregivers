@@ -40,7 +40,11 @@ export default async function PostJobPage({
         <p className="mt-6 text-sm text-clay">Care requests are posted by family accounts.</p>
       ) : (
         <form action={createCareRequestAction} className="mt-6 space-y-4 rounded-2xl border border-line bg-card p-5">
-          {query.error ? <p className="text-sm text-clay">Please complete the required fields.</p> : null}
+          {query.error === "past" ? (
+            <p className="text-sm text-clay">Pick a start time that has not already passed.</p>
+          ) : query.error ? (
+            <p className="text-sm text-clay">Please complete the required fields.</p>
+          ) : null}
           <label className="block text-sm">
             Title
             <input name="title" required className="mt-1 w-full rounded-lg border border-line px-3 py-2" />

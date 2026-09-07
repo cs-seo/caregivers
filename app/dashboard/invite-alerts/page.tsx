@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { markInviteAlertSentAction, toggleInviteAlertsAction } from "@/lib/actions";
 import { ROLES } from "@/lib/constants";
 import { formatJobStart } from "@/lib/job-match";
+import { acceptingJobWhere } from "@/lib/job-status";
 import { prisma } from "@/lib/prisma";
 import { composeInviteAlert, inviteAlertLabel, searchAlertDelta, searchAlertMailto } from "@/lib/saved-search";
 import { requireUser } from "@/lib/session";
@@ -29,7 +30,7 @@ export default async function InviteAlertsPage({
       where: {
         caregiverId: user.caregiverProfile.id,
         status: "pending",
-        request: { status: "open" },
+        request: acceptingJobWhere(),
       },
       include: {
         request: {

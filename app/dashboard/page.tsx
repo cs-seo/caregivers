@@ -21,6 +21,7 @@ import {
   proposalStatusLabel,
   requestStatusLabel,
 } from "@/lib/job-hire";
+import { acceptingJobWhere, isJobAccepting, requestListingStatus } from "@/lib/job-status";
 import { INVITE_NOTE_LIMIT } from "@/lib/job-invite";
 import { inviteStatusLabel } from "@/lib/job-invite";
 import { unreadJobCountsByRequest } from "@/lib/job-messages";
@@ -211,7 +212,7 @@ export default async function DashboardPage({
     (
       await Promise.all(
         familyJobs
-          .filter((job) => job.status === "open")
+          .filter((job) => isJobAccepting(job))
           .map(async (job) => {
             const stats = await directoryStats(jobDirectoryFilters(job));
             return [job.id, { count: stats.count, href: jobDirectoryHref(job) }] as const;
@@ -295,7 +296,7 @@ export default async function DashboardPage({
   const openJobs =
     !isFamily && user.caregiverProfile
       ? await prisma.careRequest.findMany({
-          where: { status: "open" },
+          where: acceptingJobWhere(),
           include: { specialty: true, city: { include: { state: true } } },
           orderBy: { startDate: "asc" },
         })
@@ -316,7 +317,7 @@ export default async function DashboardPage({
     ? searchAlertDelta(fittingJobs.length, carerProfile.lastJobAlertedCount, carerProfile.jobAlertedAt)
     : null;
   const pendingProposalCount = familyJobs
-    .filter((job) => job.status === "open")
+    .filter((job) => isJobAccepting(job))
     .reduce((sum, job) => sum + job._count.proposals, 0);
   const familyProfile = isFamily ? user.familyProfile : null;
   const proposalAlertDelta = familyProfile
@@ -328,7 +329,7 @@ export default async function DashboardPage({
           where: {
             caregiverId: user.caregiverProfile.id,
             status: "pending",
-            request: { status: "open" },
+            request: acceptingJobWhere(),
           },
           include: {
             request: {
@@ -356,7 +357,7 @@ export default async function DashboardPage({
       slug: proposal.careRequest.slug,
     }));
   const passedOnJobs = carerProposals
-    .filter((proposal) => proposal.status === "declined" && proposal.careRequest.status === "open")
+    .filter((proposal) => proposal.status === "declined" && isJobAccepting(proposal.careRequest))
     .map((proposal) => ({
       title: proposal.careRequest.title,
       familyName: proposal.careRequest.family.name,
@@ -365,7 +366,7 @@ export default async function DashboardPage({
   const notHiredCopy = notHiredBanner(notHiredJobs);
   const passedOnCopy = passedOnBanner(passedOnJobs);
   const counterJobs = carerProposals
-    .filter((proposal) => canRespondToCounter(proposal, user.caregiverProfile?.id ?? "", proposal.careRequest.status))
+    .filter((proposal) => canRespondToCounter(proposal, user.caregiverProfile?.id ?? "", proposal.careRequest))
     .map((proposal) => ({
       title: proposal.careRequest.title,
       familyName: proposal.careRequest.family.name,
@@ -1061,7 +1062,7 @@ export default async function DashboardPage({
                   <Link href={`/care-requests/${job.slug}`} className="text-teal hover:underline">
                     {job.title}
                   </Link>
-                  <span className="ml-2 text-sm text-stone-500">{requestStatusLabel(job.status)}</span>
+                  <span className="ml-2 text-sm text-stone-500">{requestStatusLabel(requestListingStatus(job))}</span>
                   {job.bookings[0] ? (
                     <span className="mt-0.5 block text-sm">
                       <Link href={`/dashboard/bookings/${job.bookings[0].id}`} className="text-teal hover:underline">
@@ -1129,7 +1130,7 @@ export default async function DashboardPage({
                   </span>
                 ) : null}
                 {user.caregiverProfile &&
-                canWithdrawProposal(proposal, user.caregiverProfile.id, proposal.careRequest.status) ? (
+                canWithdrawProposal(proposal, user.caregiverProfile.id, proposal.careRequest) ? (
                   <form action={withdrawProposalAction} className="mt-0.5">
                     <input type="hidden" name="proposalId" value={proposal.id} />
                     <button className="text-sm text-stone-500 hover:text-ink" type="submit">

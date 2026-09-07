@@ -6,6 +6,7 @@ import { InviteJobPicker } from "@/components/invite-job-picker";
 import { fortnightLabel, isInstantBookLive, summariseFortnight } from "@/lib/availability";
 import { formatAud } from "@/lib/money";
 import { caregiverCardInclude, getUpcomingAvailability, withTrust } from "@/lib/queries";
+import { acceptingJobWhere } from "@/lib/job-status";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
 import { pageMeta } from "@/lib/seo";
@@ -35,12 +36,13 @@ export default async function ShortlistPage() {
   );
   const availability = new Map(fortnights);
   const openJobs = await prisma.careRequest.findMany({
-    where: { familyId: user.id, status: "open" },
+    where: { familyId: user.id, ...acceptingJobWhere() },
     select: {
       slug: true,
       title: true,
       familyId: true,
       status: true,
+      startDate: true,
       proposals: { select: { caregiverId: true } },
       invites: { select: { caregiverId: true, status: true } },
     },
@@ -185,6 +187,7 @@ export default async function ShortlistPage() {
                     title: job.title,
                     familyId: job.familyId,
                     status: job.status,
+                    startDate: job.startDate,
                     existing: job.invites.find((invite) => invite.caregiverId === carer.id) ?? null,
                     proposed: job.proposals.some((proposal) => proposal.caregiverId === carer.id),
                   }))}

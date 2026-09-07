@@ -20,6 +20,7 @@ import { handoverFromForm, handoverToDb, fillEmptyHandover, canFillFromHousehold
 import { sanitizePhotoUrl } from "./photos";
 import { isSafeReviewReturnPath, sanitizeReviewReply, hasReviewReply } from "./reviews";
 import { matchingJobs } from "./job-match";
+import { acceptingJobWhere, isJobAccepting } from "./job-status";
 import { directoryStats } from "./queries";
 import { filtersFromSearchHref, isSafeSearchHref, MAX_SAVED_SEARCHES } from "./saved-search";
 import { requireRole, requireUser } from "./session";
@@ -206,7 +207,7 @@ export async function createBookingAction(formData: FormData) {
     jobSlug && isJobSlug(jobSlug)
       ? await prisma.careRequest.findUnique({
           where: { slug: jobSlug },
-          select: { id: true, slug: true, familyId: true, status: true },
+          select: { id: true, slug: true, familyId: true, status: true, startDate: true },
         })
       : null;
   const attachJobId = attachJob && canAttachJob(attachJob, user.id) ? attachJob.id : null;
@@ -528,6 +529,9 @@ export async function createCareRequestAction(formData: FormData) {
   if (!title || !description || !specialtyId || !cityId || !budgetCents || Number.isNaN(startDate.getTime())) {
     redirect("/post-a-job?error=invalid");
   }
+  if (!startIsInFuture(startDate)) {
+    redirect("/post-a-job?error=past");
+  }
 
   let slug = slugify(title);
   const clash = await prisma.careRequest.findUnique({ where: { slug } });
@@ -560,7 +564,7 @@ export async function createProposalAction(formData: FormData) {
   const coverLetter = String(formData.get("coverLetter") ?? "").trim();
   const rateCents = Math.round(Number(formData.get("rate")) * 100);
   const request = await prisma.careRequest.findUnique({ where: { slug } });
-  if (!request || request.status !== "open") throw new Error("Job is not open");
+  if (!request || !isJobAccepting(request)) throw new Error("Job is not open");
   if (!coverLetter || !rateCents) redirect(`/care-requests/${slug}?error=invalid`);
   const updating = Boolean(
     await prisma.proposal.findUnique({
@@ -672,7 +676,7 @@ export async function updateInviteNoteAction(formData: FormData) {
   const inviteId = String(formData.get("inviteId") ?? "");
   const invite = await prisma.careRequestInvite.findUnique({
     where: { id: inviteId },
-    include: { request: { select: { slug: true, familyId: true, status: true } }, caregiver: { select: { slug: true } } },
+    include: { request: { select: { slug: true, familyId: true, status: true, startDate: true } }, caregiver: { select: { slug: true } } },
   });
   if (!invite || !canUpdateInviteNote(invite, invite.request, user.id)) {
     redirect(next);
@@ -698,7 +702,7 @@ export async function withdrawInviteAction(formData: FormData) {
   const inviteId = String(formData.get("inviteId") ?? "");
   const invite = await prisma.careRequestInvite.findUnique({
     where: { id: inviteId },
-    include: { request: { select: { slug: true, familyId: true, status: true } }, caregiver: { select: { slug: true } } },
+    include: { request: { select: { slug: true, familyId: true, status: true, startDate: true } }, caregiver: { select: { slug: true } } },
   });
   if (!invite || !canWithdrawInvite(invite, invite.request, user.id)) {
     redirect(next);
@@ -718,9 +722,9 @@ export async function withdrawProposalAction(formData: FormData) {
   const proposalId = String(formData.get("proposalId") ?? "");
   const proposal = await prisma.proposal.findUnique({
     where: { id: proposalId },
-    include: { careRequest: { select: { slug: true, status: true } } },
+    include: { careRequest: { select: { slug: true, status: true, startDate: true } } },
   });
-  if (!proposal || !canWithdrawProposal(proposal, user.caregiverProfile.id, proposal.careRequest.status)) {
+  if (!proposal || !canWithdrawProposal(proposal, user.caregiverProfile.id, proposal.careRequest)) {
     redirect("/dashboard");
   }
 
@@ -744,7 +748,7 @@ export async function passOnProposalAction(formData: FormData) {
   const proposalId = String(formData.get("proposalId") ?? "");
   const proposal = await prisma.proposal.findUnique({
     where: { id: proposalId },
-    include: { careRequest: { select: { slug: true, familyId: true, status: true } } },
+    include: { careRequest: { select: { slug: true, familyId: true, status: true, startDate: true } } },
   });
   if (!proposal || !canPassOnProposal(proposal, proposal.careRequest, user.id)) {
     redirect(proposal ? `/care-requests/${proposal.careRequest.slug}` : "/dashboard");
@@ -777,7 +781,7 @@ export async function counterProposalAction(formData: FormData) {
   const counterNote = sanitizeInviteNote(String(formData.get("counterNote") ?? ""));
   const proposal = await prisma.proposal.findUnique({
     where: { id: proposalId },
-    include: { careRequest: { select: { slug: true, familyId: true, status: true } } },
+    include: { careRequest: { select: { slug: true, familyId: true, status: true, startDate: true } } },
   });
   if (!proposal || !canCounterProposal(proposal, proposal.careRequest, user.id)) {
     redirect(proposal ? `/care-requests/${proposal.careRequest.slug}` : "/dashboard");
@@ -802,9 +806,9 @@ export async function respondToCounterAction(formData: FormData) {
   const accept = String(formData.get("accept") ?? "") === "1";
   const proposal = await prisma.proposal.findUnique({
     where: { id: proposalId },
-    include: { careRequest: { select: { slug: true, status: true } } },
+    include: { careRequest: { select: { slug: true, status: true, startDate: true } } },
   });
-  if (!proposal || !canRespondToCounter(proposal, user.caregiverProfile.id, proposal.careRequest.status)) {
+  if (!proposal || !canRespondToCounter(proposal, user.caregiverProfile.id, proposal.careRequest)) {
     redirect(proposal ? `/care-requests/${proposal.careRequest.slug}` : "/dashboard");
   }
 
@@ -830,7 +834,7 @@ export async function hireProposalAction(formData: FormData) {
   if (!proposal || proposal.careRequest.familyId !== user.id) {
     throw new Error("Not allowed");
   }
-  if (proposal.careRequest.status !== "open") {
+  if (!isJobAccepting(proposal.careRequest)) {
     throw new Error("Job is not open");
   }
 
@@ -1493,7 +1497,7 @@ export async function markJobAlertSentAction(formData: FormData) {
   const next = savedSearchReturnPath(String(formData.get("next") ?? "/dashboard/job-alerts"));
   const [openJobs, profile] = await Promise.all([
     prisma.careRequest.findMany({
-      where: { status: "open" },
+      where: acceptingJobWhere(),
       select: { cityId: true, specialtyId: true, startDate: true },
     }),
     prisma.caregiverProfile.findUnique({
@@ -1540,7 +1544,7 @@ export async function markInviteAlertSentAction(formData: FormData) {
     where: {
       caregiverId: user.caregiverProfile.id,
       status: "pending",
-      request: { status: "open" },
+      request: acceptingJobWhere(),
     },
   });
   await prisma.caregiverProfile.update({
@@ -1573,7 +1577,7 @@ export async function markProposalAlertSentAction(formData: FormData) {
   const count = await prisma.proposal.count({
     where: {
       status: "pending",
-      careRequest: { familyId: user.id, status: "open" },
+      careRequest: { familyId: user.id, ...acceptingJobWhere() },
     },
   });
   await prisma.familyProfile.update({

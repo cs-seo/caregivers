@@ -138,6 +138,14 @@ test("canAttachJob only links an open request owned by the family", () => {
   assert.equal(canAttachJob({ familyId: "alex", status: "hired" }, "alex"), false);
   assert.equal(canAttachJob({ familyId: "alex", status: "open" }, "other"), false);
   assert.equal(canAttachJob(null, "alex"), false);
+  assert.equal(
+    canAttachJob(
+      { familyId: "alex", status: "open", startDate: new Date("2026-09-06T09:00:00+10:00") },
+      "alex",
+      new Date("2026-09-08T00:00:00.000Z"),
+    ),
+    false,
+  );
 });
 
 test("bookHref keeps a start clock when the family picks another free day", () => {

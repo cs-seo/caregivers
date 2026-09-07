@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { markProposalAlertSentAction, toggleProposalAlertsAction } from "@/lib/actions";
 import { ROLES } from "@/lib/constants";
+import { acceptingJobWhere } from "@/lib/job-status";
 import { prisma } from "@/lib/prisma";
 import {
   composeProposalAlert,
@@ -33,7 +34,7 @@ export default async function ProposalAlertsPage({
     prisma.proposal.findMany({
       where: {
         status: "pending",
-        careRequest: { familyId: user.id, status: "open" },
+        careRequest: { familyId: user.id, ...acceptingJobWhere() },
       },
       include: {
         caregiver: { include: { user: { select: { name: true } } } },

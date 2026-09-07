@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { Badge } from "@/components/badges";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { formatJobStart, jobFitsCarer, jobMissLabel, jobMissReason } from "@/lib/job-match";
+import { acceptingJobWhere } from "@/lib/job-status";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { jobsFitDeltaLabel, savedSearchDelta } from "@/lib/saved-search";
@@ -22,7 +23,7 @@ export default async function CareRequestsPage({
 }) {
   const [query, session] = await Promise.all([searchParams, auth()]);
   const requests = await prisma.careRequest.findMany({
-    where: { status: "open" },
+    where: acceptingJobWhere(),
     include: {
       specialty: true,
       city: { include: { state: true } },

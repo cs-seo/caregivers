@@ -13,6 +13,7 @@ import { ShortlistButton } from "@/components/shortlist-button";
 import { fortnightLabel, isAvailableNowLive, isInstantBookLive, noticeLabel, summariseFortnight, weeklyHourChips } from "@/lib/availability";
 import { lastActiveLabel, monthYear } from "@/lib/format";
 import { canAttachJob, bookHref, caregiverHref, isJobSlug } from "@/lib/job-match";
+import { acceptingJobWhere } from "@/lib/job-status";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { getCaregiverBySlug, getShortlistedIds, getUpcomingAvailability, similarCaregivers } from "@/lib/queries";
@@ -69,12 +70,13 @@ export default async function CaregiverProfilePage({
     getUpcomingAvailability(carer.id, 70),
     viewer?.role === "FAMILY"
       ? prisma.careRequest.findMany({
-          where: { familyId: viewer.id, status: "open" },
+          where: { familyId: viewer.id, ...acceptingJobWhere() },
           select: {
             slug: true,
             title: true,
             familyId: true,
             status: true,
+            startDate: true,
             proposals: { where: { caregiverId: carer.id }, select: { id: true } },
             invites: { where: { caregiverId: carer.id }, select: { id: true, status: true } },
           },
@@ -87,6 +89,7 @@ export default async function CaregiverProfilePage({
     title: job.title,
     familyId: job.familyId,
     status: job.status,
+    startDate: job.startDate,
     existing: job.invites[0] ?? null,
     proposed: job.proposals.length > 0,
   }));

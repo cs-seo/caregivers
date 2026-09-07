@@ -1,3 +1,5 @@
+import { isJobAccepting } from "./job-status";
+
 export const INVITE_NOTE_LIMIT = 400;
 
 export function sanitizeInviteNote(raw: string) {
@@ -10,33 +12,40 @@ export const INVITE_STATUS = {
   DECLINED: "declined",
 } as const;
 
-export function canInviteToJob(job: { familyId: string; status: string } | null, familyId: string) {
-  return Boolean(job && job.status === "open" && job.familyId === familyId);
+export function canInviteToJob(
+  job: { familyId: string; status: string; startDate?: Date | null } | null,
+  familyId: string,
+  now = new Date(),
+) {
+  return Boolean(job && job.familyId === familyId && isJobAccepting(job, now));
 }
 
 export function canWithdrawInvite(
   invite: { status: string } | null,
-  job: { familyId: string; status: string } | null,
+  job: { familyId: string; status: string; startDate?: Date | null } | null,
   familyId: string,
+  now = new Date(),
 ) {
-  return Boolean(invite && invite.status === INVITE_STATUS.PENDING && canInviteToJob(job, familyId));
+  return Boolean(invite && invite.status === INVITE_STATUS.PENDING && canInviteToJob(job, familyId, now));
 }
 
 export function canUpdateInviteNote(
   invite: { status: string } | null,
-  job: { familyId: string; status: string } | null,
+  job: { familyId: string; status: string; startDate?: Date | null } | null,
   familyId: string,
+  now = new Date(),
 ) {
-  return canWithdrawInvite(invite, job, familyId);
+  return canWithdrawInvite(invite, job, familyId, now);
 }
 
 export function canCreateInvite(
-  job: { familyId: string; status: string } | null,
+  job: { familyId: string; status: string; startDate?: Date | null } | null,
   familyId: string,
   existing?: { status: string } | null,
   proposed?: boolean,
+  now = new Date(),
 ) {
-  if (!canInviteToJob(job, familyId)) return false;
+  if (!canInviteToJob(job, familyId, now)) return false;
   if (proposed) return false;
   if (existing && existing.status !== INVITE_STATUS.DECLINED) return false;
   return true;
@@ -88,6 +97,7 @@ export type InviteJobOption = {
   title: string;
   familyId: string;
   status: string;
+  startDate?: Date | null;
   existing?: { status: string } | null;
   proposed?: boolean;
 };

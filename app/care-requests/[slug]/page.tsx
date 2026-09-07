@@ -25,7 +25,9 @@ import {
   hasPendingCounter,
   proposalStatusLabel,
   proposalStatusTone,
+  requestStatusLabel,
 } from "@/lib/job-hire";
+import { isJobAccepting, isJobExpired, requestListingStatus } from "@/lib/job-status";
 import {
   INVITE_NOTE_LIMIT,
   INVITE_STATUS,
@@ -155,7 +157,10 @@ export default async function CareRequestPage({
   const alreadyProposed = Boolean(ownProposal);
   const ownInvite = carer ? job.invites.find((invite) => invite.caregiverId === carer.id) : null;
   const directoryFilters = jobDirectoryFilters(job);
-  const matchHref = job.status === "open" ? jobDirectoryHref(job) : null;
+  const accepting = isJobAccepting(job);
+  const expired = isJobExpired(job);
+  const listingStatus = requestListingStatus(job);
+  const matchHref = accepting ? jobDirectoryHref(job) : null;
   const [matchStats, matchCarers] =
     isOwner && matchHref
       ? await Promise.all([directoryStats(directoryFilters), searchCaregivers(directoryFilters, 3)])
@@ -207,12 +212,19 @@ export default async function CareRequestPage({
         />
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-3xl font-semibold text-ink">{job.title}</h1>
+          <Badge tone={expired ? "stone" : job.status === "hired" ? "teal" : "clay"}>
+            {requestStatusLabel(listingStatus)}
+          </Badge>
           {matchCarer ? <Badge tone={fit ? "teal" : "stone"}>{jobMissLabel(miss)}</Badge> : null}
         </div>
         <p className="mt-2 text-stone-600">
           {job.specialty.name} · {job.city.name}, {job.city.state.abbrev} · starts {formatJobStart(job.startDate)}
         </p>
-        {matchCarer ? (
+        {expired ? (
+          <p className="mt-3 text-sm text-stone-600">
+            This sit has already started, so CareProof closed proposals and invites.
+          </p>
+        ) : matchCarer ? (
           <p className={`mt-3 text-sm ${fit ? "text-teal-deep" : "text-stone-600"}`}>
             {fit
               ? "This start time is in your city, one of your specialties, and inside your usual weekly hours."
@@ -525,13 +537,13 @@ export default async function CareRequestPage({
         {query.kept ? <p className="mb-3 text-sm text-teal">You kept your original rate.</p> : null}
         {query.error === "message" ? <p className="mb-3 text-sm text-clay">Write a short message before sending.</p> : null}
         {query.error === "counter" ? <p className="mb-3 text-sm text-clay">Enter an hourly rate of at least $20.</p> : null}
-        {isCarer && ownInvite?.status === INVITE_STATUS.PENDING && job.status === "open" ? (
+        {isCarer && ownInvite?.status === INVITE_STATUS.PENDING && accepting ? (
           <p className="mb-3 rounded-xl bg-sage px-3 py-2 text-sm text-teal-deep">
             {job.family.name} invited you to apply
             {ownInvite.note ? `: “${ownInvite.note}”` : ""}. Send a proposal below or decline.
           </p>
         ) : null}
-        {isCarer && job.status === "open" && (!alreadyProposed || canWithdrawProposal(ownProposal ?? null, carer!.id, job.status)) ? (
+        {isCarer && accepting && (!alreadyProposed || canWithdrawProposal(ownProposal ?? null, carer!.id, job)) ? (
           <form action={createProposalAction} className="space-y-3">
             <input type="hidden" name="slug" value={job.slug} />
             <h2 className="font-semibold">{alreadyProposed ? "Update your proposal" : "Send a proposal"}</h2>
@@ -565,10 +577,10 @@ export default async function CareRequestPage({
                   : "Submit proposal"}
             </button>
           </form>
-        ) : isCarer && job.status === "open" && alreadyProposed ? (
+        ) : isCarer && accepting && alreadyProposed ? (
           <p className="text-sm text-teal">You already sent a proposal on this request.</p>
         ) : null}
-        {isCarer && ownProposal && canWithdrawProposal(ownProposal, carer!.id, job.status) ? (
+        {isCarer && ownProposal && canWithdrawProposal(ownProposal, carer!.id, job) ? (
           <form action={withdrawProposalAction} className="mt-3">
             <input type="hidden" name="proposalId" value={ownProposal.id} />
             <button className="text-sm text-stone-500 hover:text-ink" type="submit">
@@ -576,7 +588,7 @@ export default async function CareRequestPage({
             </button>
           </form>
         ) : null}
-        {isCarer && ownInvite?.status === INVITE_STATUS.PENDING && job.status === "open" && !alreadyProposed ? (
+        {isCarer && ownInvite?.status === INVITE_STATUS.PENDING && accepting && !alreadyProposed ? (
           <form action={declineInviteAction} className="mt-3 space-y-2">
             <input type="hidden" name="inviteId" value={ownInvite.id} />
             <label className="block text-xs text-stone-500">
@@ -600,7 +612,7 @@ export default async function CareRequestPage({
             {ownInvite.reply ? `: “${ownInvite.reply}”` : "."}
           </p>
         ) : null}
-        {isCarer && ownProposal && canRespondToCounter(ownProposal, carer!.id, job.status) ? (
+        {isCarer && ownProposal && canRespondToCounter(ownProposal, carer!.id, job) ? (
           <div className="mt-3 rounded-xl bg-sage px-3 py-3 text-sm text-teal-deep">
             <p>
               {job.family.name} suggested {formatAud(ownProposal.counterRateCents ?? 0)}/hr
@@ -624,7 +636,7 @@ export default async function CareRequestPage({
             </div>
           </div>
         ) : null}
-        {isCarer && ownProposal?.status === "declined" && job.status === "open" ? (
+        {isCarer && ownProposal?.status === "declined" && accepting ? (
           <p className="mt-3 text-sm text-stone-600">
             This family passed on your proposal
             {ownProposal.familyNote ? `: “${ownProposal.familyNote}”` : "."}
@@ -650,20 +662,22 @@ export default async function CareRequestPage({
             />
           </div>
         ) : null}
-        {isCarer && job.status === "open" ? null : !session ? (
+        {isCarer && accepting ? null : !session && !expired ? (
           <p className="text-sm">
             <Link href={`/login?callbackUrl=/care-requests/${job.slug}`} className="text-teal">
               Log in as a carer
             </Link>{" "}
             to send a proposal.
           </p>
+        ) : expired && !isOwner ? (
+          <p className="text-sm text-stone-600">This request expired when the sit started.</p>
         ) : (
           <p className="text-sm text-stone-600">
             {ownProposal?.status === "declined"
-              ? job.status === "open"
+              ? accepting
                 ? `This family passed on your proposal${ownProposal.familyNote ? `: “${ownProposal.familyNote}”` : "."}`
                 : "This family hired someone else."
-              : `This request is ${job.status}.`}
+              : `This request is ${requestStatusLabel(listingStatus).toLowerCase()}.`}
             {attachedBookings[0] ? (
               <>
                 {" "}

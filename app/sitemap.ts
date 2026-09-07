@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { HIRE_GUIDES } from "@/lib/seo-content";
 import { siteUrl } from "@/lib/constants";
+import { acceptingJobWhere } from "@/lib/job-status";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +14,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     prisma.state.findMany({ include: { cities: true } }),
     prisma.suburb.findMany({ include: { city: { include: { state: true } } } }),
     prisma.caregiverProfile.findMany({ select: { slug: true, lastActiveAt: true } }),
-    prisma.careRequest.findMany({ select: { slug: true, createdAt: true } }),
+    prisma.careRequest.findMany({
+      where: { OR: [{ status: "hired" }, acceptingJobWhere()] },
+      select: { slug: true, createdAt: true },
+    }),
   ])
     .then(([specialtyRows, stateRows, suburbRows, carerRows, jobRows]) => ({
       specialties: specialtyRows,

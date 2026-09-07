@@ -1,5 +1,12 @@
 import { INVITE_NOTE_LIMIT, INVITE_STATUS } from "./job-invite";
+import { isJobAccepting } from "./job-status";
 import { prisma } from "./prisma";
+
+type JobOpenState = { status: string; startDate?: Date | null };
+
+function jobStillAccepting(job: JobOpenState | string, now = new Date()) {
+  return typeof job === "string" ? job === "open" : isJobAccepting(job, now);
+}
 
 export const BOOKING_NOTE_LIMIT = INVITE_NOTE_LIMIT;
 
@@ -30,6 +37,7 @@ export function hiredProposalStatus(status: string, caregiverId: string, hiredCa
 export function requestStatusLabel(status: string) {
   if (status === "hired") return "Hired";
   if (status === "open") return "Open";
+  if (status === "expired") return "Expired";
   return status;
 }
 
@@ -49,26 +57,28 @@ export function proposalStatusTone(status: string): "teal" | "stone" | "clay" {
 export function canWithdrawProposal(
   proposal: { caregiverId: string; status: string } | null,
   caregiverId: string,
-  jobStatus: string,
+  job: JobOpenState | string,
+  now = new Date(),
 ) {
   return Boolean(
     proposal &&
       proposal.caregiverId === caregiverId &&
       proposal.status === PROPOSAL_STATUS.PENDING &&
-      jobStatus === "open",
+      jobStillAccepting(job, now),
   );
 }
 
 export function canPassOnProposal(
   proposal: { status: string } | null,
-  job: { familyId: string; status: string } | null,
+  job: { familyId: string; status: string; startDate?: Date | null } | null,
   familyId: string,
+  now = new Date(),
 ) {
   return Boolean(
     proposal &&
       proposal.status === PROPOSAL_STATUS.PENDING &&
       job &&
-      job.status === "open" &&
+      isJobAccepting(job, now) &&
       job.familyId === familyId,
   );
 }
@@ -81,18 +91,20 @@ export function hasPendingCounter(proposal: { status: string; counterRateCents?:
 
 export function canCounterProposal(
   proposal: { status: string } | null,
-  job: { familyId: string; status: string } | null,
+  job: { familyId: string; status: string; startDate?: Date | null } | null,
   familyId: string,
+  now = new Date(),
 ) {
-  return canPassOnProposal(proposal, job, familyId);
+  return canPassOnProposal(proposal, job, familyId, now);
 }
 
 export function canRespondToCounter(
   proposal: { caregiverId: string; status: string; counterRateCents?: number | null } | null,
   caregiverId: string,
-  jobStatus: string,
+  job: JobOpenState | string,
+  now = new Date(),
 ) {
-  return Boolean(hasPendingCounter(proposal) && proposal?.caregiverId === caregiverId && jobStatus === "open");
+  return Boolean(hasPendingCounter(proposal) && proposal?.caregiverId === caregiverId && jobStillAccepting(job, now));
 }
 
 export function counterBanner(items: { title: string; familyName: string; rateLabel: string }[]) {

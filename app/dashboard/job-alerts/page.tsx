@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { markJobAlertSentAction, toggleJobAlertsAction } from "@/lib/actions";
 import { ROLES } from "@/lib/constants";
 import { formatJobStart, matchingJobs } from "@/lib/job-match";
+import { acceptingJobWhere } from "@/lib/job-status";
 import { prisma } from "@/lib/prisma";
 import { composeJobFitAlert, jobAlertLabel, searchAlertDelta, searchAlertMailto } from "@/lib/saved-search";
 import { requireUser } from "@/lib/session";
@@ -26,7 +27,7 @@ export default async function JobAlertsPage({
   const query = await searchParams;
   const [openJobs, profile] = await Promise.all([
     prisma.careRequest.findMany({
-      where: { status: "open" },
+      where: acceptingJobWhere(),
       include: { specialty: true, city: { include: { state: true } } },
       orderBy: { startDate: "asc" },
     }),

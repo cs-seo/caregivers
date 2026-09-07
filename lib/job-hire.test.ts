@@ -32,6 +32,20 @@ test("proposalStatusLabel is family-facing", () => {
   assert.equal(proposalStatusLabel("pending"), "Pending");
   assert.equal(requestStatusLabel("hired"), "Hired");
   assert.equal(requestStatusLabel("open"), "Open");
+  assert.equal(requestStatusLabel("expired"), "Expired");
+});
+
+test("canWithdrawProposal stops once the sit start has passed", () => {
+  const pending = { caregiverId: "elena", status: "pending" };
+  const expired = { status: "open", startDate: new Date("2026-09-06T09:00:00+10:00") };
+  const now = new Date("2026-09-08T00:00:00.000Z");
+  assert.equal(canWithdrawProposal(pending, "elena", expired, now), false);
+});
+
+test("canPassOnProposal stops once the sit start has passed", () => {
+  const expired = { familyId: "alex", status: "open", startDate: new Date("2026-09-06T09:00:00+10:00") };
+  const now = new Date("2026-09-08T00:00:00.000Z");
+  assert.equal(canPassOnProposal({ status: "pending" }, expired, "alex", now), false);
 });
 
 test("canWithdrawProposal is only for the carer on an open pending proposal", () => {

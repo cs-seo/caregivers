@@ -1,4 +1,5 @@
 import { formatDate, formatDateTime, sydneyDateKey } from "./format";
+import { isJobAccepting } from "./job-status";
 import { isDateClosed, isOpenAtMinutes, minutesToInput, sydneyMinutes, type WeeklyWindow } from "./weekly-windows";
 
 export type JobMatchCarer = {
@@ -72,8 +73,12 @@ export function isJobSlug(value: string) {
   return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value) && value.length > 0 && value.length <= 80;
 }
 
-export function canAttachJob(job: { familyId: string; status: string } | null, familyId: string) {
-  return Boolean(job && job.status === "open" && job.familyId === familyId);
+export function canAttachJob(
+  job: { familyId: string; status: string; startDate?: Date | null } | null,
+  familyId: string,
+  now = new Date(),
+) {
+  return Boolean(job && job.familyId === familyId && isJobAccepting(job, now));
 }
 
 export function bookQuery(query: { start?: string; at?: string; job?: string; error?: string } = {}) {

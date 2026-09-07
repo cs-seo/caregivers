@@ -69,7 +69,7 @@ export default async function BookPage({
     session?.user.role === "FAMILY" && jobSlug
       ? await prisma.careRequest.findUnique({
           where: { slug: jobSlug },
-          select: { slug: true, title: true, specialtyId: true, familyId: true, status: true },
+          select: { slug: true, title: true, specialtyId: true, familyId: true, status: true, startDate: true },
         })
       : null;
   const job =
