@@ -45,6 +45,7 @@ export type GroupableBooking = {
   messages: { body: string }[];
   _count: { messages: number };
   unreadCount: number;
+  disputeNote?: string | null;
 };
 
 export type DashboardBookingGroup = {

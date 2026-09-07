@@ -298,6 +298,8 @@ model Booking {
   handoverAccess    String?
   handoverCare      String?
   handoverEmergency String?
+  disputeNote      String?
+  disputedAt       DateTime?
   status           String
   recurringGroupId String?
   recurringIndex   Int       @default(1)

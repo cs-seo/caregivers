@@ -11,6 +11,7 @@ import { normalizeFundingRef } from "./funding";
 import { findSeriesOverlap } from "./booking-overlap";
 import { BOOKING_STATUS, ROLES, UNPAID_BOOKING_STATUSES } from "./constants";
 import { isAcceptedDemoCard, readDemoCard } from "./demo-card";
+import { sanitizeDisputeNote } from "./dispute";
 import { autoReleaseIfDue, holdPayment, refundPayment, releasePayment } from "./escrow";
 import { parseSydneyDateTimeLocal, sydneyDateKey } from "./format";
 import { quoteBooking } from "./money";
@@ -482,17 +483,26 @@ export async function disputeBookingAction(formData: FormData) {
   const user = await requireUser();
   if (!user) redirect("/login");
   const bookingId = String(formData.get("bookingId") ?? "");
+  const note = sanitizeDisputeNote(String(formData.get("disputeNote") ?? ""));
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
     include: { caregiver: true },
   });
   if (!booking) throw new Error("Not found");
-  const isParty =
-    booking.familyId === user.id || booking.caregiver.userId === user.id;
-  if (!isParty) throw new Error("Not allowed");
+  if (booking.familyId !== user.id) throw new Error("Not allowed");
+  if (
+    booking.status !== BOOKING_STATUS.ESCROW_HELD &&
+    booking.status !== BOOKING_STATUS.IN_PROGRESS &&
+    booking.status !== BOOKING_STATUS.PENDING_RELEASE
+  ) {
+    throw new Error("Booking is not open to dispute");
+  }
+  if (!note) {
+    redirect(`/dashboard/bookings/${booking.id}?error=dispute`);
+  }
   await prisma.booking.update({
     where: { id: booking.id },
-    data: { status: BOOKING_STATUS.DISPUTED },
+    data: { status: BOOKING_STATUS.DISPUTED, disputeNote: note, disputedAt: new Date() },
   });
   revalidatePath(`/dashboard/bookings/${booking.id}`);
 }

@@ -35,6 +35,7 @@ import { formatDateTime } from "@/lib/format";
 import { isUnreadFor, markThreadRead } from "@/lib/messages";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
+import { DISPUTE_NOTE_LIMIT, disputeReasonNotice } from "@/lib/dispute";
 import {
   carerPendingAcceptanceNotice,
   familyPendingAcceptanceNotice,
@@ -119,6 +120,11 @@ export default async function BookingDetailPage({
           seriesTotal: booking.recurringTotal,
         })
       : null;
+  const disputeReason = disputeReasonNotice({
+    note: booking.disputeNote,
+    familyName: booking.family.name,
+    isFamily,
+  });
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -146,9 +152,17 @@ export default async function BookingDetailPage({
         </p>
       ) : null}
       {isAutoReleasePaused(booking.status) ? (
-        <p className="mt-3 rounded-xl bg-orange-50 p-3 text-sm text-clay">
-          {isCarer ? carerAutoReleasePausedLabel() : autoReleasePausedLabel()}
-        </p>
+        <div className="mt-3 space-y-2">
+          <p className="rounded-xl bg-orange-50 p-3 text-sm text-clay">
+            {isCarer ? carerAutoReleasePausedLabel() : autoReleasePausedLabel()}
+          </p>
+          {disputeReason ? (
+            <p className="rounded-xl bg-orange-50 p-3 text-sm text-clay">
+              {disputeReason}
+              {booking.disputedAt ? ` Opened ${formatDateTime(booking.disputedAt)}.` : ""}
+            </p>
+          ) : null}
+        </div>
       ) : showsAutoReleaseNotice(booking.status) ? (
         <p className="mt-3 rounded-xl border border-line bg-card p-3 text-sm text-stone-600">
           {autoReleaseLabel(booking.endAt)}
@@ -173,6 +187,11 @@ export default async function BookingDetailPage({
       {query.error === "card" ? (
         <p className="mt-4 rounded-xl bg-clay/10 p-3 text-sm text-clay">
           Use the demo Visa 4242 4242 4242 4242, an expiry in this month or later, and a 3-digit CVC.
+        </p>
+      ) : null}
+      {query.error === "dispute" ? (
+        <p className="mt-4 rounded-xl bg-clay/10 p-3 text-sm text-clay">
+          Write a short reason so the carer can see why auto-release is paused.
         </p>
       ) : null}
       {query.released ? (
@@ -382,8 +401,19 @@ export default async function BookingDetailPage({
         (booking.status === BOOKING_STATUS.ESCROW_HELD ||
           booking.status === BOOKING_STATUS.IN_PROGRESS ||
           booking.status === BOOKING_STATUS.PENDING_RELEASE) ? (
-          <form action={disputeBookingAction}>
+          <form action={disputeBookingAction} className="w-full max-w-md space-y-2">
             <input type="hidden" name="bookingId" value={booking.id} />
+            <label className="block text-xs text-stone-500">
+              Reason the carer will see
+              <textarea
+                name="disputeNote"
+                required
+                rows={3}
+                maxLength={DISPUTE_NOTE_LIMIT}
+                placeholder="What happened on the sit, and what you need before release or refund."
+                className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm text-ink"
+              />
+            </label>
             <button className="rounded-lg border border-clay px-4 py-2 text-sm text-clay" type="submit">
               Open dispute
             </button>
