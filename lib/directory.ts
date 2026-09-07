@@ -18,6 +18,7 @@ export function parseFilters(
     availableNow: get("availableNow") === "1",
     wwcc: get("wwcc") === "1",
     ndis: get("ndis") === "1",
+    currentChecks: get("currentChecks") === "1",
     minRating: get("minRating") ? Number(get("minRating")) : undefined,
     minYears: get("minYears") ? Number(get("minYears")) : undefined,
     page: get("page") ? Math.max(1, Number(get("page"))) : 1,
@@ -49,6 +50,7 @@ export function filterCurrent(filters: {
   availableNow?: boolean;
   wwcc?: boolean;
   ndis?: boolean;
+  currentChecks?: boolean;
   minRating?: number;
   minYears?: number;
   page?: number;
@@ -64,6 +66,7 @@ export function filterCurrent(filters: {
     availableNow: filters.availableNow ? "1" : undefined,
     wwcc: filters.wwcc ? "1" : undefined,
     ndis: filters.ndis ? "1" : undefined,
+    currentChecks: filters.currentChecks ? "1" : undefined,
     minRating: filters.minRating ? String(filters.minRating) : undefined,
     minYears: filters.minYears ? String(filters.minYears) : undefined,
     page: filters.page && filters.page > 1 ? String(filters.page) : undefined,

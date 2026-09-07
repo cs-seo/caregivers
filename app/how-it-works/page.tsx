@@ -19,7 +19,7 @@ const faqs = [
   },
   {
     q: "What makes a carer verified?",
-    a: "Work history can be employer-confirmed, document-checked or completed on CareProof. Credentials such as WWCC, NDIS screening and AHPRA are stored with expiry dates.",
+    a: "Work history can be employer-confirmed, document-checked or completed on CareProof. Credentials such as WWCC, NDIS screening and AHPRA are stored with expiry dates. The WWCC filter only matches a current check, and Current checks only hides anyone with a lapsed document.",
   },
   {
     q: "Can I leave a review immediately?",

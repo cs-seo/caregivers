@@ -37,6 +37,12 @@ export function credentialWatchlist(
     .sort((left, right) => left.days - right.days);
 }
 
+export function stillCurrentWhere(now = new Date()) {
+  return {
+    OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+  };
+}
+
 export function watchLabel(item: CredentialWatch) {
   if (item.state === "expired") return `${item.label} expired`;
   if (item.days === 0) return `${item.label} expires today`;

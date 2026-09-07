@@ -45,6 +45,10 @@ export function DirectoryFilters({
         <input type="checkbox" name="ndis" value="1" defaultChecked={current.ndis === "1"} />
         NDIS screening
       </label>
+      <label className="flex items-center gap-2 text-sm">
+        <input type="checkbox" name="currentChecks" value="1" defaultChecked={current.currentChecks === "1"} />
+        Current checks only
+      </label>
       <label className="block text-sm">
         <span className="text-stone-600">Minimum rating</span>
         <select name="minRating" defaultValue={current.minRating ?? ""} className="mt-1 w-full rounded-lg border border-line px-3 py-2">

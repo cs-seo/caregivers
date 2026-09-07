@@ -1,4 +1,5 @@
 import { BUSY_BOOKING_STATUSES } from "./booking-overlap";
+import { stillCurrentWhere } from "./credentials";
 import { sydneyDateKey, sydneyDayBounds } from "./format";
 import { prisma } from "./prisma";
 import { computeTrustScore } from "./trust";
@@ -84,6 +85,7 @@ export type DirectoryFilters = {
   instantBook?: boolean;
   wwcc?: boolean;
   ndis?: boolean;
+  currentChecks?: boolean;
   minRating?: number;
   minYears?: number;
   availableNow?: boolean;
@@ -121,10 +123,19 @@ function caregiverWhere(filters: DirectoryFilters) {
     ...(filters.minRating ? { ratingAvg: { gte: filters.minRating } } : {}),
     ...(filters.minYears ? { yearsExperience: { gte: filters.minYears } } : {}),
     ...(filters.wwcc
-      ? { credentials: { some: { type: "wwcc", verified: true } } }
+      ? { credentials: { some: { type: "wwcc", verified: true, ...stillCurrentWhere() } } }
       : {}),
     ...(filters.ndis
-      ? { credentials: { some: { type: "ndis_screening", verified: true } } }
+      ? { credentials: { some: { type: "ndis_screening", verified: true, ...stillCurrentWhere() } } }
+      : {}),
+    ...(filters.currentChecks
+      ? {
+          NOT: {
+            credentials: {
+              some: { verified: true, expiresAt: { lt: new Date() } },
+            },
+          },
+        }
       : {}),
     ...(day
       ? {

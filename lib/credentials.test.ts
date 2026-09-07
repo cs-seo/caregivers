@@ -1,8 +1,14 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { credentialWatchlist, watchLabel } from "./credentials";
+import { credentialWatchlist, stillCurrentWhere, watchLabel } from "./credentials";
 
 const now = new Date("2026-09-07T00:00:00.000Z");
+
+test("stillCurrentWhere keeps undated and future checks", () => {
+  const where = stillCurrentWhere(new Date("2026-09-07T00:00:00.000Z"));
+  assert.equal(where.OR[0]?.expiresAt, null);
+  assert.ok(where.OR[1]?.expiresAt && "gt" in where.OR[1].expiresAt);
+});
 
 test("credentialWatchlist flags expired and soon-due checks", () => {
   const watch = credentialWatchlist(
