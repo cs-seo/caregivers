@@ -4,7 +4,7 @@ import { BOOKING_STATUS } from "./constants";
 import {
   australianFinancialYear,
   csvCell,
-  invoiceNumber,
+  invoiceNumberMap,
   statementCsv,
   statementTotals,
   toStatementRows,
@@ -57,8 +57,30 @@ test("toStatementRows keeps funded FY sits and drops cancelled or prior-year one
     new Date("2026-09-07T00:00:00.000Z"),
   );
   assert.equal(rows.length, 1);
-  assert.equal(rows[0]?.invoiceNumber, invoiceNumber("held-now"));
+  assert.equal(rows[0]?.invoiceNumber, "CP-2627-0001");
   assert.equal(statementTotals(rows).familyCents, 29920);
+});
+
+test("invoiceNumberMap numbers funded FY sits by hold time", () => {
+  const numbers = invoiceNumberMap(
+    [
+      {
+        id: "second",
+        startAt: new Date("2026-09-12T00:00:00.000Z"),
+        status: BOOKING_STATUS.ESCROW_HELD,
+        heldAt: new Date("2026-09-10T00:00:00.000Z"),
+      },
+      {
+        id: "first",
+        startAt: new Date("2026-09-20T00:00:00.000Z"),
+        status: BOOKING_STATUS.RELEASED,
+        heldAt: new Date("2026-09-01T00:00:00.000Z"),
+      },
+    ],
+    new Date("2026-09-07T00:00:00.000Z"),
+  );
+  assert.equal(numbers.get("first"), "CP-2627-0001");
+  assert.equal(numbers.get("second"), "CP-2627-0002");
 });
 
 test("statementCsv quotes commas and lists family totals", () => {
@@ -82,7 +104,7 @@ test("statementCsv quotes commas and lists family totals", () => {
   );
   assert.match(csv, /Date,Invoice,Carer,/);
   assert.match(csv, /NDIS,My Aged Care/);
-  assert.match(csv, /2026-09-12,CP-ABCDEFGH,Sarah Nguyen/);
+  assert.match(csv, /2026-09-12,CP-2627-0001,Sarah Nguyen/);
   assert.match(csv, /299.20/);
   assert.match(csv, /430 112 223,HCP-NSW-88421/);
 });

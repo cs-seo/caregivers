@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { pageMeta } from "@/lib/seo";
 import { fundingLines } from "@/lib/funding";
+import { fundedInvoicePeers } from "@/lib/invoice-peers";
 import { australianFinancialYear, statementTotals, toStatementRows } from "@/lib/statement";
 
 export const metadata = pageMeta({
@@ -26,11 +27,17 @@ export default async function StatementPage() {
       caregiver: { include: { user: true } },
       family: { select: { name: true, familyProfile: true } },
       specialty: true,
+      payment: { select: { heldAt: true } },
     },
     orderBy: { startAt: "asc" },
   });
   const fy = australianFinancialYear();
-  const rows = toStatementRows(bookings);
+  const peers = await fundedInvoicePeers();
+  const rows = toStatementRows(
+    bookings.map((booking) => ({ ...booking, heldAt: booking.payment?.heldAt })),
+    new Date(),
+    peers,
+  );
   const totals = statementTotals(rows);
 
   return (

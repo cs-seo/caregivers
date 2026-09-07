@@ -11,6 +11,7 @@ export const STATEMENT_STATUSES = new Set<string>([
 export type StatementBooking = {
   id: string;
   startAt: Date;
+  heldAt?: Date | null;
   hours: number;
   subtotalCents: number;
   platformFeeCents: number;
@@ -47,8 +48,39 @@ export type StatementRow = {
   agedCareRef: string;
 };
 
-export function invoiceNumber(bookingId: string) {
+export function fyInvoiceCode(startYear: number) {
+  return `${String(startYear).slice(-2)}${String(startYear + 1).slice(-2)}`;
+}
+
+export function sequentialInvoiceNumber(index: number, startYear: number) {
+  return `CP-${fyInvoiceCode(startYear)}-${String(index).padStart(4, "0")}`;
+}
+
+export function invoiceNumber(bookingId: string, index = 1, startYear = australianFinancialYear().startYear) {
+  if (index > 0) return sequentialInvoiceNumber(index, startYear);
   return `CP-${bookingId.slice(-8).toUpperCase()}`;
+}
+
+export function invoiceNumberMap(
+  bookings: { id: string; startAt: Date; status: string; heldAt?: Date | null }[],
+  now = new Date(),
+) {
+  const fy = australianFinancialYear(now);
+  const funded = bookings
+    .filter(
+      (booking) =>
+        STATEMENT_STATUSES.has(booking.status) &&
+        booking.startAt >= fy.startAt &&
+        booking.startAt < fy.endAt,
+    )
+    .sort((a, b) => {
+      const left = (a.heldAt ?? a.startAt).getTime();
+      const right = (b.heldAt ?? b.startAt).getTime();
+      return left - right || a.id.localeCompare(b.id);
+    });
+  return new Map(
+    funded.map((booking, index) => [booking.id, sequentialInvoiceNumber(index + 1, fy.startYear)]),
+  );
 }
 
 export function australianFinancialYear(now = new Date()) {
@@ -73,8 +105,13 @@ export function csvCell(value: string | number) {
   return text;
 }
 
-export function toStatementRows(bookings: StatementBooking[], now = new Date()): StatementRow[] {
+export function toStatementRows(
+  bookings: StatementBooking[],
+  now = new Date(),
+  allFunded: { id: string; startAt: Date; status: string; heldAt?: Date | null }[] = bookings,
+): StatementRow[] {
   const fy = australianFinancialYear(now);
+  const numbers = invoiceNumberMap(allFunded, now);
   return bookings
     .filter((booking) => STATEMENT_STATUSES.has(booking.status))
     .filter((booking) => booking.startAt >= fy.startAt && booking.startAt < fy.endAt)
@@ -82,7 +119,7 @@ export function toStatementRows(bookings: StatementBooking[], now = new Date()):
     .map((booking) => ({
       id: booking.id,
       dateKey: sydneyDateKey(booking.startAt),
-      invoiceNumber: invoiceNumber(booking.id),
+      invoiceNumber: numbers.get(booking.id) ?? sequentialInvoiceNumber(1, fy.startYear),
       caregiverName: booking.caregiver.user.name,
       familyName: booking.family.name,
       specialty: booking.specialty.name,

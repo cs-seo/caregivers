@@ -4,7 +4,9 @@ import { PLATFORM_ABN, PLATFORM_ENTITY, SITE_NAME } from "@/lib/constants";
 import { fundingLines } from "@/lib/funding";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { formatAud } from "@/lib/money";
+import { fundedInvoicePeers } from "@/lib/invoice-peers";
 import { prisma } from "@/lib/prisma";
+import { invoiceNumberMap } from "@/lib/statement";
 import { requireUser } from "@/lib/session";
 import { pageMeta } from "@/lib/seo";
 
@@ -40,7 +42,9 @@ export default async function BookingInvoicePage({
     redirect(`/dashboard/bookings/${booking.id}`);
   }
 
-  const invoiceNumber = `CP-${booking.id.slice(-8).toUpperCase()}`;
+  const invoiceNumber =
+    invoiceNumberMap(await fundedInvoicePeers(), booking.startAt).get(booking.id) ??
+    `CP-${booking.id.slice(-8).toUpperCase()}`;
   const issued = booking.payment.heldAt ?? booking.createdAt;
   const feeGst = Math.round(booking.platformFeeCents / 11);
   const household = [
