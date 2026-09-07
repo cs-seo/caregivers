@@ -3,6 +3,7 @@ import { BookingForm } from "@/components/booking-form";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { auth } from "@/auth";
 import { weeklyHourChips } from "@/lib/availability";
+import { credentialWatchlist, watchLabel } from "@/lib/credentials";
 import { lastActiveLabel, sydneyDateTimeLocal } from "@/lib/format";
 import { formatAud } from "@/lib/money";
 import { getCaregiverBySlug } from "@/lib/queries";
@@ -32,6 +33,7 @@ export default async function BookPage({
   const carer = await getCaregiverBySlug(slug);
   if (!carer) notFound();
   const hourChips = weeklyHourChips(carer.weeklyHours);
+  const checkAlerts = credentialWatchlist(carer.credentials);
   const startDate = query.start && /^\d{4}-\d{2}-\d{2}$/.test(query.start) ? query.start : "";
   const defaultStart = startDate ? `${startDate}T17:00` : sydneyDateTimeLocal(1, 9);
   const bookPath = startDate ? `/caregiver/${carer.slug}/book?start=${startDate}` : `/caregiver/${carer.slug}/book`;
@@ -63,6 +65,16 @@ export default async function BookPage({
         </div>
       ) : null}
       {carer.availabilityNote ? <p className="mt-3 rounded-xl bg-sage p-3 text-sm text-stone-700">{carer.availabilityNote}</p> : null}
+      {checkAlerts.length ? (
+        <div className="mt-3 rounded-xl bg-orange-50 p-3 text-sm text-clay">
+          <p className="font-medium">Checks to review before you book</p>
+          <ul className="mt-1 list-disc pl-5">
+            {checkAlerts.map((item) => (
+              <li key={item.type}>{watchLabel(item)}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       <p className="mt-2 text-xs text-stone-500">{lastActiveLabel(carer.lastActiveAt)}</p>
       {query.error === "overlap" ? (
         <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
