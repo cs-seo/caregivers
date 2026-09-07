@@ -47,6 +47,7 @@ export type GroupableBooking = {
   unreadCount: number;
   disputeNote?: string | null;
   disputeReply?: string | null;
+  createdAt?: Date;
 };
 
 export type DashboardBookingGroup = {

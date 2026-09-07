@@ -42,9 +42,11 @@ import { disputeReasonHint, disputeReplyHint, firstDisputeNote, firstDisputeRepl
 import {
   carerPendingAcceptanceBanner,
   carerPendingAcceptanceHint,
+  earliestPendingCreatedAt,
   familyPendingAcceptanceBanner,
   familyPendingAcceptanceHint,
   pendingAcceptanceCount,
+  pendingSinceLabel,
 } from "@/lib/pending-acceptance";
 import {
   declineInviteAction,
@@ -108,6 +110,7 @@ function BookingList({
           groups.map((group) => {
             const reasonHint = disputeReasonHint({ note: firstDisputeNote(group.weeks), isFamily });
             const replyHint = disputeReplyHint({ reply: firstDisputeReply(group.weeks), isFamily });
+            const sinceLabel = pendingSinceLabel(earliestPendingCreatedAt(group.weeks));
             return (
             <li key={group.key} className="rounded-2xl border border-line bg-card p-4">
               <div className="flex flex-wrap items-start justify-between gap-2">
@@ -153,6 +156,7 @@ function BookingList({
                   {isFamily
                     ? familyPendingAcceptanceHint(pendingAcceptanceCount(group.weeks))
                     : carerPendingAcceptanceHint(pendingAcceptanceCount(group.weeks))}
+                  {sinceLabel ? ` ${sinceLabel}` : ""}
                 </p>
               ) : null}
               {group.weeks.some((week) => isAutoReleasePaused(week.status)) ? (

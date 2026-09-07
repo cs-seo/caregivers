@@ -7,6 +7,22 @@ import { isUtcDateOnly } from "../lib/job-match";
 import { composeBookingNotes } from "../lib/job-hire";
 import { formatWeeklyHours, parseWeeklyHours } from "../lib/weekly-windows";
 
+const JAMES_PENDING_NOTE = "DEMO_PIPELINE: weekend community access — waiting on James to accept.";
+const JAMES_PENDING_REQUESTED_AT = parseSydneyDateTimeLocal("2026-09-04T09:00");
+
+export async function seedPendingRequestedAt(prisma: PrismaClient) {
+  const booking = await prisma.booking.findFirst({
+    where: { notes: JAMES_PENDING_NOTE, status: BOOKING_STATUS.PENDING_ACCEPTANCE },
+  });
+  if (!booking) return 0;
+  if (booking.createdAt.getTime() === JAMES_PENDING_REQUESTED_AT.getTime()) return 1;
+  await prisma.booking.update({
+    where: { id: booking.id },
+    data: { createdAt: JAMES_PENDING_REQUESTED_AT },
+  });
+  return 1;
+}
+
 export async function seedDemoPipeline(prisma: PrismaClient) {
   const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
   const sarah = await prisma.caregiverProfile.findUnique({
@@ -51,8 +67,9 @@ export async function seedDemoPipeline(prisma: PrismaClient) {
       specialtyId: james.specialties[0]?.specialtyId ?? sarah.specialties[0].specialtyId,
       startAt: new Date("2026-09-20T10:00:00+10:00"),
       endAt: new Date("2026-09-20T14:00:00+10:00"),
-      notes: "DEMO_PIPELINE: weekend community access — waiting on James to accept.",
+      notes: JAMES_PENDING_NOTE,
       status: BOOKING_STATUS.PENDING_ACCEPTANCE,
+      createdAt: JAMES_PENDING_REQUESTED_AT,
       ...quote(james.hourlyRateCents, 4),
     },
   });
@@ -1131,11 +1148,12 @@ async function main() {
   const passOn = await seedDemoPassOn(prisma);
   const awaitingPay = await seedDemoAwaitingPay(prisma);
   const dispute = await seedDemoDispute(prisma);
+  const pendingSince = await seedPendingRequestedAt(prisma);
   const jobAlerts = await seedDemoJobAlerts(prisma);
   const proposalAlerts = await seedDemoProposalAlerts(prisma);
   const inviteAlerts = await seedDemoInviteAlerts(prisma);
   console.log(
-    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}; notice ${notice}; jobStarts ${jobStarts}; expired ${expired}; hired ${hired}; invites ${invites}; jobMessages ${jobMessages}; passOn ${passOn}; awaitingPay ${awaitingPay}; dispute ${dispute}; jobAlerts ${jobAlerts}; proposalAlerts ${proposalAlerts}; inviteAlerts ${inviteAlerts}`,
+    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}; notice ${notice}; jobStarts ${jobStarts}; expired ${expired}; hired ${hired}; invites ${invites}; jobMessages ${jobMessages}; passOn ${passOn}; awaitingPay ${awaitingPay}; dispute ${dispute}; pendingSince ${pendingSince}; jobAlerts ${jobAlerts}; proposalAlerts ${proposalAlerts}; inviteAlerts ${inviteAlerts}`,
   );
   await prisma.$disconnect();
 }

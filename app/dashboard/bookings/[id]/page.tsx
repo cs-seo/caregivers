@@ -44,8 +44,10 @@ import {
 } from "@/lib/dispute";
 import {
   carerPendingAcceptanceNotice,
+  earliestPendingCreatedAt,
   familyPendingAcceptanceNotice,
   pendingAcceptanceCount,
+  pendingSinceLabel,
 } from "@/lib/pending-acceptance";
 import { canReplyToReview } from "@/lib/reviews";
 import { requireUser } from "@/lib/session";
@@ -104,7 +106,15 @@ export default async function BookingDetailPage({
     ? await prisma.booking.findMany({
         where: { recurringGroupId: booking.recurringGroupId },
         orderBy: { recurringIndex: "asc" },
-        select: { id: true, startAt: true, status: true, recurringIndex: true, recurringTotal: true, totalCents: true },
+        select: {
+          id: true,
+          startAt: true,
+          status: true,
+          recurringIndex: true,
+          recurringTotal: true,
+          totalCents: true,
+          createdAt: true,
+        },
       })
     : [];
   const liveWeeks = series.filter(
@@ -126,6 +136,8 @@ export default async function BookingDetailPage({
           seriesTotal: booking.recurringTotal,
         })
       : null;
+  const pendingSince = pendingSinceLabel(earliestPendingCreatedAt(series.length ? series : [booking]));
+  const pendingCopy = pendingNotice && pendingSince ? `${pendingNotice} ${pendingSince}` : pendingNotice;
   const disputeReason = disputeReasonNotice({
     note: booking.disputeNote,
     familyName: booking.family.name,
@@ -219,8 +231,8 @@ export default async function BookingDetailPage({
           {BOOKING_STATUS_LABELS[booking.status] ?? booking.status}
         </Badge>
       </div>
-      {pendingNotice ? (
-        <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">{pendingNotice}</p>
+      {pendingCopy ? (
+        <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">{pendingCopy}</p>
       ) : null}
       {query.paid ? (
         <p className="mt-4 rounded-xl bg-sage p-3 text-sm">Payment collected and held in escrow.</p>

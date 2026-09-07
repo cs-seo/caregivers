@@ -8,8 +8,11 @@ import {
   familyPendingAcceptanceBanner,
   familyPendingAcceptanceHint,
   familyPendingAcceptanceNotice,
+  earliestPendingCreatedAt,
   isPendingAcceptance,
   pendingAcceptanceCount,
+  pendingSinceDays,
+  pendingSinceLabel,
 } from "./pending-acceptance";
 
 test("isPendingAcceptance is only the request-to-book hold", () => {
@@ -128,5 +131,28 @@ test("carerPendingAcceptanceHint tells the carer to accept or decline", () => {
   assert.equal(
     carerPendingAcceptanceHint(3),
     "Accept every week so the family can pay into escrow, or decline the series if you cannot do it.",
+  );
+});
+
+test("pendingSinceLabel counts Sydney calendar days since the request", () => {
+  const requested = new Date("2026-09-04T09:00:00+10:00");
+  const now = new Date("2026-09-07T21:00:00+10:00");
+  assert.equal(pendingSinceDays(requested, now), 3);
+  assert.equal(pendingSinceLabel(requested, now), "Requested 3 days ago.");
+  assert.equal(pendingSinceLabel(requested, new Date("2026-09-04T18:00:00+10:00")), "Requested today.");
+  assert.equal(pendingSinceLabel(requested, new Date("2026-09-05T09:00:00+10:00")), "Requested yesterday.");
+  assert.equal(pendingSinceLabel(null), null);
+});
+
+test("earliestPendingCreatedAt uses the oldest waiting week", () => {
+  assert.equal(earliestPendingCreatedAt([{ status: BOOKING_STATUS.ESCROW_HELD, createdAt: new Date() }]), null);
+  const first = new Date("2026-09-04T00:00:00.000Z");
+  const later = new Date("2026-09-06T00:00:00.000Z");
+  assert.equal(
+    earliestPendingCreatedAt([
+      { status: BOOKING_STATUS.PENDING_ACCEPTANCE, createdAt: later },
+      { status: BOOKING_STATUS.PENDING_ACCEPTANCE, createdAt: first },
+    ])?.toISOString(),
+    first.toISOString(),
   );
 });
