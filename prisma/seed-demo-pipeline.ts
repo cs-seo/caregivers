@@ -324,8 +324,18 @@ export async function seedDemoUnreadMessages(prisma: PrismaClient) {
   if (!family || !sarahUser || !jamesUser) return 0;
 
   await prisma.message.updateMany({
-    where: { readAt: null, body: { in: READ_DEMO_BODIES } },
+    where: {
+      readAt: null,
+      body: { notIn: [JAMES_UNREAD, FAMILY_TO_SARAH_UNREAD] },
+      booking: {
+        OR: [{ familyId: family.id }, { caregiver: { userId: sarahUser.id } }],
+      },
+    },
     data: { readAt: new Date("2026-09-06T10:00:00.000Z") },
+  });
+  await prisma.message.updateMany({
+    where: { body: { in: [JAMES_UNREAD, FAMILY_TO_SARAH_UNREAD] } },
+    data: { readAt: null },
   });
 
   const held = await prisma.booking.findFirst({
