@@ -47,7 +47,7 @@ const faqs = [
   },
   {
     q: "How do I prepare for an upcoming sit?",
-    a: "The dashboard Coming up list shows sits in progress or starting in the next 7 days. Open Handover to leave keys, parking or allergy notes on the private thread.",
+    a: "The dashboard Coming up list shows sits in progress or starting in the next 7 days. Open Handover to save keys, parking, allergies and an emergency contact on that sit. Household defaults copy onto new bookings. These notes stay off the public calendar subscribe feed.",
   },
 ];
 

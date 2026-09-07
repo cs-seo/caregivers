@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { HandoverFields } from "@/components/handover-card";
 import { updateFamilyProfileAction } from "@/lib/actions";
 import { getStates } from "@/lib/queries";
 import { requireRole } from "@/lib/session";
@@ -7,7 +8,7 @@ import { pageMeta } from "@/lib/seo";
 
 export const metadata = pageMeta({
   title: "Household details",
-  description: "Update the suburb and notes families share with carers.",
+  description: "Update the suburb, funding refs and default handover families share with carers.",
   path: "/dashboard/household",
   noIndex: true,
 });
@@ -32,7 +33,8 @@ export default async function HouseholdPage({
       <h1 className="mt-3 text-3xl font-semibold text-ink">Household details</h1>
       <p className="mt-2 text-stone-600">
         Carers see the suburb on care requests. NDIS and My Aged Care numbers print on tax invoices and the
-        financial-year statement for coordinators and plan managers.
+        financial-year statement. Default handover notes copy onto new bookings so you are not retyping keys and
+        allergies each week.
       </p>
       {query.saved ? <p className="mt-4 rounded-xl bg-sage p-3 text-sm">Household saved.</p> : null}
       <form action={updateFamilyProfileAction} className="mt-6 space-y-4 rounded-2xl border border-line bg-card p-5">
@@ -98,6 +100,14 @@ export default async function HouseholdPage({
             className="mt-1 w-full rounded-lg border border-line px-3 py-2"
           />
         </label>
+        <fieldset className="space-y-3 rounded-xl border border-line p-4">
+          <legend className="px-1 text-sm font-medium text-ink">Default sit handover</legend>
+          <p className="text-sm text-stone-600">
+            Copied onto Instant Book and request-to-book sits. You can still edit one booking without changing the
+            household default.
+          </p>
+          <HandoverFields defaults={user.familyProfile} />
+        </fieldset>
         <button className="rounded-xl bg-teal px-5 py-2.5 font-medium text-white" type="submit">
           Save household
         </button>

@@ -361,6 +361,57 @@ export async function seedDemoUnreadMessages(prisma: PrismaClient) {
   return created;
 }
 
+const ALEX_HANDOVER = {
+  handoverAccess: "Side gate lockbox 2048. Street parking after 6pm.",
+  handoverCare: "Mum prefers tea before tablets. Blood pressure cuff is in the hall cupboard.",
+  handoverEmergency: "Alex Martin 0400 111 222",
+};
+
+const PRIYA_HANDOVER = {
+  handoverAccess: "Front door code 3910. Blue school bag on the hall hook.",
+  handoverCare: "Luca finishes at 3:10. Swimming Fridays — gear in the blue bag. No nuts.",
+  handoverEmergency: "Alex Martin 0400 111 222",
+};
+
+export async function seedDemoHandover(prisma: PrismaClient) {
+  const family = await prisma.user.findUnique({
+    where: { email: "family@careproof.com.au" },
+    include: { familyProfile: true },
+  });
+  if (!family?.familyProfile) return 0;
+
+  await prisma.familyProfile.update({
+    where: { id: family.familyProfile.id },
+    data: {
+      handoverAccess: family.familyProfile.handoverAccess ?? ALEX_HANDOVER.handoverAccess,
+      handoverCare: family.familyProfile.handoverCare ?? ALEX_HANDOVER.handoverCare,
+      handoverEmergency: family.familyProfile.handoverEmergency ?? ALEX_HANDOVER.handoverEmergency,
+    },
+  });
+
+  const sarahSit = await prisma.booking.findFirst({
+    where: { familyId: family.id, notes: { startsWith: "DEMO_PIPELINE: weekday aged care" } },
+  });
+  if (sarahSit) {
+    await prisma.booking.update({
+      where: { id: sarahSit.id },
+      data: ALEX_HANDOVER,
+    });
+  }
+
+  const priyaWeeks = await prisma.booking.findMany({
+    where: { familyId: family.id, notes: { startsWith: "DEMO_RECURRING:" } },
+  });
+  if (priyaWeeks.length) {
+    await prisma.booking.updateMany({
+      where: { id: { in: priyaWeeks.map((week) => week.id) } },
+      data: PRIYA_HANDOVER,
+    });
+  }
+
+  return (sarahSit ? 1 : 0) + priyaWeeks.length;
+}
+
 export async function seedDemoSavedSearches(prisma: PrismaClient) {
   const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
   if (!family) return 0;
@@ -394,8 +445,9 @@ async function main() {
   const funding = await seedDemoFundingRefs(prisma);
   const unread = await seedDemoUnreadMessages(prisma);
   const searches = await seedDemoSavedSearches(prisma);
+  const handover = await seedDemoHandover(prisma);
   console.log(
-    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}`,
+    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}`,
   );
   await prisma.$disconnect();
 }

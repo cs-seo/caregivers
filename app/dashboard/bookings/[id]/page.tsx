@@ -19,6 +19,7 @@ import {
 } from "@/lib/actions";
 import { BOOKING_STATUS, BOOKING_STATUS_LABELS, UNPAID_BOOKING_STATUSES } from "@/lib/constants";
 import { autoReleaseIfDue } from "@/lib/escrow";
+import { HandoverCard } from "@/components/handover-card";
 import { comingUpKind, isComingUp } from "@/lib/coming-up";
 import { formatDateTime } from "@/lib/format";
 import { isUnreadFor, markThreadRead } from "@/lib/messages";
@@ -39,7 +40,13 @@ export default async function BookingDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ paid?: string; released?: string; cancelled?: string; error?: string }>;
+  searchParams: Promise<{
+    paid?: string;
+    released?: string;
+    cancelled?: string;
+    handover?: string;
+    error?: string;
+  }>;
 }) {
   const user = await requireUser();
   if (!user) redirect("/login");
@@ -92,7 +99,7 @@ export default async function BookingDetailPage({
         <p className="mt-3 rounded-xl bg-sage p-3 text-sm text-teal-deep">
           {comingUpKind(booking) === "now"
             ? "This sit is underway. Confirm completion or raise a dispute from the actions below."
-            : "This sit is coming up. Use Messages for keys, parking or handover notes."}
+            : "This sit is coming up. Check the handover card for keys, parking and care notes."}
         </p>
       ) : null}
       <div className="mt-3 flex flex-wrap gap-2">
@@ -142,6 +149,13 @@ export default async function BookingDetailPage({
         </div>
       </dl>
       {booking.notes ? <p className="mt-4 text-sm text-stone-600 whitespace-pre-line">Notes: {booking.notes}</p> : null}
+      <HandoverCard
+        bookingId={booking.id}
+        isFamily={isFamily}
+        isSeries={series.length > 1}
+        saved={Boolean(query.handover)}
+        fields={booking}
+      />
       {series.length > 1 ? (
         <section className="mt-6 rounded-2xl border border-line bg-card p-5">
           <h2 className="font-semibold text-ink">Standing weekly series</h2>
@@ -303,7 +317,7 @@ export default async function BookingDetailPage({
         {query.error === "message" ? <p className="mt-2 text-sm text-clay">Write a short message before sending.</p> : null}
         <ul className="mt-4 space-y-3">
           {booking.messages.length === 0 ? (
-            <li className="text-sm text-stone-500">No messages yet. Confirm times, access or handover notes here.</li>
+            <li className="text-sm text-stone-500">No messages yet. Use handover for keys and care notes, or write here.</li>
           ) : (
             booking.messages.map((message) => (
               <li key={message.id} className="rounded-2xl border border-line bg-card p-4">
@@ -327,7 +341,7 @@ export default async function BookingDetailPage({
             name="body"
             required
             rows={3}
-            placeholder="Ask about parking, keys, or the handover."
+            placeholder="Ask a question about the sit. Keys and care notes live in Handover."
             className="w-full rounded-lg border border-line px-3 py-2"
           />
           <button className="rounded-lg bg-teal px-4 py-2 text-sm font-medium text-white" type="submit">

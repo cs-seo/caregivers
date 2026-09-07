@@ -15,6 +15,7 @@ import { buildRoster } from "@/lib/roster";
 import { formatAud } from "@/lib/money";
 import { deleteSavedSearchAction } from "@/lib/actions";
 import { comingUpBookings, comingUpKind } from "@/lib/coming-up";
+import { hasHandover } from "@/lib/handover";
 import { unreadCountsByBooking } from "@/lib/messages";
 import { australianFinancialYear, statementTotals, toStatementRows } from "@/lib/statement";
 import { profileChecklist } from "@/lib/profile";
@@ -281,8 +282,8 @@ export default async function DashboardPage({
           <h2 className="font-semibold text-ink">Coming up</h2>
           <p className="mt-1 text-sm text-stone-600">
             {isFamily
-              ? "Sits in progress or starting in the next 7 days. Open the thread for keys, parking or handover notes."
-              : "Your next sits. Confirm access notes before you travel."}
+              ? "Sits in progress or starting in the next 7 days. Open Handover for keys, parking and care notes."
+              : "Your next sits. Confirm the handover before you travel."}
           </p>
           <ul className="mt-4 space-y-3">
             {comingUp.map((booking) => (
@@ -297,8 +298,9 @@ export default async function DashboardPage({
                   <Badge tone={comingUpKind(booking) === "now" ? "clay" : "sage"}>
                     {comingUpLabel[comingUpKind(booking)]}
                   </Badge>
-                  <Link href={`/dashboard/bookings/${booking.id}`} className="text-sm text-teal">
-                    Handover
+                  {hasHandover(booking) ? <Badge tone="sage">Handover ready</Badge> : null}
+                  <Link href={`/dashboard/bookings/${booking.id}#handover`} className="text-sm text-teal">
+                    {isFamily && !hasHandover(booking) ? "Add handover" : "Handover"}
                   </Link>
                 </div>
               </li>

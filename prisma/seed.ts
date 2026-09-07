@@ -12,6 +12,7 @@ import {
   seedDemoRecurring,
   seedDemoSeriesActions,
   seedDemoShortlist,
+  seedDemoHandover,
   seedDemoSavedSearches,
   seedDemoUnreadMessages,
 } from "./seed-demo-pipeline";
@@ -300,6 +301,9 @@ async function main() {
             bio: "Looking after Mum at home in Marrickville. We need reliable weekday cover.",
             ndisNumber: "430 112 223",
             agedCareRef: "HCP-NSW-88421",
+            handoverAccess: "Side gate lockbox 2048. Street parking after 6pm.",
+            handoverCare: "Mum prefers tea before tablets. Blood pressure cuff is in the hall cupboard.",
+            handoverEmergency: "Alex Martin 0400 111 222",
           },
         },
       },
@@ -722,8 +726,9 @@ async function main() {
   const funding = await seedDemoFundingRefs(prisma);
   const unread = await seedDemoUnreadMessages(prisma);
   const searches = await seedDemoSavedSearches(prisma);
+  const handover = await seedDemoHandover(prisma);
   console.log(
-    `Seeded ${carerProfiles.length} featured carers + ${generatedCount} generated profiles, ${familyUsers.length} families, ${requests.length} jobs, ${suburbCount} suburbs, ${pipeline.created} live demo bookings, ${shortlisted} shortlisted, ${recurring} recurring weeks, ${expiring} expiring checks, ${series} series weeks, ${blocked} days off, ${funding} funding refs, ${unread} unread messages, ${searches} saved searches.`,
+    `Seeded ${carerProfiles.length} featured carers + ${generatedCount} generated profiles, ${familyUsers.length} families, ${requests.length} jobs, ${suburbCount} suburbs, ${pipeline.created} live demo bookings, ${shortlisted} shortlisted, ${recurring} recurring weeks, ${expiring} expiring checks, ${series} series weeks, ${blocked} days off, ${funding} funding refs, ${unread} unread messages, ${searches} saved searches, ${handover} handover notes.`,
   );
   console.log("Demo logins: family@careproof.com.au / carer@careproof.com.au / CareProof123!");
 }

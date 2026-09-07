@@ -15,6 +15,7 @@ import { parseSydneyDateTimeLocal, sydneyDateKey } from "./format";
 import { quoteBooking } from "./money";
 import { prisma } from "./prisma";
 import { newCalendarToken } from "./calendar-feed";
+import { handoverFromForm, handoverToDb } from "./handover";
 import { isSafeSearchHref, MAX_SAVED_SEARCHES } from "./saved-search";
 import { requireRole, requireUser } from "./session";
 
@@ -149,6 +150,12 @@ export async function createBookingAction(formData: FormData) {
     redirect(`/caregiver/${slug}/book?error=blocked`);
   }
 
+  const householdHandover = handoverToDb({
+    handoverAccess: user.familyProfile?.handoverAccess ?? "",
+    handoverCare: user.familyProfile?.handoverCare ?? "",
+    handoverEmergency: user.familyProfile?.handoverEmergency ?? "",
+  });
+
   const created = [];
   for (let index = 0; index < weeks; index += 1) {
     const weekStart = windows[index].startAt;
@@ -165,6 +172,7 @@ export async function createBookingAction(formData: FormData) {
         startAt: weekStart,
         endAt: weekEnd,
         notes: weekNotes || null,
+        ...householdHandover,
         status,
         recurringGroupId: groupId,
         recurringIndex: index + 1,
@@ -599,6 +607,36 @@ export async function runAutoReleaseAction(bookingId: string) {
   await autoReleaseIfDue(bookingId);
 }
 
+export async function updateBookingHandoverAction(formData: FormData) {
+  const user = await requireRole(ROLES.FAMILY);
+  if (!user) redirect("/login");
+  const bookingId = String(formData.get("bookingId") ?? "");
+  const applySeries = formData.get("applySeries") === "1";
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    select: { id: true, familyId: true, recurringGroupId: true },
+  });
+  if (!booking || booking.familyId !== user.id) throw new Error("Not allowed");
+
+  const data = handoverToDb(handoverFromForm(formData));
+  if (applySeries && booking.recurringGroupId) {
+    await prisma.booking.updateMany({
+      where: {
+        familyId: user.id,
+        recurringGroupId: booking.recurringGroupId,
+        status: { notIn: [BOOKING_STATUS.CANCELLED, BOOKING_STATUS.REFUNDED] },
+      },
+      data,
+    });
+  } else {
+    await prisma.booking.update({ where: { id: booking.id }, data });
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/dashboard/bookings/${booking.id}`);
+  redirect(`/dashboard/bookings/${booking.id}?handover=1#handover`);
+}
+
 export async function sendMessageAction(formData: FormData) {
   const user = await requireUser();
   if (!user) redirect("/login");
@@ -791,6 +829,7 @@ export async function updateFamilyProfileAction(formData: FormData) {
   const phone = String(formData.get("phone") ?? "").trim();
   const ndisNumber = normalizeFundingRef(String(formData.get("ndisNumber") ?? ""));
   const agedCareRef = normalizeFundingRef(String(formData.get("agedCareRef") ?? ""));
+  const handover = handoverToDb(handoverFromForm(formData));
 
   await prisma.user.update({
     where: { id: user.id },
@@ -805,6 +844,7 @@ export async function updateFamilyProfileAction(formData: FormData) {
         bio: bio || null,
         ndisNumber,
         agedCareRef,
+        ...handover,
       },
     });
   } else {
@@ -816,6 +856,7 @@ export async function updateFamilyProfileAction(formData: FormData) {
         bio: bio || null,
         ndisNumber,
         agedCareRef,
+        ...handover,
       },
     });
   }

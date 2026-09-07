@@ -38,6 +38,9 @@ model FamilyProfile {
   bio         String?
   ndisNumber  String?
   agedCareRef String?
+  handoverAccess    String?
+  handoverCare      String?
+  handoverEmergency String?
 }
 
 model State {
@@ -226,6 +229,9 @@ model Booking {
   gstCents         Int
   totalCents       Int
   notes            String?
+  handoverAccess    String?
+  handoverCare      String?
+  handoverEmergency String?
   status           String
   recurringGroupId String?
   recurringIndex   Int       @default(1)
