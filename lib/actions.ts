@@ -16,6 +16,7 @@ import { quoteBooking } from "./money";
 import { prisma } from "./prisma";
 import { newCalendarToken } from "./calendar-feed";
 import { handoverFromForm, handoverToDb, fillEmptyHandover, canFillFromHousehold } from "./handover";
+import { sanitizePhotoUrl } from "./photos";
 import { isSafeReviewReturnPath, sanitizeReviewReply, hasReviewReply } from "./reviews";
 import { isSafeSearchHref, MAX_SAVED_SEARCHES } from "./saved-search";
 import { requireRole, requireUser } from "./session";
@@ -798,6 +799,9 @@ export async function updateCaregiverProfileAction(formData: FormData) {
   const availableNow = formData.get("availableNow") === "1";
   const availabilityNote = String(formData.get("availabilityNote") ?? "").trim().slice(0, 240);
   const weeklyHours = String(formData.get("weeklyHours") ?? "").trim().slice(0, 120);
+  const photoRaw = String(formData.get("photoUrl") ?? "").trim();
+  const photoUrl = photoRaw ? sanitizePhotoUrl(photoRaw) : null;
+  if (photoRaw && !photoUrl) redirect("/dashboard/profile?error=photo");
 
   if (!headline || !bio || !suburb || !cityId || hourlyRateAud < 20 || yearsExperience < 0) {
     redirect("/dashboard/profile?error=invalid");
@@ -821,6 +825,7 @@ export async function updateCaregiverProfileAction(formData: FormData) {
         availableNow,
         availabilityNote: availabilityNote || null,
         weeklyHours: weeklyHours || null,
+        photoUrl,
         lastActiveAt: new Date(),
       },
     });

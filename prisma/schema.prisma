@@ -101,6 +101,7 @@ model CaregiverProfile {
   slug            String   @unique
   headline        String
   bio             String
+  photoUrl        String?
   hourlyRateCents Int
   yearsExperience Int
   suburb          String

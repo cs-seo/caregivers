@@ -24,7 +24,7 @@ export function CaregiverCardView({
   return (
     <article className="rounded-2xl border border-line bg-card p-5 shadow-sm transition hover:border-teal/40">
       <div className="flex gap-4">
-        <Portrait name={caregiver.user.name} size={56} />
+        <Portrait name={caregiver.user.name} photoUrl={caregiver.photoUrl} size={56} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>

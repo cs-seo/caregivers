@@ -23,6 +23,7 @@ export async function GET(request: Request) {
       availableNow: carer.availableNow && !isAwayToday(carer.blockedDates.map((row) => row.dateKey)),
       awayToday: isAwayToday(carer.blockedDates.map((row) => row.dateKey)),
       ratingAvg: carer.ratingAvg,
+      photoUrl: carer.photoUrl,
       trustScore: carer.trustScore,
     })),
   );

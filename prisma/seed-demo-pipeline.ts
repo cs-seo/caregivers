@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { BOOKING_STATUS } from "../lib/constants";
+import { DEMO_PORTRAITS } from "../lib/photos";
 import { invoiceNumberMap, STATEMENT_STATUSES, australianFinancialYear } from "../lib/statement";
 
 export async function seedDemoPipeline(prisma: PrismaClient) {
@@ -484,6 +485,18 @@ export async function seedDemoReviewReplies(prisma: PrismaClient) {
   return updated;
 }
 
+export async function seedDemoPortraits(prisma: PrismaClient) {
+  let updated = 0;
+  for (const item of DEMO_PORTRAITS) {
+    const result = await prisma.caregiverProfile.updateMany({
+      where: { slug: item.slug, photoUrl: null },
+      data: { photoUrl: `/portraits/${item.file}` },
+    });
+    updated += result.count;
+  }
+  return updated;
+}
+
 export async function seedDemoSavedSearches(prisma: PrismaClient) {
   const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
   if (!family) return 0;
@@ -520,8 +533,9 @@ async function main() {
   const handover = await seedDemoHandover(prisma);
   const invoices = await seedDemoInvoiceNumbers(prisma);
   const replies = await seedDemoReviewReplies(prisma);
+  const portraits = await seedDemoPortraits(prisma);
   console.log(
-    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}`,
+    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}`,
   );
   await prisma.$disconnect();
 }

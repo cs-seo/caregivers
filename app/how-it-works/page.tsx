@@ -77,8 +77,9 @@ export default function HowItWorksPage() {
         <li>
           <h2 className="text-xl font-semibold">2. Check experience, not just a bio</h2>
           <p className="mt-2 text-stone-600">
-            Profiles show verified roles, screening checks and reviews from released bookings. Carers can publish one
-            public reply. Trust score is calculated from those facts.
+            Profiles show verified roles, screening checks, an illustrated portrait (or a photo the carer supplied over
+            HTTPS) and reviews from released bookings. Carers can publish one public reply. Trust score is calculated
+            from those facts.
           </p>
         </li>
         <li>

@@ -41,6 +41,7 @@ export async function insertCarer(
               ? `Weekday afternoons and most weekends around ${carer.suburb}.`
               : `Book a few days ahead — usually free mid-week around ${carer.suburb}.`),
           weeklyHours: carer.weeklyHours || defaultWeeklyHours(carer.specialties),
+          photoUrl: carer.photoUrl || null,
           lastActiveAt: new Date(),
           verifiedHours,
           specialties: {

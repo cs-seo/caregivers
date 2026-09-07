@@ -15,6 +15,7 @@ export type FeaturedCarer = {
   availableNow: boolean;
   availabilityNote?: string;
   weeklyHours?: string;
+  photoUrl?: string;
   specialties: string[];
   credentials: { type: string; issuingState?: string; number?: string; months: number }[];
   work: {
@@ -35,6 +36,7 @@ export const featuredCarers: FeaturedCarer[] = [
     name: "Sarah Nguyen",
     slug: "sarah-nguyen-aged-care-sydney",
     headline: "AHPRA-registered nurse offering in-home aged care in Sydney's inner west",
+    photoUrl: "/portraits/sarah-nguyen.svg",
     bio: "I have spent 11 years supporting older Australians at home — from daily personal care through to complex medication and dementia routines. Families book me when they want clinical judgement without a facility. I am calm, punctual and happy to coordinate with GPs and My Aged Care packages.",
     hourlyRateCents: 6800,
     yearsExperience: 11,
@@ -79,6 +81,7 @@ export const featuredCarers: FeaturedCarer[] = [
     name: "Priya Nair",
     slug: "priya-nair-nanny-sydney",
     headline: "Live-out nanny and after-school carer in Sydney's east",
+    photoUrl: "/portraits/priya-nair.svg",
     bio: "I specialise in school-age children, homework routines and swimming pick-ups. Parents book me for term-time consistency and school holiday cover. I keep a shared daily note so you always know how the afternoon went.",
     hourlyRateCents: 4200,
     yearsExperience: 7,
@@ -114,6 +117,7 @@ export const featuredCarers: FeaturedCarer[] = [
     name: "James Okafor",
     slug: "james-okafor-disability-support-sydney",
     headline: "NDIS support worker for community access across Greater Sydney",
+    photoUrl: "/portraits/james-okafor.svg",
     bio: "I support participants with community access, public transport training and weekend social goals. I am comfortable with complex behaviour support plans and keep detailed shift notes for plan managers.",
     hourlyRateCents: 5500,
     yearsExperience: 6,
@@ -218,6 +222,7 @@ export const featuredCarers: FeaturedCarer[] = [
     name: "Maya Chen",
     slug: "maya-chen-nanny-melbourne",
     headline: "Bilingual Mandarin-English nanny in Melbourne's inner north",
+    photoUrl: "/portraits/maya-chen.svg",
     bio: "I look after infants through to early primary, with a focus on bilingual play and sleep routines. I am first-aid certified and happy to cook simple family meals.",
     hourlyRateCents: 4500,
     yearsExperience: 5,
@@ -566,6 +571,7 @@ export const featuredCarers: FeaturedCarer[] = [
     name: "Chloe Bennett",
     slug: "chloe-bennett-aged-care-adelaide",
     headline: "Aged care worker and companion in Adelaide's eastern suburbs",
+    photoUrl: "/portraits/chloe-bennett.svg",
     bio: "I support clients with dementia-friendly routines, meal prep and GP visits. Families tell me I bring calm to the house.",
     hourlyRateCents: 4400,
     yearsExperience: 10,

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Badge } from "@/components/badges";
 import { DaysOffCalendar } from "@/components/days-off-calendar";
+import { Portrait } from "@/components/portrait";
 import { WeeklyHoursField } from "@/components/weekly-hours-field";
 import {
   addBlockedDateAction,
@@ -81,7 +82,11 @@ export default async function CarerProfileEditorPage({
       {query.saved ? (
         <p className="mt-4 rounded-xl bg-sage p-3 text-sm">Profile saved.</p>
       ) : null}
-      {query.error ? (
+      {query.error === "photo" ? (
+        <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
+          Photos must be an https URL, or a CareProof portrait path. Initials are used if you leave this blank.
+        </p>
+      ) : query.error ? (
         <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
           Check the required fields and try again.
         </p>
@@ -111,6 +116,22 @@ export default async function CarerProfileEditorPage({
 
       <form action={updateCaregiverProfileAction} className="mt-8 space-y-4 rounded-2xl border border-line bg-card p-5">
         <h2 className="font-semibold text-ink">Public details</h2>
+        <div className="flex items-center gap-4">
+          <Portrait name={user.name} photoUrl={profile.photoUrl} size={72} />
+          <p className="text-sm text-stone-600">This portrait appears on directory cards and your public profile.</p>
+        </div>
+        <label className="block text-sm">
+          Photo URL (optional)
+          <input
+            name="photoUrl"
+            defaultValue={profile.photoUrl ?? ""}
+            placeholder="https://… or leave blank for initials"
+            className="mt-1 w-full rounded-lg border border-line px-3 py-2"
+          />
+          <span className="mt-1 block text-xs text-stone-500">
+            HTTPS only. CareProof does not scrape photos from other sites. Leave blank to keep illustrated initials.
+          </span>
+        </label>
         <label className="block text-sm">
           Headline
           <input

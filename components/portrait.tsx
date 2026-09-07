@@ -1,25 +1,32 @@
 import { initials } from "@/lib/format";
+import { portraitPalette, sanitizePhotoUrl } from "@/lib/photos";
 
-const PALETTE = [
-  ["#0f4c46", "#d7e6df"],
-  ["#c45c26", "#f3d7c4"],
-  ["#1d4e89", "#d4e3f2"],
-  ["#5b3a29", "#efe4d6"],
-  ["#3d5a3a", "#dde8d2"],
-  ["#6b3d6e", "#eddff0"],
-  ["#0b5a6b", "#cfe8ee"],
-  ["#8a3d2f", "#f0d6cf"],
-] as const;
+export function Portrait({
+  name,
+  photoUrl,
+  size = 56,
+}: {
+  name: string;
+  photoUrl?: string | null;
+  size?: number;
+}) {
+  const src = sanitizePhotoUrl(photoUrl ?? "");
+  if (src) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src}
+        alt=""
+        width={size}
+        height={size}
+        className="relative shrink-0 rounded-full object-cover shadow-sm"
+        style={{ width: size, height: size }}
+      />
+    );
+  }
 
-function hashName(name: string) {
-  let hash = 0;
-  for (const char of name) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
-  return hash;
-}
-
-export function Portrait({ name, size = 56 }: { name: string; size?: number }) {
-  const hash = hashName(name);
-  const [bg, accent] = PALETTE[hash % PALETTE.length];
+  const { hash, colors } = portraitPalette(name);
+  const [bg, accent] = colors;
   return (
     <div
       className="relative shrink-0 overflow-hidden rounded-full shadow-sm"

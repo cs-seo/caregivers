@@ -15,21 +15,26 @@ import { formatAud } from "@/lib/money";
 import { getCaregiverBySlug, getShortlistedIds, getUpcomingAvailability, similarCaregivers } from "@/lib/queries";
 import { requireUser } from "@/lib/session";
 import { breadcrumbJsonLd, pageMeta } from "@/lib/seo";
-import { siteUrl } from "@/lib/constants";
-import { trustLabel } from "@/lib/trust";
-import { WORK_VERIFICATION_LABELS } from "@/lib/constants";
+import { absolutePhotoUrl } from "@/lib/photos";
+import { WORK_VERIFICATION_LABELS, siteUrl } from "@/lib/constants";
 import { canReplyToReview } from "@/lib/reviews";
+import { trustLabel } from "@/lib/trust";
 import { slugifySuburb } from "@/prisma/data/suburbs";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const carer = await getCaregiverBySlug(slug);
   if (!carer) return {};
-  return pageMeta({
+  const meta = pageMeta({
     title: `${carer.user.name} — ${carer.headline}`,
     description: `${carer.user.name} is a verified carer in ${carer.city.name}, ${carer.city.state.abbrev}. ${carer.yearsExperience} years’ experience. Book with escrow on CareProof.`,
     path: `/caregiver/${carer.slug}`,
   });
+  const image = absolutePhotoUrl(carer.photoUrl, siteUrl());
+  if (image && meta.openGraph) {
+    meta.openGraph = { ...meta.openGraph, images: [{ url: image }] };
+  }
+  return meta;
 }
 
 export default async function CaregiverProfilePage({
@@ -87,6 +92,9 @@ export default async function CaregiverProfilePage({
             jobTitle: carer.headline,
             description: carer.bio,
             url: `${siteUrl()}/caregiver/${carer.slug}`,
+            ...(absolutePhotoUrl(carer.photoUrl, siteUrl())
+              ? { image: absolutePhotoUrl(carer.photoUrl, siteUrl()) }
+              : {}),
             address: {
               "@type": "PostalAddress",
               addressLocality: carer.city.name,
@@ -130,7 +138,7 @@ export default async function CaregiverProfilePage({
       <div className="grid gap-8 md:grid-cols-[1fr_320px]">
         <div>
           <div className="flex gap-4">
-            <Portrait name={carer.user.name} size={72} />
+            <Portrait name={carer.user.name} photoUrl={carer.photoUrl} size={72} />
             <div>
               <h1 className="text-3xl font-semibold text-ink">{carer.user.name}</h1>
               {isOwner ? (
