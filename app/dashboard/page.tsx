@@ -13,6 +13,7 @@ import {
 import { formatDateTime, plural, snippet } from "@/lib/format";
 import { buildRoster } from "@/lib/roster";
 import { formatAud } from "@/lib/money";
+import { deleteSavedSearchAction } from "@/lib/actions";
 import { unreadCountsByBooking } from "@/lib/messages";
 import { australianFinancialYear, statementTotals, toStatementRows } from "@/lib/statement";
 import { profileChecklist } from "@/lib/profile";
@@ -158,6 +159,12 @@ export default async function DashboardPage({
   const shortlistCount = isFamily
     ? await prisma.shortlist.count({ where: { familyId: user.id } })
     : 0;
+  const savedSearches = isFamily
+    ? await prisma.savedSearch.findMany({
+        where: { familyId: user.id },
+        orderBy: { createdAt: "desc" },
+      })
+    : [];
 
   const { action: needsAction, active, history } = groupDashboardBookings(groupedSource);
   const escrowStatuses = new Set<string>([
@@ -330,6 +337,37 @@ export default async function DashboardPage({
           <Link href={shortlistCount ? "/dashboard/shortlist" : "/caregivers"} className="mt-3 inline-block text-sm font-medium text-teal">
             {shortlistCount ? "Open shortlist" : "Browse carers to save"}
           </Link>
+        </section>
+      ) : null}
+
+      {isFamily ? (
+        <section className="mt-6 rounded-2xl border border-line bg-card p-5">
+          <h2 className="font-semibold text-ink">Saved searches</h2>
+          <p className="mt-1 text-sm text-stone-600">
+            Keep a specialty, suburb or Needed on filter and open it again without rebuilding the form.
+          </p>
+          {savedSearches.length === 0 ? (
+            <Link href="/caregivers" className="mt-3 inline-block text-sm font-medium text-teal">
+              Browse carers to save a search
+            </Link>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {savedSearches.map((search) => (
+                <li key={search.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                  <Link href={search.href} className="font-medium text-teal hover:underline">
+                    {search.name}
+                  </Link>
+                  <form action={deleteSavedSearchAction}>
+                    <input type="hidden" name="id" value={search.id} />
+                    <input type="hidden" name="next" value="/dashboard" />
+                    <button className="text-stone-500 hover:text-clay" type="submit">
+                      Remove
+                    </button>
+                  </form>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       ) : null}
 

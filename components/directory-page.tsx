@@ -4,7 +4,10 @@ import { CaregiverCardView } from "@/components/caregiver-card";
 import { DirectoryFilters } from "@/components/directory-filters";
 import { JsonLd } from "@/components/json-ld";
 import { SearchForm } from "@/components/search-form";
+import { saveSearchAction } from "@/lib/actions";
 import { emptyStateLinks, filterHref } from "@/lib/directory";
+import { defaultSearchName, savedSearchHref } from "@/lib/saved-search";
+import { prisma } from "@/lib/prisma";
 import { formatAud } from "@/lib/money";
 import type { DirectoryFilters as Filters } from "@/lib/queries";
 import { directoryStats, getShortlistedIds, searchCaregiversPage } from "@/lib/queries";
@@ -42,6 +45,12 @@ export async function DirectoryResults({
   ]);
   const caregivers = page.caregivers;
   const canShortlist = viewer?.role === "FAMILY";
+  const searchHref = savedSearchHref(path, current);
+  const savedSearch = canShortlist
+    ? await prisma.savedSearch.findUnique({
+        where: { familyId_href: { familyId: viewer!.id, href: searchHref } },
+      })
+    : null;
 
   return (
     <div>
@@ -98,6 +107,40 @@ export async function DirectoryResults({
           availableOn={filters.availableOn}
         />
       </div>
+      {canShortlist ? (
+        savedSearch ? (
+          <p className="mt-3 text-sm text-teal-deep">
+            Saved as “{savedSearch.name}”.{" "}
+            <Link href="/dashboard" className="text-teal">
+              Open on your dashboard
+            </Link>
+          </p>
+        ) : (
+          <form action={saveSearchAction} className="mt-3 flex flex-wrap items-end gap-2">
+            <input type="hidden" name="href" value={searchHref} />
+            <label className="block text-sm">
+              <span className="text-stone-600">Save this search</span>
+              <input
+                name="name"
+                required
+                maxLength={80}
+                defaultValue={defaultSearchName(title, filters)}
+                className="mt-1 w-72 max-w-full rounded-lg border border-line px-3 py-2"
+              />
+            </label>
+            <button className="rounded-lg border border-teal px-3 py-2 text-sm font-medium text-teal" type="submit">
+              Save
+            </button>
+          </form>
+        )
+      ) : viewer ? null : (
+        <p className="mt-3 text-sm text-stone-600">
+          <Link href={`/login?callbackUrl=${encodeURIComponent(searchHref)}`} className="text-teal">
+            Log in
+          </Link>{" "}
+          as a family to save this search.
+        </p>
+      )}
       <div className="mt-8 grid gap-6 md:grid-cols-[240px_1fr]">
         <DirectoryFilters action={filterAction} current={current} />
         <div className="space-y-4">

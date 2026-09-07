@@ -41,6 +41,10 @@ const faqs = [
     q: "How do I message a carer or family?",
     a: "Each booking has a private thread. New messages show a count on Dashboard until you open the booking. Opening the thread marks them read and keeps a New label on that first view.",
   },
+  {
+    q: "Can I save a search for later?",
+    a: "Yes. On any directory page, families can save the current filters — specialty, suburb, Needed on, Instant Book or checks. Open the search again from the dashboard.",
+  },
 ];
 
 export default function HowItWorksPage() {

@@ -361,6 +361,28 @@ export async function seedDemoUnreadMessages(prisma: PrismaClient) {
   return created;
 }
 
+export async function seedDemoSavedSearches(prisma: PrismaClient) {
+  const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
+  if (!family) return 0;
+  const rows = [
+    {
+      name: "Aged care in Sydney · needed 12 Sept 2026",
+      href: "/caregivers/aged-care/nsw/sydney?availableOn=2026-09-12",
+    },
+    { name: "Instant Book nannies", href: "/caregivers/nannies?instantBook=1" },
+  ];
+  let saved = 0;
+  for (const row of rows) {
+    await prisma.savedSearch.upsert({
+      where: { familyId_href: { familyId: family.id, href: row.href } },
+      update: { name: row.name },
+      create: { familyId: family.id, name: row.name, href: row.href },
+    });
+    saved += 1;
+  }
+  return saved;
+}
+
 async function main() {
   const prisma = new PrismaClient();
   const result = await seedDemoPipeline(prisma);
@@ -371,8 +393,9 @@ async function main() {
   const blocked = await seedDemoBlockedDates(prisma);
   const funding = await seedDemoFundingRefs(prisma);
   const unread = await seedDemoUnreadMessages(prisma);
+  const searches = await seedDemoSavedSearches(prisma);
   console.log(
-    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}`,
+    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}`,
   );
   await prisma.$disconnect();
 }

@@ -14,6 +14,7 @@ import { autoReleaseIfDue, holdPayment, refundPayment, releasePayment } from "./
 import { parseSydneyDateTimeLocal, sydneyDateKey } from "./format";
 import { quoteBooking } from "./money";
 import { prisma } from "./prisma";
+import { isSafeSearchHref, MAX_SAVED_SEARCHES } from "./saved-search";
 import { requireRole, requireUser } from "./session";
 
 function slugify(value: string) {
@@ -868,4 +869,39 @@ export async function toggleShortlistAction(formData: FormData) {
   revalidatePath(`/caregiver/${caregiver.slug}`);
   revalidatePath("/caregivers");
   revalidatePath("/dashboard");
+}
+
+export async function saveSearchAction(formData: FormData) {
+  const href = String(formData.get("href") ?? "");
+  const name = String(formData.get("name") ?? "").trim().slice(0, 80);
+  const next = isSafeSearchHref(href) ? href : "/caregivers";
+  const user = await requireRole(ROLES.FAMILY);
+  if (!user) redirect(`/login?callbackUrl=${encodeURIComponent(next)}`);
+  if (!isSafeSearchHref(href) || !name) redirect(next);
+
+  const existing = await prisma.savedSearch.findUnique({
+    where: { familyId_href: { familyId: user.id, href } },
+  });
+  if (existing) {
+    revalidatePath("/dashboard");
+    return;
+  }
+  const count = await prisma.savedSearch.count({ where: { familyId: user.id } });
+  if (count >= MAX_SAVED_SEARCHES) redirect(`${next}${next.includes("?") ? "&" : "?"}error=saved-limit`);
+
+  await prisma.savedSearch.create({
+    data: { familyId: user.id, name, href },
+  });
+  revalidatePath("/dashboard");
+  revalidatePath(next);
+}
+
+export async function deleteSavedSearchAction(formData: FormData) {
+  const user = await requireRole(ROLES.FAMILY);
+  if (!user) redirect("/login?callbackUrl=/dashboard");
+  const id = String(formData.get("id") ?? "");
+  const next = String(formData.get("next") ?? "/dashboard");
+  await prisma.savedSearch.deleteMany({ where: { id, familyId: user.id } });
+  revalidatePath("/dashboard");
+  revalidatePath(next);
 }

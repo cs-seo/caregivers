@@ -24,6 +24,7 @@ model User {
   reviewsAuthored  Review[]       @relation("ReviewAuthor")
   messages         Message[]
   shortlists       Shortlist[]
+  savedSearches    SavedSearch[]
 }
 
 model FamilyProfile {
@@ -271,6 +272,18 @@ model Shortlist {
   createdAt   DateTime         @default(now())
 
   @@unique([familyId, caregiverId])
+}
+
+model SavedSearch {
+  id        String   @id @default(cuid())
+  familyId  String
+  family    User     @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  name      String
+  href      String
+  createdAt DateTime @default(now())
+
+  @@unique([familyId, href])
+  @@index([familyId])
 }
 
 model Review {
