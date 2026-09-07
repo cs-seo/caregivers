@@ -113,6 +113,8 @@ model CaregiverProfile {
   availabilityNote String?
   weeklyHours      String?
   noticeHours      Int      @default(4)
+  jobsLastSeenCount Int      @default(0)
+  jobsSeenAt        DateTime?
   lastActiveAt     DateTime @default(now())
   ratingAvg       Float    @default(0)
   reviewCount     Int      @default(0)

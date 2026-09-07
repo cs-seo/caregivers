@@ -16,7 +16,7 @@ import { buildRoster } from "@/lib/roster";
 import { formatAud } from "@/lib/money";
 import { deleteSavedSearchAction, applyHouseholdHandoverAction } from "@/lib/actions";
 import { directoryStats } from "@/lib/queries";
-import { filtersFromSearchHref, savedSearchDelta, savedSearchDeltaLabel } from "@/lib/saved-search";
+import { filtersFromSearchHref, jobsFitDeltaLabel, savedSearchDelta, savedSearchDeltaLabel } from "@/lib/saved-search";
 import { comingUpBookings, comingUpKind } from "@/lib/coming-up";
 import { canFillFromHousehold, hasHandover } from "@/lib/handover";
 import { unreadCountsByBooking } from "@/lib/messages";
@@ -239,6 +239,9 @@ export default async function DashboardPage({
       }
     : null;
   const fittingJobs = matchCarer ? matchingJobs(openJobs, matchCarer) : [];
+  const fittingDelta = carerProfile
+    ? savedSearchDelta(fittingJobs.length, carerProfile.jobsLastSeenCount, carerProfile.jobsSeenAt)
+    : null;
   const proposedJobIds = new Set(carerProposals.map((proposal) => proposal.careRequestId));
   const heldCents = bookings
     .filter((booking) => escrowStatuses.has(booking.status))
@@ -294,6 +297,15 @@ export default async function DashboardPage({
       {unrepliedReviews.length > 0 ? (
         <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
           {plural(unrepliedReviews.length, "review")} waiting for a public reply.
+        </p>
+      ) : null}
+      {fittingDelta && (fittingDelta.unseen || fittingDelta.newCount > 0) && fittingDelta.current > 0 ? (
+        <p className="mt-4 rounded-xl bg-sage p-3 text-sm text-teal-deep">
+          {jobsFitDeltaLabel(fittingDelta)}.{" "}
+          <Link href="/care-requests?fit=1" className="font-medium text-teal">
+            Open jobs that fit you
+          </Link>{" "}
+          to mark them seen.
         </p>
       ) : null}
 
@@ -554,9 +566,7 @@ export default async function DashboardPage({
           <h2 className="font-semibold text-ink">Jobs that fit you</h2>
           <p className="mt-1 text-sm text-stone-600">
             Open requests in your city that match your specialties and usual weekly hours.
-            {fittingJobs.length
-              ? ` ${fittingJobs.length} ${fittingJobs.length === 1 ? "job fits" : "jobs fit"} right now.`
-              : ""}
+            {fittingDelta ? ` ${jobsFitDeltaLabel(fittingDelta)}.` : ""}
           </p>
           {fittingJobs.length === 0 ? (
             <Link href="/care-requests" className="mt-3 inline-block text-sm font-medium text-teal">

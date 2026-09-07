@@ -4,6 +4,7 @@ import {
   defaultSearchName,
   filtersFromSearchHref,
   isSafeSearchHref,
+  jobsFitDeltaLabel,
   savedSearchDelta,
   savedSearchDeltaLabel,
   savedSearchHref,
@@ -68,4 +69,11 @@ test("savedSearchDelta treats a never-opened search as all new", () => {
   assert.equal(grown.newCount, 3);
   assert.equal(savedSearchDeltaLabel(grown), "10 carers · 3 new");
   assert.equal(savedSearchDeltaLabel(savedSearchDelta(7, 7, new Date("2026-09-01"))), "7 carers");
+});
+
+test("jobsFitDeltaLabel mirrors saved-search new counts for carers", () => {
+  assert.equal(jobsFitDeltaLabel(savedSearchDelta(1, 0, null)), "1 job fits · not opened yet");
+  assert.equal(jobsFitDeltaLabel(savedSearchDelta(3, 1, new Date("2026-09-01"))), "3 jobs fit · 2 new");
+  assert.equal(jobsFitDeltaLabel(savedSearchDelta(2, 2, new Date("2026-09-01"))), "2 jobs fit");
+  assert.equal(jobsFitDeltaLabel(savedSearchDelta(0, 0, new Date("2026-09-01"))), "0 matching jobs");
 });

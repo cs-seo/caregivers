@@ -5,6 +5,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { formatJobStart, jobFitsCarer, jobMissLabel, jobMissReason } from "@/lib/job-match";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
+import { jobsFitDeltaLabel, savedSearchDelta } from "@/lib/saved-search";
 import { pageMeta } from "@/lib/seo";
 
 export const metadata = pageMeta({
@@ -59,6 +60,15 @@ export default async function CareRequestsPage({
   const visible = fitOnly ? decorated.filter((row) => row.fit) : decorated;
   const sorted = matchCarer ? [...visible].sort((a, b) => Number(b.fit) - Number(a.fit)) : visible;
   const fitCount = decorated.filter((row) => row.fit).length;
+  const fitDelta = carer
+    ? savedSearchDelta(fitCount, carer.jobsLastSeenCount, carer.jobsSeenAt)
+    : null;
+  if (fitOnly && carer) {
+    await prisma.caregiverProfile.update({
+      where: { id: carer.id },
+      data: { jobsLastSeenCount: fitCount, jobsSeenAt: new Date() },
+    });
+  }
 
   return (
     <div>
@@ -69,7 +79,9 @@ export default async function CareRequestsPage({
           <p className="mt-2 max-w-2xl text-stone-600">
             Families post what they need. Carers send a proposal. Hiring funds escrow the same way a profile booking does.
             {matchCarer
-              ? ` ${fitCount} ${fitCount === 1 ? "job fits" : "jobs fit"} your city, specialties and usual hours.`
+              ? ` ${fitCount} ${fitCount === 1 ? "job fits" : "jobs fit"} your city, specialties and usual hours.${
+                  fitDelta && (fitDelta.unseen || fitDelta.newCount > 0) ? ` ${jobsFitDeltaLabel(fitDelta)}.` : ""
+                }`
               : ""}
           </p>
           {matchCarer ? (

@@ -79,3 +79,11 @@ export function savedSearchDeltaLabel(delta: ReturnType<typeof savedSearchDelta>
   if (delta.newCount > 0) return `${delta.current} carers · ${delta.newCount} new`;
   return `${delta.current} carers`;
 }
+
+export function jobsFitDeltaLabel(delta: ReturnType<typeof savedSearchDelta>) {
+  if (delta.current === 0) return delta.unseen ? "No matching jobs yet" : "0 matching jobs";
+  const jobs = delta.current === 1 ? "job fits" : "jobs fit";
+  if (delta.unseen) return `${delta.current} ${jobs} · not opened yet`;
+  if (delta.newCount > 0) return `${delta.current} ${jobs} · ${delta.newCount} new`;
+  return `${delta.current} ${jobs}`;
+}
