@@ -26,6 +26,7 @@ import {
   canPassOnProposal,
   canRespondToCounter,
   canWithdrawProposal,
+  composeBookingNotes,
   markRequestHired,
 } from "./job-hire";
 import {
@@ -829,6 +830,7 @@ export async function hireProposalAction(formData: FormData) {
   const quote = quoteBooking(proposal.rateCents, hours);
   const startAt = proposal.careRequest.startDate;
   const endAt = new Date(startAt.getTime() + hours * 60 * 60 * 1000);
+  const welcomeNote = String(formData.get("welcomeNote") ?? "");
 
   const booking = await prisma.booking.create({
     data: {
@@ -838,7 +840,7 @@ export async function hireProposalAction(formData: FormData) {
       specialtyId: proposal.careRequest.specialtyId,
       startAt,
       endAt,
-      notes: proposal.coverLetter,
+      notes: composeBookingNotes({ welcomeNote, coverLetter: proposal.coverLetter }),
       status: BOOKING_STATUS.AWAITING_PAYMENT,
       hours: quote.hours,
       rateCents: quote.rateCents,

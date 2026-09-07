@@ -4,6 +4,7 @@ import { DEMO_PORTRAITS } from "../lib/photos";
 import { invoiceNumberMap, STATEMENT_STATUSES, australianFinancialYear } from "../lib/statement";
 import { parseSydneyDateTimeLocal } from "../lib/format";
 import { isUtcDateOnly } from "../lib/job-match";
+import { composeBookingNotes } from "../lib/job-hire";
 import { formatWeeklyHours, parseWeeklyHours } from "../lib/weekly-windows";
 
 export async function seedDemoPipeline(prisma: PrismaClient) {
@@ -550,6 +551,9 @@ export async function seedDemoWeeklyWindows(prisma: PrismaClient) {
   return updated;
 }
 
+const LEICHHARDT_WELCOME = "Side gate is unlocked. Mum likes tea before the walk — kettle on the left.";
+const LEICHHARDT_COVER = "I can cover Wednesday mornings in Leichhardt and already support a nearby client.";
+
 export async function seedDemoHiredRequest(prisma: PrismaClient) {
   const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
   const sarah = await prisma.caregiverProfile.findUnique({
@@ -588,7 +592,7 @@ export async function seedDemoHiredRequest(prisma: PrismaClient) {
     create: {
       careRequestId: job.id,
       caregiverId: sarah.id,
-      coverLetter: "I can cover Wednesday mornings in Leichhardt and already support a nearby client.",
+      coverLetter: LEICHHARDT_COVER,
       rateCents: 6800,
       status: "accepted",
     },
@@ -611,6 +615,7 @@ export async function seedDemoHiredRequest(prisma: PrismaClient) {
   const rateCents = sarah.hourlyRateCents;
   const subtotalCents = rateCents * hours;
   const platformFeeCents = Math.round(subtotalCents * 0.1);
+  const notes = composeBookingNotes({ welcomeNote: LEICHHARDT_WELCOME, coverLetter: LEICHHARDT_COVER });
   const attached = await prisma.booking.findFirst({ where: { careRequestId: job.id } });
   if (!attached) {
     await prisma.booking.create({
@@ -621,7 +626,7 @@ export async function seedDemoHiredRequest(prisma: PrismaClient) {
         specialtyId: specialty.id,
         startAt,
         endAt: new Date(startAt.getTime() + hours * 60 * 60 * 1000),
-        notes: "DEMO: hired from Midweek respite in Leichhardt.",
+        notes,
         status: BOOKING_STATUS.RELEASED,
         hours,
         rateCents,
@@ -642,6 +647,8 @@ export async function seedDemoHiredRequest(prisma: PrismaClient) {
         },
       },
     });
+  } else if (attached.notes !== notes) {
+    await prisma.booking.update({ where: { id: attached.id }, data: { notes } });
   }
   return 1;
 }

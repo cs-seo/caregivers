@@ -1,5 +1,20 @@
-import { INVITE_STATUS } from "./job-invite";
+import { INVITE_NOTE_LIMIT, INVITE_STATUS } from "./job-invite";
 import { prisma } from "./prisma";
+
+export const BOOKING_NOTE_LIMIT = INVITE_NOTE_LIMIT;
+
+export function sanitizeBookingNote(raw: string) {
+  return raw.trim().slice(0, BOOKING_NOTE_LIMIT);
+}
+
+export function composeBookingNotes(parts: { welcomeNote?: string | null; coverLetter?: string | null }) {
+  const welcome = sanitizeBookingNote(parts.welcomeNote ?? "");
+  const cover = (parts.coverLetter ?? "").trim();
+  if (welcome && cover) {
+    return `Welcome from the family:\n${welcome}\n\nProposal:\n${cover}`;
+  }
+  return welcome || cover || null;
+}
 
 export const PROPOSAL_STATUS = {
   PENDING: "pending",

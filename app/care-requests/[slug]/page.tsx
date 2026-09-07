@@ -423,8 +423,18 @@ export default async function CareRequestPage({
                   {canPassOnProposal(proposal, job, session?.user?.id ?? "") ? (
                     <div className="mt-3 space-y-3">
                       <div className="flex flex-wrap items-end gap-4">
-                        <form action={hireProposalAction}>
+                        <form action={hireProposalAction} className="min-w-[16rem] space-y-2">
                           <input type="hidden" name="proposalId" value={proposal.id} />
+                          <label className="block text-xs text-stone-500">
+                            Welcome note for the carer
+                            <textarea
+                              name="welcomeNote"
+                              rows={2}
+                              maxLength={INVITE_NOTE_LIMIT}
+                              placeholder="Gate, parking, or what the first morning should look like."
+                              className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm text-ink"
+                            />
+                          </label>
                           <button className="rounded-lg bg-teal px-4 py-2 text-sm font-medium text-white" type="submit">
                             Hire and pay into escrow
                           </button>

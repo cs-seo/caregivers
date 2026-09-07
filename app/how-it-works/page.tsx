@@ -11,7 +11,7 @@ export const metadata = pageMeta({
 const faqs = [
   {
     q: "How do I book a carer?",
-    a: "Open a profile and use Instant Book, or post a care request and hire a proposal. From a posted job you can also invite a carer to apply — they see it on their dashboard and can send a proposal or decline. Booking a matching carer from your request attaches that sit to the job and closes it — same as hiring a proposal. Either path creates one escrow-backed booking, declines the other pending proposals, and closes leftover invites. The hired request and your dashboard both link to that booking. Instant Book needs the carer’s notice window — 2 hours for many babysitters, 12 for aged care — and falls back to a request if you need someone sooner.",
+    a: "Open a profile and use Instant Book, or post a care request and hire a proposal. From a posted job you can also invite a carer to apply — they see it on their dashboard and can send a proposal or decline. Booking a matching carer from your request attaches that sit to the job and closes it — same as hiring a proposal. Either path creates one escrow-backed booking, declines the other pending proposals, and closes leftover invites. When you hire, add an optional welcome note — gate, parking, or how the first morning should go — and it lands on the booking with their proposal. Instant Book already has a notes field. The hired request and your dashboard both link to that booking. Instant Book needs the carer’s notice window — 2 hours for many babysitters, 12 for aged care — and falls back to a request if you need someone sooner.",
   },
   {
     q: "When is the carer paid?",
@@ -92,7 +92,8 @@ export default function HowItWorksPage() {
             Instant Book pays into escrow immediately if the start is outside the carer’s notice window. A sit that
             starts too soon becomes a request to book instead. Days off pause Instant Book for that calendar day in
             Australia/Sydney. Usual weekly hours close weekdays the carer does not work, so a start time has to fall
-            inside a window. Job posts collect proposals you can hire with one click. Browse matches from a request
+            inside a window. Job posts collect proposals you can hire with one click — add a welcome note so the carer
+            sees gate, parking or the first-morning plan on the booking. Browse matches from a request
             and invite a carer to apply if you want a written proposal before you book. Message an invited or proposing
             carer on the request before you hire, suggest a different rate, or pass on a proposal and keep the request open. Carers see which open jobs
             match their city, specialties and usual hours, plus any invites on their dashboard. For babysitting, pick a date

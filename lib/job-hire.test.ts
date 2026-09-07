@@ -12,6 +12,9 @@ import {
   hasPendingCounter,
   notHiredBanner,
   passedOnBanner,
+  composeBookingNotes,
+  sanitizeBookingNote,
+  BOOKING_NOTE_LIMIT,
   PROPOSAL_STATUS,
 } from "./job-hire";
 
@@ -97,6 +100,20 @@ test("notHiredBanner names the family and the request", () => {
     ]),
     "2 families hired someone else.",
   );
+});
+
+test("composeBookingNotes joins a welcome note and the cover letter", () => {
+  assert.equal(composeBookingNotes({ welcomeNote: "  ", coverLetter: "  " }), null);
+  assert.equal(composeBookingNotes({ coverLetter: "I can do Wednesday mornings." }), "I can do Wednesday mornings.");
+  assert.equal(composeBookingNotes({ welcomeNote: "Side gate is unlocked." }), "Side gate is unlocked.");
+  assert.equal(
+    composeBookingNotes({
+      welcomeNote: "  Side gate is unlocked.  ",
+      coverLetter: "I can do Wednesday mornings.",
+    }),
+    "Welcome from the family:\nSide gate is unlocked.\n\nProposal:\nI can do Wednesday mornings.",
+  );
+  assert.equal(sanitizeBookingNote("x".repeat(BOOKING_NOTE_LIMIT + 20)).length, BOOKING_NOTE_LIMIT);
 });
 
 test("passedOnBanner names the family and the request", () => {

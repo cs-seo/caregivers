@@ -164,7 +164,12 @@ export default async function BookingDetailPage({
           <dd>{booking.payment ? `${booking.payment.provider} · ${booking.payment.status}` : "Not funded"}</dd>
         </div>
       </dl>
-      {booking.notes ? <p className="mt-4 text-sm text-stone-600 whitespace-pre-line">Notes: {booking.notes}</p> : null}
+      {booking.notes ? (
+        <section className="mt-4 rounded-2xl border border-line bg-card p-5">
+          <h2 className="font-semibold text-ink">Sit notes</h2>
+          <p className="mt-2 text-sm text-stone-600 whitespace-pre-line">{booking.notes}</p>
+        </section>
+      ) : null}
       <HandoverCard
         bookingId={booking.id}
         isFamily={isFamily}
