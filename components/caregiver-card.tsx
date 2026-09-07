@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { weeklyHourChips } from "@/lib/availability";
+import { isAwayToday, isInstantBookLive, weeklyHourChips } from "@/lib/availability";
 import { formatDate, lastActiveLabel, parseSydneyDateTimeLocal } from "@/lib/format";
 import { formatAud } from "@/lib/money";
 import { trustLabel } from "@/lib/trust";
@@ -18,6 +18,9 @@ export function CaregiverCardView({
   neededOn?: string;
 }) {
   const specialtyNames = caregiver.specialties.map((s) => s.specialty.name).join(" · ");
+  const blockedKeys = (caregiver.blockedDates ?? []).map((row) => row.dateKey);
+  const awayToday = isAwayToday(blockedKeys);
+  const liveInstant = isInstantBookLive(caregiver.instantBook, blockedKeys);
   return (
     <article className="rounded-2xl border border-line bg-card p-5 shadow-sm transition hover:border-teal/40">
       <div className="flex gap-4">
@@ -63,8 +66,9 @@ export function CaregiverCardView({
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <Badge tone="teal">{trustLabel(caregiver.trustScore)}</Badge>
-            {caregiver.instantBook ? <Badge tone="clay">Instant Book</Badge> : null}
-            {caregiver.availableNow ? <Badge>Available now</Badge> : null}
+            {liveInstant ? <Badge tone="clay">Instant Book</Badge> : null}
+            {caregiver.instantBook && awayToday ? <Badge tone="stone">Instant Book paused</Badge> : null}
+            {awayToday ? <Badge>Away today</Badge> : caregiver.availableNow ? <Badge>Available now</Badge> : null}
             <span className="text-xs text-stone-500">{lastActiveLabel(caregiver.lastActiveAt)}</span>
             {caregiver.reviewCount > 0 ? (
               <span className="text-xs text-stone-600">

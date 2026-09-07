@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { WEEKLY_HOUR_PRESETS, defaultWeeklyHours, fortnightLabel, summariseFortnight, weeklyHourChips } from "./availability";
+import {
+  WEEKLY_HOUR_PRESETS,
+  defaultWeeklyHours,
+  fortnightLabel,
+  isAwayToday,
+  isInstantBookLive,
+  summariseFortnight,
+  weeklyHourChips,
+} from "./availability";
 
 test("weekly hour presets include the babysitting evening pattern", () => {
   assert.ok(WEEKLY_HOUR_PRESETS.includes("Thu–Sun 5pm–midnight"));
@@ -26,4 +34,12 @@ test("summariseFortnight counts free, booked and away days", () => {
   assert.equal(summary.away, 2);
   assert.equal(summary.nextFree, "2026-09-15");
   assert.equal(fortnightLabel(summary), "1 free · 1 booked · 2 away");
+});
+
+test("isInstantBookLive pauses Instant Book while today is a day off", () => {
+  const now = new Date("2026-09-07T02:00:00.000Z");
+  assert.equal(isAwayToday(["2026-09-07"], now), true);
+  assert.equal(isInstantBookLive(true, ["2026-09-07"], now), false);
+  assert.equal(isInstantBookLive(true, ["2026-09-13"], now), true);
+  assert.equal(isInstantBookLive(false, [], now), false);
 });

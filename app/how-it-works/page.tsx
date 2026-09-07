@@ -27,11 +27,11 @@ const faqs = [
   },
   {
     q: "Can I book a standing weekly sit?",
-    a: "Yes. On the book page choose 2 to 12 weeks. CareProof creates one escrow booking per week so you can cancel or dispute a single Friday without touching the rest of the series. The dashboard folds those weeks into one card. Download one calendar file for every week, or cancel unpaid remaining weeks while funded holds stay in escrow.",
+    a: "Yes. On the book page choose 2 to 12 weeks. CareProof creates one escrow booking per week so you can cancel or dispute a single Friday without touching the rest of the series. The dashboard folds those weeks into one card. Download one calendar file for every week, the whole roster from the dashboard, or cancel unpaid remaining weeks while funded holds stay in escrow.",
   },
   {
     q: "Can I search for a carer who is free on a specific night?",
-    a: "Yes. Use Needed on in search or the directory filters. CareProof hides carers who already have a sit in escrow that day, and carers who marked the day as away. Public profiles show the next fortnight as free, booked or away.",
+    a: "Yes. Use Needed on in search or the directory filters. CareProof hides carers who already have a sit in escrow that day, and carers who marked the day as away. Public profiles and the shortlist show the next fortnight as free, booked or away. If a carer is away today, Instant Book pauses and they drop out of the Instant Book filter until tomorrow.",
   },
   {
     q: "Can I get a GST tax invoice for a Home Care Package or NDIS plan?",
@@ -72,9 +72,10 @@ export default function HowItWorksPage() {
         <li>
           <h2 className="text-xl font-semibold">3. Book in a few steps</h2>
           <p className="mt-2 text-stone-600">
-            Instant Book pays into escrow immediately. Request to book waits for the carer. Job posts collect proposals
-            you can hire with one click. For babysitting, pick a date night, last-minute sit, overnight or a standing
-            weekly series — the hourly rate does not rise with a second child.
+            Instant Book pays into escrow immediately. Request to book waits for the carer. Days off pause Instant Book
+            for that calendar day in Australia/Sydney. Job posts collect proposals you can hire with one click. For
+            babysitting, pick a date night, last-minute sit, overnight or a standing weekly series — the hourly rate
+            does not rise with a second child.
           </p>
         </li>
         <li>

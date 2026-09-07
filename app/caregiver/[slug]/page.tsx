@@ -7,7 +7,7 @@ import { JsonLd } from "@/components/json-ld";
 import { MobileBookBar } from "@/components/mobile-book-bar";
 import { Portrait } from "@/components/portrait";
 import { ShortlistButton } from "@/components/shortlist-button";
-import { weeklyHourChips } from "@/lib/availability";
+import { fortnightLabel, isInstantBookLive, summariseFortnight, weeklyHourChips } from "@/lib/availability";
 import { formatDate, lastActiveLabel, monthYear } from "@/lib/format";
 import { formatAud } from "@/lib/money";
 import { getCaregiverBySlug, getShortlistedIds, getUpcomingAvailability, similarCaregivers } from "@/lib/queries";
@@ -49,6 +49,10 @@ export default async function CaregiverProfilePage({
   ]);
   const primary = carer.specialties[0]?.specialty;
   const canShortlist = viewer?.role === "FAMILY";
+  const fortnight = summariseFortnight(upcoming);
+  const blockedKeys = upcoming.filter((day) => day.blocked).map((day) => day.key);
+  const awayToday = upcoming[0]?.blocked === true;
+  const liveInstant = isInstantBookLive(carer.instantBook, blockedKeys);
 
   return (
     <div className="pb-20 md:pb-0">
@@ -145,8 +149,9 @@ export default async function CaregiverProfilePage({
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Badge tone="teal">{trustLabel(carer.trustScore)} · {carer.trustScore}/100</Badge>
-                {carer.instantBook ? <Badge tone="clay">Instant Book</Badge> : null}
-                {carer.availableNow ? <Badge>Available now</Badge> : null}
+                {liveInstant ? <Badge tone="clay">Instant Book</Badge> : null}
+                {carer.instantBook && awayToday ? <Badge tone="stone">Instant Book paused</Badge> : null}
+                {awayToday ? <Badge>Away today</Badge> : carer.availableNow ? <Badge>Available now</Badge> : null}
                 <span className="text-sm text-stone-500">{lastActiveLabel(carer.lastActiveAt)}</span>
                 {carer.reviewCount > 0 ? (
                   <span className="text-sm text-stone-600">
@@ -168,6 +173,20 @@ export default async function CaregiverProfilePage({
 
           <section className="mt-8">
               <h2 className="text-xl font-semibold text-ink">Availability</h2>
+              <p className="mt-2 text-sm text-stone-600">
+                Next 14 days: {fortnightLabel(fortnight)}
+                {fortnight.nextFree ? (
+                  <>
+                    {" · "}
+                    <Link href={`/caregiver/${carer.slug}/book?start=${fortnight.nextFree}`} className="text-teal">
+                      Book the next free day
+                    </Link>
+                  </>
+                ) : (
+                  " · no free day this fortnight"
+                )}
+                {awayToday ? " · Instant Book is paused while they are away today." : ""}
+              </p>
               {weeklyHourChips(carer.weeklyHours).length ? (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {weeklyHourChips(carer.weeklyHours).map((chip) => (
@@ -263,18 +282,21 @@ export default async function CaregiverProfilePage({
           <p className="text-3xl font-semibold text-teal">{formatAud(carer.hourlyRateCents)}</p>
           <p className="text-sm text-stone-500">per hour, inc GST</p>
           <p className="mt-3 text-sm text-stone-600">
-            {carer.instantBook
+            {liveInstant
               ? "Instant Book — pay into escrow now and the carer is confirmed."
-              : "Request to book — the carer accepts, then you fund escrow."}
+              : carer.instantBook && awayToday
+                ? "Away today — Instant Book is paused. Send a request, or pick another free day."
+                : "Request to book — the carer accepts, then you fund escrow."}
           </p>
+          <p className="mt-3 text-sm text-stone-600">{fortnightLabel(fortnight)} in the next fortnight.</p>
           {carer.weeklyHours ? <p className="mt-3 text-sm font-medium text-teal-deep">{carer.weeklyHours}</p> : null}
           {carer.availabilityNote ? <p className="mt-3 text-sm text-stone-700">{carer.availabilityNote}</p> : null}
           <p className="mt-2 text-xs text-stone-500">{lastActiveLabel(carer.lastActiveAt)}</p>
           <Link
-            href={`/caregiver/${carer.slug}/book`}
+            href={fortnight.nextFree ? `/caregiver/${carer.slug}/book?start=${fortnight.nextFree}` : `/caregiver/${carer.slug}/book`}
             className="mt-4 block rounded-xl bg-teal py-3 text-center font-semibold text-white no-underline hover:bg-teal-deep"
           >
-            {carer.instantBook ? "Book now" : "Request to book"}
+            {liveInstant ? "Book now" : "Request to book"}
           </Link>
           <div className="mt-3">
             <ShortlistButton
@@ -308,7 +330,12 @@ export default async function CaregiverProfilePage({
           </div>
         </section>
       ) : null}
-      <MobileBookBar slug={carer.slug} hourlyRateCents={carer.hourlyRateCents} instantBook={carer.instantBook} />
+      <MobileBookBar
+        slug={carer.slug}
+        hourlyRateCents={carer.hourlyRateCents}
+        instantBook={liveInstant}
+        start={fortnight.nextFree}
+      />
     </div>
   );
 }

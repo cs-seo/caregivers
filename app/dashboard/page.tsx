@@ -250,11 +250,16 @@ export default async function DashboardPage({
       </section>
 
       <section className="mt-6 rounded-2xl border border-line bg-card p-5">
-        <h2 className="font-semibold text-ink">Next 14 days</h2>
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <h2 className="font-semibold text-ink">Next 14 days</h2>
+          <a href="/dashboard/calendar/ics" className="text-sm font-medium text-teal hover:underline">
+            Download calendar
+          </a>
+        </div>
         <p className="mt-1 text-sm text-stone-600">
           {isFamily
-            ? "Sits already in escrow, plus empty days you can still book."
-            : "Your held roster. Open days have no sit on the books. Away days are hidden from Needed on."}
+            ? "Sits already in escrow, plus empty days you can still book. The calendar file has every upcoming sit."
+            : "Your held roster. Open days have no sit on the books. Away days pause Instant Book and hide you from Needed on. The calendar file includes booked sits and days off."}
         </p>
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-7">
           {roster.map((day) =>

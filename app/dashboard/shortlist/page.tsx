@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Badge, CredentialBadges } from "@/components/badges";
 import { CaregiverCardView } from "@/components/caregiver-card";
-import { fortnightLabel, summariseFortnight } from "@/lib/availability";
+import { fortnightLabel, isInstantBookLive, summariseFortnight } from "@/lib/availability";
 import { formatAud } from "@/lib/money";
 import { caregiverCardInclude, getUpcomingAvailability, withTrust } from "@/lib/queries";
 import { prisma } from "@/lib/prisma";
@@ -106,7 +106,12 @@ export default async function ShortlistPage() {
                       </td>
                       <td className="px-4 py-3">
                         <Link href={`/caregiver/${carer.slug}/book`} className="text-teal hover:underline">
-                          {carer.instantBook ? "Book now" : "Request"}
+                          {isInstantBookLive(
+                            carer.instantBook,
+                            carer.blockedDates.map((row) => row.dateKey),
+                          )
+                            ? "Book now"
+                            : "Request"}
                         </Link>
                       </td>
                     </tr>

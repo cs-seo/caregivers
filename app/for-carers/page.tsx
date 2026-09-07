@@ -20,7 +20,8 @@ export default function ForCarersPage() {
           <strong>Keep 100% of your advertised rate.</strong> Families pay a 10% platform fee on top.
         </li>
         <li>
-          <strong>Instant Book</strong> for carers who want jobs without back-and-forth. Turn it off to accept requests first.
+          <strong>Instant Book</strong> for carers who want jobs without back-and-forth. Turn it off to accept requests
+          first. Mark today as a day off and Instant Book pauses until tomorrow.
         </li>
         <li>
           <strong>Proposals</strong> on open care requests, the same way freelancers apply on Upwork.

@@ -2,11 +2,11 @@ import { notFound } from "next/navigation";
 import { BookingForm } from "@/components/booking-form";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { auth } from "@/auth";
-import { weeklyHourChips } from "@/lib/availability";
+import { fortnightLabel, isInstantBookLive, summariseFortnight, weeklyHourChips } from "@/lib/availability";
 import { credentialWatchlist, watchLabel } from "@/lib/credentials";
 import { lastActiveLabel, sydneyDateTimeLocal } from "@/lib/format";
 import { formatAud } from "@/lib/money";
-import { getCaregiverBySlug } from "@/lib/queries";
+import { getCaregiverBySlug, getUpcomingAvailability } from "@/lib/queries";
 import { pageMeta } from "@/lib/seo";
 import Link from "next/link";
 
@@ -32,10 +32,16 @@ export default async function BookPage({
   const [{ slug }, query, session] = await Promise.all([params, searchParams, auth()]);
   const carer = await getCaregiverBySlug(slug);
   if (!carer) notFound();
+  const upcoming = await getUpcomingAvailability(carer.id);
+  const fortnight = summariseFortnight(upcoming);
+  const blockedKeys = upcoming.filter((day) => day.blocked).map((day) => day.key);
+  const awayToday = upcoming[0]?.blocked === true;
+  const liveInstant = isInstantBookLive(carer.instantBook, blockedKeys);
   const hourChips = weeklyHourChips(carer.weeklyHours);
   const checkAlerts = credentialWatchlist(carer.credentials);
   const startDate = query.start && /^\d{4}-\d{2}-\d{2}$/.test(query.start) ? query.start : "";
-  const defaultStart = startDate ? `${startDate}T17:00` : sydneyDateTimeLocal(1, 9);
+  const startIsBlocked = startDate ? blockedKeys.includes(startDate) : false;
+  const defaultStart = startDate && !startIsBlocked ? `${startDate}T17:00` : sydneyDateTimeLocal(1, 9);
   const bookPath = startDate ? `/caregiver/${carer.slug}/book?start=${startDate}` : `/caregiver/${carer.slug}/book`;
 
   return (
@@ -50,7 +56,12 @@ export default async function BookPage({
       <h1 className="text-3xl font-semibold text-ink">Book {carer.user.name}</h1>
       <p className="mt-2 text-stone-600">
         {carer.suburb}, {carer.city.name} · {formatAud(carer.hourlyRateCents)}/hr inc GST.{" "}
-        {carer.instantBook ? "Instant Book confirms immediately." : "The carer will accept before you pay."}
+        {liveInstant
+          ? "Instant Book confirms immediately."
+          : carer.instantBook && awayToday
+            ? "Away today — Instant Book is paused, so this sit waits for the carer to accept."
+            : "The carer will accept before you pay."}{" "}
+        Next 14 days: {fortnightLabel(fortnight)}.
       </p>
       {hourChips.length ? (
         <div className="mt-3 rounded-xl bg-sage p-3">
@@ -80,7 +91,7 @@ export default async function BookPage({
         <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
           That time overlaps a booking already held for this carer. Pick another start, or a different week.
         </p>
-      ) : query.error === "blocked" ? (
+      ) : query.error === "blocked" || startIsBlocked ? (
         <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
           This carer has marked that day as away. Pick another date, or search someone free that night.
         </p>
@@ -106,7 +117,7 @@ export default async function BookPage({
           <BookingForm
             slug={carer.slug}
             hourlyRateCents={carer.hourlyRateCents}
-            instantBook={carer.instantBook}
+            instantBook={liveInstant}
             specialties={carer.specialties.map((s) => ({ id: s.specialty.id, name: s.specialty.name }))}
             defaultStart={defaultStart}
           />

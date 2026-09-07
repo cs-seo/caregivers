@@ -1,3 +1,5 @@
+import { sydneyDateKey } from "./format";
+
 export const WEEKLY_HOUR_PRESETS = [
   "Thu–Sun 5pm–midnight",
   "Mon–Fri 3pm–7pm",
@@ -36,6 +38,16 @@ export function fortnightLabel(summary: ReturnType<typeof summariseFortnight>) {
   if (summary.booked) parts.push(`${summary.booked} booked`);
   if (summary.away) parts.push(`${summary.away} away`);
   return parts.join(" · ");
+}
+
+export function isAwayToday(blockedKeys: Iterable<string>, now = new Date()) {
+  const today = sydneyDateKey(now);
+  const set = blockedKeys instanceof Set ? blockedKeys : new Set(blockedKeys);
+  return set.has(today);
+}
+
+export function isInstantBookLive(instantBook: boolean, blockedKeys: Iterable<string>, now = new Date()) {
+  return instantBook && !isAwayToday(blockedKeys, now);
 }
 
 export function weeklyHourChips(weeklyHours?: string | null) {

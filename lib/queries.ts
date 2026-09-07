@@ -10,6 +10,7 @@ export const caregiverCardInclude = {
   specialties: { include: { specialty: true } },
   credentials: true,
   workHistory: true,
+  blockedDates: { select: { dateKey: true } },
 } as const;
 
 export type CaregiverCard = Awaited<
@@ -118,8 +119,12 @@ function caregiverWhere(filters: DirectoryFilters) {
     ...(filters.state ? { city: { state: { slug: filters.state } } } : {}),
     ...(filters.city ? { city: { slug: filters.city } } : {}),
     ...(filters.suburb ? { suburb: { contains: filters.suburb } } : {}),
-    ...(filters.instantBook ? { instantBook: true } : {}),
-    ...(filters.availableNow ? { availableNow: true } : {}),
+    ...(filters.instantBook
+      ? { instantBook: true, blockedDates: { none: { dateKey: sydneyDateKey(new Date()) } } }
+      : {}),
+    ...(filters.availableNow
+      ? { availableNow: true, blockedDates: { none: { dateKey: sydneyDateKey(new Date()) } } }
+      : {}),
     ...(filters.minRating ? { ratingAvg: { gte: filters.minRating } } : {}),
     ...(filters.minYears ? { yearsExperience: { gte: filters.minYears } } : {}),
     ...(filters.wwcc

@@ -229,7 +229,9 @@ export default async function CarerProfileEditorPage({
       <section className="mt-8 rounded-2xl border border-line bg-card p-5">
         <h2 className="font-semibold text-ink">Days off</h2>
         <p className="mt-1 text-sm text-stone-600">
-          Mark a day away and families cannot book it, or find you with Needed on that date. Booked sits still show as booked.
+          Mark a day away and families cannot book it, or find you with Needed on that date. Marking today away also
+          pauses Instant Book until tomorrow — families send a request instead of paying into escrow immediately. Booked
+          sits still show as booked.
         </p>
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
           {upcoming.map((day) => (

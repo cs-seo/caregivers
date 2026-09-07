@@ -5,12 +5,13 @@ import { AuthError } from "next-auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { signIn } from "@/auth";
+import { isInstantBookLive } from "./availability";
 import { dateKeysInWindows, firstBlockedKey, isDateKey } from "./blocked-dates";
 import { normalizeFundingRef } from "./funding";
 import { findSeriesOverlap } from "./booking-overlap";
 import { BOOKING_STATUS, ROLES, UNPAID_BOOKING_STATUSES } from "./constants";
 import { autoReleaseIfDue, holdPayment, refundPayment, releasePayment } from "./escrow";
-import { parseSydneyDateTimeLocal } from "./format";
+import { parseSydneyDateTimeLocal, sydneyDateKey } from "./format";
 import { quoteBooking } from "./money";
 import { prisma } from "./prisma";
 import { requireRole, requireUser } from "./session";
@@ -121,9 +122,13 @@ export async function createBookingAction(formData: FormData) {
   }
 
   const quote = quoteBooking(caregiver.hourlyRateCents, hours);
-  const status = caregiver.instantBook
-    ? BOOKING_STATUS.AWAITING_PAYMENT
-    : BOOKING_STATUS.PENDING_ACCEPTANCE;
+  const todayKey = sydneyDateKey(new Date());
+  const awayToday = await prisma.caregiverBlockedDate.findFirst({
+    where: { caregiverId: caregiver.id, dateKey: todayKey },
+    select: { dateKey: true },
+  });
+  const liveInstant = isInstantBookLive(caregiver.instantBook, awayToday ? [todayKey] : []);
+  const status = liveInstant ? BOOKING_STATUS.AWAITING_PAYMENT : BOOKING_STATUS.PENDING_ACCEPTANCE;
   const groupId = weeks > 1 ? crypto.randomUUID() : null;
   const windows = Array.from({ length: weeks }, (_, index) => {
     const weekStart = new Date(startAt.getTime() + index * 7 * 24 * 60 * 60 * 1000);
@@ -173,7 +178,7 @@ export async function createBookingAction(formData: FormData) {
     created.push(booking);
   }
 
-  if (caregiver.instantBook) {
+  if (liveInstant) {
     for (const booking of created) {
       await holdPayment(booking.id);
     }

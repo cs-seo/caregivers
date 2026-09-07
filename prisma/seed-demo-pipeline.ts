@@ -199,17 +199,26 @@ export async function seedDemoBlockedDates(prisma: PrismaClient) {
   const sarah = await prisma.caregiverProfile.findUnique({
     where: { slug: "sarah-nguyen-aged-care-sydney" },
   });
-  if (!sarah) return 0;
-  const days = [
-    { dateKey: "2026-09-13", note: "Weekend off" },
-    { dateKey: "2026-09-14", note: "Weekend off" },
+  const priya = await prisma.caregiverProfile.findUnique({
+    where: { slug: "priya-nair-nanny-sydney" },
+  });
+  const rows = [
+    ...(sarah
+      ? [
+          { caregiverId: sarah.id, dateKey: "2026-09-13", note: "Weekend off" },
+          { caregiverId: sarah.id, dateKey: "2026-09-14", note: "Weekend off" },
+        ]
+      : []),
+    ...(priya
+      ? [{ caregiverId: priya.id, dateKey: "2026-09-07", note: "Day off — Instant Book paused" }]
+      : []),
   ];
   let saved = 0;
-  for (const day of days) {
+  for (const day of rows) {
     await prisma.caregiverBlockedDate.upsert({
-      where: { caregiverId_dateKey: { caregiverId: sarah.id, dateKey: day.dateKey } },
-      update: {},
-      create: { caregiverId: sarah.id, dateKey: day.dateKey, note: day.note },
+      where: { caregiverId_dateKey: { caregiverId: day.caregiverId, dateKey: day.dateKey } },
+      update: { note: day.note },
+      create: { caregiverId: day.caregiverId, dateKey: day.dateKey, note: day.note },
     });
     saved += 1;
   }
