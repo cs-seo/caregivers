@@ -12,6 +12,15 @@ export function DirectoryFilters({
       {current.state ? <input type="hidden" name="state" value={current.state} /> : null}
       {current.city ? <input type="hidden" name="city" value={current.city} /> : null}
       <label className="block text-sm">
+        <span className="text-stone-600">Needed on</span>
+        <input
+          type="date"
+          name="availableOn"
+          defaultValue={current.availableOn ?? ""}
+          className="mt-1 w-full rounded-lg border border-line px-3 py-2"
+        />
+      </label>
+      <label className="block text-sm">
         <span className="text-stone-600">Keywords</span>
         <input
           name="q"

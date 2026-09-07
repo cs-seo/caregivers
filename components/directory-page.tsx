@@ -87,9 +87,16 @@ export async function DirectoryResults({
         {page.pages > 1
           ? ` · showing ${(page.page - 1) * page.pageSize + 1}–${Math.min(page.page * page.pageSize, page.total)}`
           : ""}
+        {filters.availableOn ? ` · not already booked on ${filters.availableOn}` : ""}
       </p>
       <div className="mt-6">
-        <SearchForm specialty={filters.specialty} state={filters.state} city={filters.city} q={filters.q} />
+        <SearchForm
+          specialty={filters.specialty}
+          state={filters.state}
+          city={filters.city}
+          q={filters.q}
+          availableOn={filters.availableOn}
+        />
       </div>
       <div className="mt-8 grid gap-6 md:grid-cols-[240px_1fr]">
         <DirectoryFilters action={filterAction} current={current} />

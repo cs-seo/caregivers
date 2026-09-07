@@ -10,7 +10,7 @@ import { ShortlistButton } from "@/components/shortlist-button";
 import { weeklyHourChips } from "@/lib/availability";
 import { formatDate, lastActiveLabel, monthYear } from "@/lib/format";
 import { formatAud } from "@/lib/money";
-import { getCaregiverBySlug, getShortlistedIds, similarCaregivers } from "@/lib/queries";
+import { getCaregiverBySlug, getShortlistedIds, getUpcomingAvailability, similarCaregivers } from "@/lib/queries";
 import { requireUser } from "@/lib/session";
 import { breadcrumbJsonLd, pageMeta } from "@/lib/seo";
 import { siteUrl } from "@/lib/constants";
@@ -38,13 +38,14 @@ export default async function CaregiverProfilePage({
   const [carer, viewer] = await Promise.all([getCaregiverBySlug(slug), requireUser()]);
   if (!carer) notFound();
   const isOwner = viewer?.caregiverProfile?.id === carer.id;
-  const [similar, savedIds] = await Promise.all([
+  const [similar, savedIds, upcoming] = await Promise.all([
     similarCaregivers(
       carer.id,
       carer.cityId,
       carer.specialties.map((s) => s.specialtyId),
     ),
     getShortlistedIds(viewer?.role === "FAMILY" ? viewer.id : null),
+    getUpcomingAvailability(carer.id),
   ]);
   const primary = carer.specialties[0]?.specialty;
   const canShortlist = viewer?.role === "FAMILY";
@@ -165,8 +166,7 @@ export default async function CaregiverProfilePage({
             <CredentialDetails credentials={carer.credentials} abn={carer.abn} />
           </section>
 
-          {carer.availabilityNote || carer.weeklyHours ? (
-            <section className="mt-8">
+          <section className="mt-8">
               <h2 className="text-xl font-semibold text-ink">Availability</h2>
               {weeklyHourChips(carer.weeklyHours).length ? (
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -178,8 +178,27 @@ export default async function CaregiverProfilePage({
                 </div>
               ) : null}
               {carer.availabilityNote ? <p className="mt-2 text-stone-700">{carer.availabilityNote}</p> : null}
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-7">
+                {upcoming.map((day) => (
+                  <div
+                    key={day.key}
+                    className={`rounded-xl px-2 py-2 text-center text-xs ${
+                      day.booked ? "bg-orange-50 text-clay" : "bg-sage text-teal-deep"
+                    }`}
+                  >
+                    <p className="font-medium">{day.label}</p>
+                    <p className="mt-0.5">{day.booked ? "Booked" : "Free"}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-stone-500">
+                Booked days already have a sit in escrow. Search{" "}
+                <Link href={`/caregivers?availableOn=${upcoming.find((day) => !day.booked)?.key ?? ""}`} className="text-teal">
+                  carers free on another day
+                </Link>
+                .
+              </p>
             </section>
-          ) : null}
 
           <section className="mt-8">
             <h2 className="text-xl font-semibold text-ink">About</h2>

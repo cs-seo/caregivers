@@ -30,6 +30,10 @@ const faqs = [
     a: "Yes. On the book page choose 2 to 12 weeks. CareProof creates one escrow booking per week so you can cancel or dispute a single Friday without touching the rest of the series.",
   },
   {
+    q: "Can I search for a carer who is free on a specific night?",
+    a: "Yes. Use Needed on in search or the directory filters. CareProof hides carers who already have a sit in escrow that day. Public profiles also show the next fortnight as free or booked.",
+  },
+  {
     q: "Can I get a GST tax invoice for a Home Care Package or NDIS plan?",
     a: "Yes. After funds are in escrow, open the booking and download the tax invoice. It shows the care rate inc GST, GST as 1/11, the 10% CareProof fee, the carer ABN if they listed one, and the carer payout.",
   },

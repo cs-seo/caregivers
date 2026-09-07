@@ -1,3 +1,5 @@
+import { BUSY_BOOKING_STATUSES } from "./booking-overlap";
+import { sydneyDateKey, sydneyDayBounds } from "./format";
 import { prisma } from "./prisma";
 import { computeTrustScore } from "./trust";
 
@@ -85,6 +87,7 @@ export type DirectoryFilters = {
   minRating?: number;
   minYears?: number;
   availableNow?: boolean;
+  availableOn?: string;
   page?: number;
   sort?: "rating" | "rate" | "experience";
 };
@@ -96,6 +99,7 @@ function caregiverOrderBy(filters: DirectoryFilters) {
 }
 
 function caregiverWhere(filters: DirectoryFilters) {
+  const day = filters.availableOn ? sydneyDayBounds(filters.availableOn) : null;
   return {
     ...(filters.q
       ? {
@@ -121,6 +125,17 @@ function caregiverWhere(filters: DirectoryFilters) {
       : {}),
     ...(filters.ndis
       ? { credentials: { some: { type: "ndis_screening", verified: true } } }
+      : {}),
+    ...(day
+      ? {
+          bookings: {
+            none: {
+              status: { in: [...BUSY_BOOKING_STATUSES] },
+              startAt: { lt: day.endAt },
+              endAt: { gt: day.startAt },
+            },
+          },
+        }
       : {}),
   };
 }
@@ -237,6 +252,34 @@ export async function getCityHubs() {
     where: { slug: { in: slugs } },
     include: { state: true, _count: { select: { caregivers: true } } },
     orderBy: { name: "asc" },
+  });
+}
+
+export async function getUpcomingAvailability(caregiverId: string, days = 14) {
+  const todayKey = sydneyDateKey(new Date());
+  const start = sydneyDayBounds(todayKey)?.startAt ?? new Date();
+  const end = new Date(start.getTime() + days * 24 * 60 * 60 * 1000);
+  const bookings = await prisma.booking.findMany({
+    where: {
+      caregiverId,
+      status: { in: [...BUSY_BOOKING_STATUSES] },
+      startAt: { lt: end },
+      endAt: { gt: start },
+    },
+    select: { startAt: true, endAt: true },
+    orderBy: { startAt: "asc" },
+  });
+  const bookedKeys = new Set(bookings.map((booking) => sydneyDateKey(booking.startAt)));
+  return Array.from({ length: days }, (_, index) => {
+    const date = new Date(start.getTime() + index * 24 * 60 * 60 * 1000);
+    const key = sydneyDateKey(date);
+    const label = new Intl.DateTimeFormat("en-AU", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      timeZone: "Australia/Sydney",
+    }).format(date);
+    return { key, label, booked: bookedKeys.has(key) };
   });
 }
 

@@ -5,11 +5,13 @@ export async function SearchForm({
   state,
   city,
   q,
+  availableOn,
 }: {
   specialty?: string;
   state?: string;
   city?: string;
   q?: string;
+  availableOn?: string;
 }) {
   const [specialties, states] = await Promise.all([getSpecialties(), getStates()]);
   const selectedState = states.find((item) => item.slug === state);
@@ -17,7 +19,7 @@ export async function SearchForm({
 
   return (
     <form action="/caregivers" method="get" className="grid gap-3 rounded-2xl bg-card p-4 shadow-sm md:grid-cols-12">
-      <label className="md:col-span-3">
+      <label className="md:col-span-2">
         <span className="mb-1 block text-xs font-medium text-stone-500">Keywords</span>
         <input
           name="q"
@@ -26,7 +28,7 @@ export async function SearchForm({
           className="w-full rounded-xl border border-line bg-white px-3 py-2.5"
         />
       </label>
-      <label className="md:col-span-3">
+      <label className="md:col-span-2">
         <span className="mb-1 block text-xs font-medium text-stone-500">Specialty</span>
         <select
           name="specialty"
@@ -51,6 +53,15 @@ export async function SearchForm({
             </option>
           ))}
         </select>
+      </label>
+      <label className="md:col-span-2">
+        <span className="mb-1 block text-xs font-medium text-stone-500">Needed on</span>
+        <input
+          type="date"
+          name="availableOn"
+          defaultValue={availableOn ?? ""}
+          className="w-full rounded-xl border border-line bg-white px-3 py-2.5"
+        />
       </label>
       <label className="md:col-span-2">
         <span className="mb-1 block text-xs font-medium text-stone-500">City</span>

@@ -83,6 +83,29 @@ export function parseSydneyDateTimeLocal(value: string) {
   return new Date(`${wall}:00+10:00`);
 }
 
+export function sydneyDateKey(value: Date) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Australia/Sydney",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(value);
+  const year = parts.find((part) => part.type === "year")?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
+  const day = parts.find((part) => part.type === "day")?.value;
+  return `${year}-${month}-${day}`;
+}
+
+export function sydneyDayBounds(isoDate: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return null;
+  const startAt = parseSydneyDateTimeLocal(`${isoDate}T00:00`);
+  if (Number.isNaN(startAt.getTime())) return null;
+  const next = new Date(startAt.getTime() + 36 * 60 * 60 * 1000);
+  const nextKey = sydneyDateKey(next);
+  const endAt = parseSydneyDateTimeLocal(`${nextKey}T00:00`);
+  return { startAt, endAt };
+}
+
 export function sydneyDateTimeLocal(daysFromNow: number, hour: number) {
   const date = new Date(Date.now() + daysFromNow * 24 * 60 * 60 * 1000);
   const parts = new Intl.DateTimeFormat("en-CA", {
