@@ -46,6 +46,10 @@ const faqs = [
     a: "Yes. On any directory page, families can save the current filters — specialty, suburb, Needed on, Instant Book or checks. The dashboard shows how many carers match now, and how many are new since you last opened that search. Opening the list marks it seen.",
   },
   {
+    q: "Which care requests should a carer propose on?",
+    a: "CareProof marks jobs that match your city, specialties and usual weekly hours. Days you marked away and weekdays your roster is closed are skipped. The board can show only jobs that fit, and the carer dashboard lists those matches so you are not reading every post in another state. You can still propose on a mismatch if the family is flexible.",
+  },
+  {
     q: "How do I prepare for an upcoming sit?",
     a: "The dashboard Coming up list shows sits in progress or starting in the next 7 days. Open Handover to save keys, parking, allergies and an emergency contact on that sit. Household defaults copy onto new bookings. On an existing sit with empty fields, choose Use household defaults — notes already typed stay. From Household you can copy onto every empty upcoming sit. These notes stay off the public calendar subscribe feed.",
   },
@@ -88,7 +92,8 @@ export default function HowItWorksPage() {
             Instant Book pays into escrow immediately if the start is outside the carer’s notice window. A sit that
             starts too soon becomes a request to book instead. Days off pause Instant Book for that calendar day in
             Australia/Sydney. Usual weekly hours close weekdays the carer does not work, so a start time has to fall
-            inside a window. Job posts collect proposals you can hire with one click. For babysitting, pick a date
+            inside a window. Job posts collect proposals you can hire with one click. Carers see which open jobs
+            match their city, specialties and usual hours. For babysitting, pick a date
             night, last-minute sit, overnight or a standing weekly series — the hourly rate does not rise with a second
             child.
           </p>

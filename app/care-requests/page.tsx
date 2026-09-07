@@ -1,7 +1,10 @@
 import Link from "next/link";
+import { auth } from "@/auth";
+import { Badge } from "@/components/badges";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { formatAud } from "@/lib/money";
 import { formatDate } from "@/lib/format";
+import { jobFitsCarer, jobMissLabel, jobMissReason } from "@/lib/job-match";
+import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { pageMeta } from "@/lib/seo";
 
@@ -12,7 +15,12 @@ export const metadata = pageMeta({
   path: "/care-requests",
 });
 
-export default async function CareRequestsPage() {
+export default async function CareRequestsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ fit?: string }>;
+}) {
+  const [query, session] = await Promise.all([searchParams, auth()]);
   const requests = await prisma.careRequest.findMany({
     where: { status: "open" },
     include: {
@@ -23,6 +31,36 @@ export default async function CareRequestsPage() {
     orderBy: { createdAt: "desc" },
   });
 
+  const carer =
+    session?.user?.role === "CAREGIVER"
+      ? await prisma.caregiverProfile.findFirst({
+          where: { userId: session.user.id },
+          include: {
+            specialties: { select: { specialtyId: true } },
+            weeklyWindows: { select: { weekday: true, startMin: true, endMin: true } },
+            blockedDates: { select: { dateKey: true } },
+          },
+        })
+      : null;
+  const matchCarer = carer
+    ? {
+        cityId: carer.cityId,
+        specialtyIds: carer.specialties.map((item) => item.specialtyId),
+        windows: carer.weeklyWindows,
+        blockedKeys: carer.blockedDates.map((row) => row.dateKey),
+      }
+    : null;
+
+  const decorated = requests.map((job) => {
+    const reason = matchCarer ? jobMissReason(job, matchCarer) : null;
+    const fit = matchCarer ? jobFitsCarer(job, matchCarer) : false;
+    return { job, reason, fit };
+  });
+  const fitOnly = query.fit === "1" && Boolean(matchCarer);
+  const visible = fitOnly ? decorated.filter((row) => row.fit) : decorated;
+  const sorted = matchCarer ? [...visible].sort((a, b) => Number(b.fit) - Number(a.fit)) : visible;
+  const fitCount = decorated.filter((row) => row.fit).length;
+
   return (
     <div>
       <Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "Care requests" }]} />
@@ -31,29 +69,56 @@ export default async function CareRequestsPage() {
           <h1 className="text-3xl font-semibold text-ink">Open care requests</h1>
           <p className="mt-2 max-w-2xl text-stone-600">
             Families post what they need. Carers send a proposal. Hiring funds escrow the same way a profile booking does.
+            {matchCarer
+              ? ` ${fitCount} ${fitCount === 1 ? "job fits" : "jobs fit"} your city, specialties and usual hours.`
+              : ""}
           </p>
+          {matchCarer ? (
+            <p className="mt-2 text-sm">
+              {fitOnly ? (
+                <Link href="/care-requests" className="font-medium text-teal">
+                  Show every open job
+                </Link>
+              ) : (
+                <Link href="/care-requests?fit=1" className="font-medium text-teal">
+                  Show jobs that fit your roster
+                </Link>
+              )}
+            </p>
+          ) : null}
         </div>
         <Link href="/post-a-job" className="rounded-full bg-teal px-4 py-2 text-sm font-medium text-white no-underline">
           Post a request
         </Link>
       </div>
       <ul className="mt-8 space-y-4">
-        {requests.map((job) => (
-          <li key={job.id} className="rounded-2xl border border-line bg-card p-5">
-            <h2 className="text-lg font-semibold">
-              <Link href={`/care-requests/${job.slug}`} className="hover:text-teal">
-                {job.title}
-              </Link>
-            </h2>
-            <p className="mt-1 text-sm text-stone-600">
-              {job.specialty.name} · {job.city.name}, {job.city.state.abbrev} · from {formatDate(job.startDate)}
-            </p>
-            <p className="mt-2 line-clamp-2 text-sm text-stone-700">{job.description}</p>
-            <p className="mt-3 text-sm text-stone-500">
-              Budget {formatAud(job.budgetCents)}/hr · {job._count.proposals} proposals
-            </p>
+        {sorted.length === 0 ? (
+          <li className="rounded-2xl border border-dashed border-line bg-card p-5 text-sm text-stone-600">
+            {fitOnly ? "No open jobs match your city, specialties and usual weekly hours." : "No open care requests right now."}
           </li>
-        ))}
+        ) : (
+          sorted.map(({ job, fit, reason }) => (
+            <li key={job.id} className="rounded-2xl border border-line bg-card p-5">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <h2 className="text-lg font-semibold">
+                  <Link href={`/care-requests/${job.slug}`} className="hover:text-teal">
+                    {job.title}
+                  </Link>
+                </h2>
+                {matchCarer ? (
+                  <Badge tone={fit ? "teal" : "stone"}>{jobMissLabel(reason)}</Badge>
+                ) : null}
+              </div>
+              <p className="mt-1 text-sm text-stone-600">
+                {job.specialty.name} · {job.city.name}, {job.city.state.abbrev} · from {formatDate(job.startDate)}
+              </p>
+              <p className="mt-2 line-clamp-2 text-sm text-stone-700">{job.description}</p>
+              <p className="mt-3 text-sm text-stone-500">
+                Budget {formatAud(job.budgetCents)}/hr · {job._count.proposals} proposals
+              </p>
+            </li>
+          ))
+        )}
       </ul>
     </div>
   );

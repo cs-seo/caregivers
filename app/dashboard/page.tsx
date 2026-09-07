@@ -10,7 +10,8 @@ import {
   isClosedStatus,
   type DashboardBookingGroup,
 } from "@/lib/dashboard-groups";
-import { formatDateTime, plural, snippet } from "@/lib/format";
+import { formatDate, formatDateTime, plural, snippet } from "@/lib/format";
+import { matchingJobs } from "@/lib/job-match";
 import { buildRoster } from "@/lib/roster";
 import { formatAud } from "@/lib/money";
 import { deleteSavedSearchAction, applyHouseholdHandoverAction } from "@/lib/actions";
@@ -166,7 +167,7 @@ export default async function DashboardPage({
     !isFamily && user.caregiverProfile
       ? await prisma.caregiverProfile.findUnique({
           where: { id: user.caregiverProfile.id },
-          include: { specialties: true, credentials: true, workHistory: true },
+          include: { specialties: true, credentials: true, workHistory: true, weeklyWindows: true },
         })
       : null;
   const checklist = carerProfile ? profileChecklist(carerProfile) : null;
@@ -208,6 +209,24 @@ export default async function DashboardPage({
         ).map((row) => row.dateKey)
       : [];
   const roster = buildRoster(bookings, 14, new Date(), blockedKeys);
+  const openJobs =
+    !isFamily && user.caregiverProfile
+      ? await prisma.careRequest.findMany({
+          where: { status: "open" },
+          include: { specialty: true, city: { include: { state: true } } },
+          orderBy: { startDate: "asc" },
+        })
+      : [];
+  const matchCarer = carerProfile
+    ? {
+        cityId: carerProfile.cityId,
+        specialtyIds: carerProfile.specialties.map((item) => item.specialtyId),
+        windows: carerProfile.weeklyWindows,
+        blockedKeys,
+      }
+    : null;
+  const fittingJobs = matchCarer ? matchingJobs(openJobs, matchCarer) : [];
+  const proposedJobIds = new Set(carerProposals.map((proposal) => proposal.careRequestId));
   const heldCents = bookings
     .filter((booking) => escrowStatuses.has(booking.status))
     .reduce((sum, booking) => sum + (isFamily ? booking.totalCents : booking.subtotalCents), 0);
@@ -505,6 +524,47 @@ export default async function DashboardPage({
           <Link href="/dashboard/profile" className="mt-3 inline-block text-sm font-medium text-teal">
             Update a check
           </Link>
+        </section>
+      ) : null}
+
+      {!isFamily && matchCarer ? (
+        <section className="mt-6 rounded-2xl border border-line bg-card p-5">
+          <h2 className="font-semibold text-ink">Jobs that fit you</h2>
+          <p className="mt-1 text-sm text-stone-600">
+            Open requests in your city that match your specialties and usual weekly hours.
+            {fittingJobs.length
+              ? ` ${fittingJobs.length} ${fittingJobs.length === 1 ? "job fits" : "jobs fit"} right now.`
+              : ""}
+          </p>
+          {fittingJobs.length === 0 ? (
+            <Link href="/care-requests" className="mt-3 inline-block text-sm font-medium text-teal">
+              Browse every open job
+            </Link>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {fittingJobs.slice(0, 5).map((job) => (
+                <li key={job.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                  <span>
+                    <Link href={`/care-requests/${job.slug}`} className="font-medium text-teal hover:underline">
+                      {job.title}
+                    </Link>
+                    <span className="mt-0.5 block text-stone-500">
+                      {job.specialty.name} · {job.city.name} · from {formatDate(job.startDate)}
+                      {proposedJobIds.has(job.id) ? " · proposed" : ""}
+                    </span>
+                  </span>
+                  <Link href={`/care-requests/${job.slug}`} className="text-teal hover:underline">
+                    {proposedJobIds.has(job.id) ? "View" : "Propose"}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          {fittingJobs.length > 0 ? (
+            <Link href="/care-requests?fit=1" className="mt-3 inline-block text-sm font-medium text-teal">
+              See all matches
+            </Link>
+          ) : null}
         </section>
       ) : null}
 
