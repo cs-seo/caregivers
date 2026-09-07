@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { PrintLink } from "@/components/print-link";
 import { PLATFORM_ABN, PLATFORM_ENTITY, SITE_NAME } from "@/lib/constants";
 import { fundingLines } from "@/lib/funding";
 import { formatDate, formatDateTime } from "@/lib/format";
@@ -157,15 +158,8 @@ export default async function BookingInvoicePage({
         </p>
       </article>
       <p className="print:hidden mt-4 text-sm">
-        <a href="#" className="text-teal" id="print-invoice">
-          Print or save as PDF
-        </a>
+        <PrintLink id="print-invoice" />
       </p>
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `document.getElementById("print-invoice")?.addEventListener("click",function(e){e.preventDefault();window.print();});`,
-        }}
-      />
     </div>
   );
 }

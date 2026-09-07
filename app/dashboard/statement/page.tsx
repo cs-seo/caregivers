@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { PLATFORM_ABN, PLATFORM_ENTITY } from "@/lib/constants";
+import { PrintLink } from "@/components/print-link";
+import { PLATFORM_ABN, PLATFORM_ENTITY, SITE_NAME } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
@@ -8,7 +9,7 @@ import { requireUser } from "@/lib/session";
 import { pageMeta } from "@/lib/seo";
 import { fundingLines } from "@/lib/funding";
 import { fundedInvoicePeers, persistMissingInvoiceNumbers } from "@/lib/invoice-peers";
-import { australianFinancialYear, statementTotals, toStatementRows } from "@/lib/statement";
+import { australianFinancialYear, fyPeriodLabel, statementTotals, toStatementRows } from "@/lib/statement";
 
 export const metadata = pageMeta({
   title: "Financial year statement",
@@ -44,6 +45,8 @@ export default async function StatementPage() {
     peers,
   );
   const totals = statementTotals(rows);
+  const funding = isFamily ? fundingLines(user.familyProfile) : [];
+  const period = fyPeriodLabel();
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -55,82 +58,136 @@ export default async function StatementPage() {
         <a href="/dashboard/statement/csv" className="text-teal">
           Download CSV
         </a>
+        {" · "}
+        <PrintLink />
       </p>
-      <h1 className="mt-3 text-3xl font-semibold text-ink">FY {fy.label} statement</h1>
-      <p className="mt-2 text-sm text-stone-600">
-        {PLATFORM_ENTITY} · ABN {PLATFORM_ABN} (demo) · {isFamily ? "Family spend" : "Carer earnings"} for {user.name}.
-        Funded and released sits only. Unpaid and cancelled weeks are omitted.
-        {isFamily && fundingLines(user.familyProfile).length
-          ? ` ${fundingLines(user.familyProfile).join(" · ")}.`
-          : ""}
-      </p>
+      <article className="mt-4 rounded-2xl border border-line bg-card p-6 print:mt-0 print:rounded-none print:border-0 print:p-0">
+        <p className="text-xs font-semibold uppercase tracking-wide text-teal">
+          {isFamily ? "GST tax invoice summary" : "Remittance summary"}
+        </p>
+        <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold text-ink">
+              {SITE_NAME} · FY {fy.label}
+            </h1>
+            <p className="mt-1 text-sm text-stone-600">
+              {PLATFORM_ENTITY}
+              <br />
+              ABN {PLATFORM_ABN} (demo)
+              <br />
+              {period}
+            </p>
+          </div>
+          <div className="text-sm text-stone-600">
+            <p className="font-semibold text-ink">{isFamily ? "Bill to" : "Paid to"}</p>
+            <p className="mt-1">
+              {user.name}
+              {isFamily && funding.length ? (
+                <>
+                  <br />
+                  {funding.join(" · ")}
+                </>
+              ) : null}
+            </p>
+          </div>
+        </div>
+        <p className="mt-4 text-sm text-stone-600">
+          Funded and released sits only. Unpaid and cancelled weeks are omitted. Invoice numbers match the tax invoice
+          and remittance for each sit.
+        </p>
 
-      <dl className="mt-6 grid gap-3 sm:grid-cols-3">
-        <div className="rounded-2xl border border-line bg-card p-4">
-          <dt className="text-xs font-semibold uppercase tracking-wide text-stone-500">Care rate</dt>
-          <dd className="mt-1 text-xl font-semibold text-ink">{formatAud(totals.careCents)}</dd>
-        </div>
-        <div className="rounded-2xl border border-line bg-card p-4">
-          <dt className="text-xs font-semibold uppercase tracking-wide text-stone-500">GST (1/11)</dt>
-          <dd className="mt-1 text-xl font-semibold text-ink">{formatAud(totals.gstCents)}</dd>
-        </div>
-        <div className="rounded-2xl border border-line bg-card p-4">
-          <dt className="text-xs font-semibold uppercase tracking-wide text-stone-500">
-            {isFamily ? "Family total" : "Your payout"}
-          </dt>
-          <dd className="mt-1 text-xl font-semibold text-teal">
-            {formatAud(isFamily ? totals.familyCents : totals.payoutCents)}
-          </dd>
-        </div>
-      </dl>
+        <dl className="mt-6 grid gap-3 sm:grid-cols-3 print:grid-cols-3">
+          <div className="rounded-2xl border border-line bg-card p-4 print:border-line">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-stone-500">Care rate</dt>
+            <dd className="mt-1 text-xl font-semibold text-ink">{formatAud(totals.careCents)}</dd>
+          </div>
+          <div className="rounded-2xl border border-line bg-card p-4">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-stone-500">GST (1/11)</dt>
+            <dd className="mt-1 text-xl font-semibold text-ink">{formatAud(totals.gstCents)}</dd>
+          </div>
+          <div className="rounded-2xl border border-line bg-card p-4">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+              {isFamily ? "Family total" : "Your payout"}
+            </dt>
+            <dd className="mt-1 text-xl font-semibold text-teal">
+              {formatAud(isFamily ? totals.familyCents : totals.payoutCents)}
+            </dd>
+          </div>
+        </dl>
 
-      {rows.length === 0 ? (
-        <p className="mt-6 text-sm text-stone-500">No funded bookings in this financial year yet.</p>
-      ) : (
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-line">
-          <table className="w-full min-w-[640px] text-left text-sm">
-            <thead className="bg-sage/60 text-xs uppercase tracking-wide text-stone-500">
-              <tr>
-                <th className="px-3 py-2 font-medium">Date</th>
-                <th className="px-3 py-2 font-medium">Invoice</th>
-                <th className="px-3 py-2 font-medium">{isFamily ? "Carer" : "Family"}</th>
-                <th className="px-3 py-2 font-medium">Care</th>
-                <th className="px-3 py-2 font-medium">GST</th>
-                <th className="px-3 py-2 font-medium">{isFamily ? "Paid" : "Payout"}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.id} className="border-t border-line">
-                  <td className="px-3 py-2">{formatDate(row.dateKey)}</td>
-                  <td className="px-3 py-2">
-                    <Link
-                      href={
-                        isFamily
-                          ? `/dashboard/bookings/${row.id}/invoice`
-                          : `/dashboard/bookings/${row.id}/remittance`
-                      }
-                      className="text-teal hover:underline"
-                    >
-                      {row.invoiceNumber}
-                    </Link>
-                    {row.week ? <span className="ml-1 text-stone-400">w{row.week}</span> : null}
+        {rows.length === 0 ? (
+          <p className="mt-6 text-sm text-stone-500">No funded bookings in this financial year yet.</p>
+        ) : (
+          <div className="mt-6 overflow-x-auto">
+            <table className="w-full min-w-[720px] text-left text-sm">
+              <thead className="border-b border-line text-xs uppercase tracking-wide text-stone-500">
+                <tr>
+                  <th className="py-2 pr-3 font-medium">Date</th>
+                  <th className="py-2 pr-3 font-medium">Invoice</th>
+                  <th className="py-2 pr-3 font-medium">{isFamily ? "Carer" : "Family"}</th>
+                  <th className="py-2 pr-3 font-medium">Hours</th>
+                  <th className="py-2 pr-3 font-medium">Care</th>
+                  <th className="py-2 pr-3 font-medium">GST</th>
+                  {isFamily ? <th className="py-2 pr-3 font-medium">Fee</th> : null}
+                  <th className="py-2 text-right font-medium">{isFamily ? "Paid" : "Payout"}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.id} className="border-t border-line">
+                    <td className="py-2 pr-3">{formatDate(row.dateKey)}</td>
+                    <td className="py-2 pr-3">
+                      <Link
+                        href={
+                          isFamily
+                            ? `/dashboard/bookings/${row.id}/invoice`
+                            : `/dashboard/bookings/${row.id}/remittance`
+                        }
+                        className="text-teal hover:underline print:text-ink print:no-underline"
+                      >
+                        {row.invoiceNumber}
+                      </Link>
+                      {row.week ? <span className="ml-1 text-stone-400">w{row.week}</span> : null}
+                    </td>
+                    <td className="py-2 pr-3">
+                      {isFamily ? row.caregiverName : row.familyName}
+                      <span className="block text-xs text-stone-500">{row.specialty}</span>
+                    </td>
+                    <td className="py-2 pr-3">{row.hours}</td>
+                    <td className="py-2 pr-3">{formatAud(row.careCents)}</td>
+                    <td className="py-2 pr-3">{formatAud(row.gstCents)}</td>
+                    {isFamily ? <td className="py-2 pr-3">{formatAud(row.feeCents)}</td> : null}
+                    <td className="py-2 text-right font-medium">
+                      {formatAud(isFamily ? row.familyCents : row.payoutCents)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t-2 border-ink">
+                  <td className="py-3 font-semibold text-ink" colSpan={4}>
+                    {rows.length} {rows.length === 1 ? "sit" : "sits"}
                   </td>
-                  <td className="px-3 py-2">
-                    {isFamily ? row.caregiverName : row.familyName}
-                    <span className="block text-xs text-stone-500">{row.specialty}</span>
-                  </td>
-                  <td className="px-3 py-2">{formatAud(row.careCents)}</td>
-                  <td className="px-3 py-2">{formatAud(row.gstCents)}</td>
-                  <td className="px-3 py-2 font-medium">
-                    {formatAud(isFamily ? row.familyCents : row.payoutCents)}
+                  <td className="py-3 font-semibold text-ink">{formatAud(totals.careCents)}</td>
+                  <td className="py-3 font-semibold text-ink">{formatAud(totals.gstCents)}</td>
+                  {isFamily ? (
+                    <td className="py-3 font-semibold text-ink">{formatAud(totals.feeCents)}</td>
+                  ) : null}
+                  <td className="py-3 text-right font-semibold text-ink">
+                    {formatAud(isFamily ? totals.familyCents : totals.payoutCents)}
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </tfoot>
+            </table>
+          </div>
+        )}
+
+        <p className="mt-6 text-xs text-stone-500">
+          Care rates are advertised inc GST. CareProof adds 10% on top and holds the total until each booking is
+          released. Open an invoice number for the full tax invoice or remittance. Print from the browser for a PDF
+          coordinators and plan managers can file with a Home Care Package or self-managed NDIS plan.
+        </p>
+      </article>
     </div>
   );
 }

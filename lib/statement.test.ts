@@ -4,6 +4,7 @@ import { BOOKING_STATUS } from "./constants";
 import {
   australianFinancialYear,
   csvCell,
+  fyPeriodLabel,
   invoiceNumberMap,
   statementCsv,
   statementTotals,
@@ -33,6 +34,11 @@ test("australianFinancialYear uses 1 July in Sydney", () => {
   assert.equal(fy.startAt.toISOString(), "2026-06-30T14:00:00.000Z");
   const before = australianFinancialYear(new Date("2026-06-30T00:00:00.000Z"));
   assert.equal(before.label, "2025–26");
+});
+
+test("fyPeriodLabel is 1 July to 30 June", () => {
+  assert.equal(fyPeriodLabel(new Date("2026-09-07T00:00:00.000Z")), "1 July 2026 – 30 June 2027");
+  assert.equal(fyPeriodLabel(new Date("2026-06-30T00:00:00.000Z")), "1 July 2025 – 30 June 2026");
 });
 
 test("toStatementRows keeps funded FY sits and drops cancelled or prior-year ones", () => {

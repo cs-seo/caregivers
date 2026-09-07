@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { PrintLink } from "@/components/print-link";
 import { PLATFORM_ABN, PLATFORM_ENTITY, SITE_NAME } from "@/lib/constants";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { formatAud } from "@/lib/money";
@@ -138,15 +139,8 @@ export default async function BookingRemittancePage({
         </p>
       </article>
       <p className="print:hidden mt-4 text-sm">
-        <a href="#" className="text-teal" id="print-remittance">
-          Print or save as PDF
-        </a>
+        <PrintLink id="print-remittance" />
       </p>
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `document.getElementById("print-remittance")?.addEventListener("click",function(e){e.preventDefault();window.print();});`,
-        }}
-      />
     </div>
   );
 }

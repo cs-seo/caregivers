@@ -128,6 +128,11 @@ export function australianFinancialYear(now = new Date()) {
   };
 }
 
+export function fyPeriodLabel(now = new Date()) {
+  const fy = australianFinancialYear(now);
+  return `1 July ${fy.startYear} – 30 June ${fy.startYear + 1}`;
+}
+
 export function csvCell(value: string | number) {
   const text = String(value);
   if (/[",\n]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
