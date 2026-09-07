@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { Badge } from "@/components/badges";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { createProposalAction, hireProposalAction } from "@/lib/actions";
+import { BOOKING_STATUS_LABELS } from "@/lib/constants";
 import { proposalStatusLabel, proposalStatusTone } from "@/lib/job-hire";
 import {
   formatJobStart,
@@ -47,6 +48,16 @@ export default async function CareRequestPage({
       specialty: true,
       city: { include: { state: true } },
       family: { select: { id: true, name: true } },
+      bookings: {
+        select: {
+          id: true,
+          startAt: true,
+          status: true,
+          caregiverId: true,
+          caregiver: { select: { user: { select: { name: true } } } },
+        },
+        orderBy: { startAt: "asc" },
+      },
       proposals: {
         include: {
           caregiver: {
@@ -93,6 +104,7 @@ export default async function CareRequestPage({
     isOwner && matchHref
       ? await Promise.all([directoryStats(directoryFilters), searchCaregivers(directoryFilters, 3)])
       : [null, []];
+  const attachedBookings = job.bookings.filter((booking) => isOwner || booking.caregiverId === carer?.id);
 
   return (
     <div className="grid gap-8 md:grid-cols-[1fr_340px]">
@@ -159,6 +171,28 @@ export default async function CareRequestPage({
             >
               {matchStats.count ? "See every match — booking still closes this request" : "Search any time that day"}
             </Link>
+          </section>
+        ) : null}
+
+        {attachedBookings.length ? (
+          <section className="mt-10 rounded-2xl border border-line bg-card p-5">
+            <h2 className="text-xl font-semibold">Escrow booking</h2>
+            <p className="mt-2 text-sm text-stone-600">
+              This request is attached to {attachedBookings.length === 1 ? "a sit" : "sits"} in escrow.
+            </p>
+            <ul className="mt-3 space-y-2 text-sm">
+              {attachedBookings.map((booking) => (
+                <li key={booking.id} className="flex flex-wrap items-center justify-between gap-2">
+                  <span>
+                    {booking.caregiver.user.name} · {formatJobStart(booking.startAt)} ·{" "}
+                    {BOOKING_STATUS_LABELS[booking.status] ?? booking.status}
+                  </span>
+                  <Link href={`/dashboard/bookings/${booking.id}`} className="font-medium text-teal hover:underline">
+                    Open booking
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </section>
         ) : null}
 
@@ -248,7 +282,17 @@ export default async function CareRequestPage({
             to send a proposal.
           </p>
         ) : (
-          <p className="text-sm text-stone-600">This request is {job.status}.</p>
+          <p className="text-sm text-stone-600">
+            This request is {job.status}.
+            {attachedBookings[0] ? (
+              <>
+                {" "}
+                <Link href={`/dashboard/bookings/${attachedBookings[0].id}`} className="font-medium text-teal hover:underline">
+                  Open the escrow booking
+                </Link>
+              </>
+            ) : null}
+          </p>
         )}
       </aside>
     </div>

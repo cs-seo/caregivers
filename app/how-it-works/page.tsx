@@ -11,7 +11,7 @@ export const metadata = pageMeta({
 const faqs = [
   {
     q: "How do I book a carer?",
-    a: "Open a profile and use Instant Book, or post a care request and hire a proposal. Booking a matching carer from your request attaches that sit to the job and closes it — same as hiring a proposal. Either path creates one escrow-backed booking and declines the other pending proposals. Instant Book needs the carer’s notice window — 2 hours for many babysitters, 12 for aged care — and falls back to a request if you need someone sooner.",
+    a: "Open a profile and use Instant Book, or post a care request and hire a proposal. Booking a matching carer from your request attaches that sit to the job and closes it — same as hiring a proposal. Either path creates one escrow-backed booking and declines the other pending proposals. The hired request links back to that booking. Instant Book needs the carer’s notice window — 2 hours for many babysitters, 12 for aged care — and falls back to a request if you need someone sooner.",
   },
   {
     q: "When is the carer paid?",

@@ -558,7 +558,7 @@ export async function seedDemoHiredRequest(prisma: PrismaClient) {
   const elena = await prisma.caregiverProfile.findUnique({
     where: { slug: "elena-rossi-companion-care-sydney" },
   });
-  const specialty = await prisma.specialty.findUnique({ where: { slug: "respite" } });
+  const specialty = await prisma.specialty.findUnique({ where: { slug: "aged-care" } });
   const city = await prisma.city.findFirst({
     where: { slug: "sydney", state: { slug: "nsw" } },
   });
@@ -580,7 +580,7 @@ export async function seedDemoHiredRequest(prisma: PrismaClient) {
       hoursEstimate: 6,
       status: "hired",
     },
-    update: { status: "hired", title: "Midweek respite in Leichhardt" },
+    update: { status: "hired", title: "Midweek respite in Leichhardt", specialtyId: specialty.id },
   });
 
   await prisma.proposal.upsert({
@@ -605,6 +605,44 @@ export async function seedDemoHiredRequest(prisma: PrismaClient) {
     },
     update: { status: "declined" },
   });
+
+  const startAt = parseSydneyDateTimeLocal("2026-08-20T09:00");
+  const hours = 6;
+  const rateCents = sarah.hourlyRateCents;
+  const subtotalCents = rateCents * hours;
+  const platformFeeCents = Math.round(subtotalCents * 0.1);
+  const attached = await prisma.booking.findFirst({ where: { careRequestId: job.id } });
+  if (!attached) {
+    await prisma.booking.create({
+      data: {
+        familyId: family.id,
+        caregiverId: sarah.id,
+        careRequestId: job.id,
+        specialtyId: specialty.id,
+        startAt,
+        endAt: new Date(startAt.getTime() + hours * 60 * 60 * 1000),
+        notes: "DEMO: hired from Midweek respite in Leichhardt.",
+        status: BOOKING_STATUS.RELEASED,
+        hours,
+        rateCents,
+        subtotalCents,
+        platformFeeCents,
+        gstCents: Math.round(subtotalCents / 11),
+        totalCents: subtotalCents + platformFeeCents,
+        payment: {
+          create: {
+            provider: "demo",
+            amountCents: subtotalCents + platformFeeCents,
+            platformFeeCents,
+            caregiverPayoutCents: subtotalCents,
+            status: "released",
+            heldAt: new Date("2026-08-19T10:00:00.000Z"),
+            releasedAt: new Date("2026-08-21T10:00:00.000Z"),
+          },
+        },
+      },
+    });
+  }
   return 1;
 }
 
