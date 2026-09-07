@@ -293,6 +293,52 @@ export function weeklyOpenWhere(dateKey: string) {
   };
 }
 
+export function parseTimeParam(value: string | undefined | null) {
+  const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec((value ?? "").trim());
+  if (!match) return null;
+  return Number(match[1]) * 60 + Number(match[2]);
+}
+
+export function isOpenAtMinutes(windows: WeeklyWindow[], dateKey: string, startMin: number) {
+  if (!windows.length) return true;
+  const weekday = weekdayFromDateKey(dateKey);
+  if (windows.some((row) => row.weekday === weekday && startMin >= row.startMin && startMin < row.endMin)) {
+    return true;
+  }
+  const overnightMin = startMin + 1440;
+  return windows.some(
+    (row) => row.weekday === previousWeekday(weekday) && overnightMin >= row.startMin && overnightMin < row.endMin,
+  );
+}
+
+export function weeklyOpenAtWhere(dateKey: string, startMin: number) {
+  const weekday = weekdayFromDateKey(dateKey);
+  const overnightMin = startMin + 1440;
+  return {
+    OR: [
+      { weeklyWindows: { none: {} } },
+      {
+        weeklyWindows: {
+          some: {
+            weekday,
+            startMin: { lte: startMin },
+            endMin: { gt: startMin },
+          },
+        },
+      },
+      {
+        weeklyWindows: {
+          some: {
+            weekday: previousWeekday(weekday),
+            startMin: { lte: overnightMin },
+            endMin: { gt: overnightMin },
+          },
+        },
+      },
+    ],
+  };
+}
+
 export function sydneyMinutes(date: Date) {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Australia/Sydney",
@@ -308,15 +354,7 @@ export function sydneyMinutes(date: Date) {
 export function sitStartsInUsualHours(windows: WeeklyWindow[], startAt: Date, endAt: Date) {
   if (!windows.length) return true;
   if (!(endAt.getTime() > startAt.getTime())) return false;
-  const startKey = sydneyDateKey(startAt);
-  const weekday = weekdayFromDateKey(startKey);
-  const startMin = sydneyMinutes(startAt);
-  const sameDay = windows.some((row) => row.weekday === weekday && startMin >= row.startMin && startMin < row.endMin);
-  if (sameDay) return true;
-  const overnightMin = startMin + 1440;
-  return windows.some(
-    (row) => row.weekday === previousWeekday(weekday) && overnightMin >= row.startMin && overnightMin < row.endMin,
-  );
+  return isOpenAtMinutes(windows, sydneyDateKey(startAt), sydneyMinutes(startAt));
 }
 
 export function firstSitOutsideHours(windows: WeeklyWindow[], sits: { startAt: Date; endAt: Date }[]) {

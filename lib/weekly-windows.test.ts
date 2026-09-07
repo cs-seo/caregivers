@@ -5,11 +5,14 @@ import {
   firstSitOutsideHours,
   formatWeeklyHours,
   isDateClosed,
+  isOpenAtMinutes,
+  parseTimeParam,
   parseWeeklyHours,
   sitStartsInUsualHours,
   suggestedStartLocal,
   weekdayFromDateKey,
   WEEKLY_WINDOW_PRESETS,
+  weeklyOpenAtWhere,
   windowsFromForm,
 } from "./weekly-windows";
 
@@ -126,4 +129,32 @@ test("windowsFromForm rejects broken tokens", () => {
   assert.deepEqual(windowsFromForm(["0:420:780", "1:420:780"]).windows.length, 2);
   assert.equal(windowsFromForm(["nope"]).ok, false);
   assert.equal(windowsFromForm([]).ok, true);
+});
+
+test("parseTimeParam only accepts HH:MM clock values", () => {
+  assert.equal(parseTimeParam("08:00"), 480);
+  assert.equal(parseTimeParam("16:00"), 960);
+  assert.equal(parseTimeParam("7am"), null);
+  assert.equal(parseTimeParam("24:00"), null);
+  assert.equal(parseTimeParam(""), null);
+});
+
+test("isOpenAtMinutes matches a start inside a window or overnight spill", () => {
+  const sarah = parseWeeklyHours("Mon–Fri 7am–1pm");
+  assert.equal(isOpenAtMinutes(sarah, "2026-09-15", 8 * 60), true);
+  assert.equal(isOpenAtMinutes(sarah, "2026-09-15", 16 * 60), false);
+  assert.equal(isOpenAtMinutes(sarah, "2026-09-12", 10 * 60), false);
+  assert.equal(isOpenAtMinutes([], "2026-09-12", 10 * 60), true);
+  const overnight = parseWeeklyHours("Fri 10pm–2am");
+  assert.equal(isOpenAtMinutes(overnight, "2026-09-12", 60), true);
+  assert.equal(isOpenAtMinutes(overnight, "2026-09-12", 8 * 60), false);
+});
+
+test("weeklyOpenAtWhere keeps carers with no windows or a covering slot", () => {
+  const where = weeklyOpenAtWhere("2026-09-15", 8 * 60);
+  assert.equal(where.OR.length, 3);
+  assert.deepEqual(where.OR[0], { weeklyWindows: { none: {} } });
+  assert.deepEqual(where.OR[1], {
+    weeklyWindows: { some: { weekday: 1, startMin: { lte: 480 }, endMin: { gt: 480 } } },
+  });
 });

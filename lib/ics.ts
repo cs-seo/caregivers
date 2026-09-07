@@ -1,4 +1,6 @@
 import { BOOKING_STATUS } from "./constants";
+import { parseSydneyDateTimeLocal, sydneyDateKey } from "./format";
+import { weekdayFromDateKey, type WeeklyWindow } from "./weekly-windows";
 
 export const ICS_SKIP_STATUSES = [BOOKING_STATUS.CANCELLED, BOOKING_STATUS.REFUNDED] as const;
 
@@ -107,6 +109,56 @@ export function awayToIcsEvent(
     notes: note ?? "Marked as a day off on CareProof",
     summary: `Away · ${caregiverName}`,
   };
+}
+
+function dateKeyPlus(dateKey: string, days: number) {
+  let key = dateKey;
+  for (let i = 0; i < days; i += 1) key = nextDateKey(key);
+  return key;
+}
+
+function wallAt(dateKey: string, minutes: number) {
+  let key = dateKey;
+  let min = minutes;
+  while (min >= 1440) {
+    key = nextDateKey(key);
+    min -= 1440;
+  }
+  const hour = String(Math.floor(min / 60)).padStart(2, "0");
+  const minute = String(min % 60).padStart(2, "0");
+  return parseSydneyDateTimeLocal(`${key}T${hour}:${minute}`);
+}
+
+export function usualHoursToIcsEvents(
+  windows: WeeklyWindow[],
+  caregiverId: string,
+  caregiverName: string,
+  from = new Date(),
+  weeks = 4,
+  blockedKeys: Iterable<string> = [],
+) {
+  const blocked = blockedKeys instanceof Set ? blockedKeys : new Set(blockedKeys);
+  const todayKey = sydneyDateKey(from);
+  const events: IcsEventInput[] = [];
+  for (let i = 0; i < weeks * 7; i += 1) {
+    const key = dateKeyPlus(todayKey, i);
+    if (blocked.has(key)) continue;
+    const weekday = weekdayFromDateKey(key);
+    for (const window of windows) {
+      if (window.weekday !== weekday) continue;
+      events.push({
+        id: `hours-${caregiverId}-${key}-${window.startMin}`,
+        startAt: wallAt(key, window.startMin),
+        endAt: wallAt(key, window.endMin),
+        specialtyName: "Usual hours",
+        caregiverName,
+        familyName: caregiverName,
+        notes: "Usual weekly hours on CareProof",
+        summary: `Usual hours · ${caregiverName}`,
+      });
+    }
+  }
+  return events;
 }
 
 export function bookingsToIcs(events: IcsEventInput[], now = new Date(), calendarName?: string, refreshHours?: number) {

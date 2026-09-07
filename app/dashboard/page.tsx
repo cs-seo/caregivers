@@ -208,7 +208,7 @@ export default async function DashboardPage({
           })
         ).map((row) => row.dateKey)
       : [];
-  const roster = buildRoster(bookings, 14, new Date(), blockedKeys);
+  const roster = buildRoster(bookings, 14, new Date(), blockedKeys, carerProfile?.weeklyWindows ?? []);
   const openJobs =
     !isFamily && user.caregiverProfile
       ? await prisma.careRequest.findMany({
@@ -408,7 +408,7 @@ export default async function DashboardPage({
         <p className="mt-1 text-sm text-stone-600">
           {isFamily
             ? "Sits already in escrow, plus empty days you can still book. Subscribe so Google or Apple Calendar stay in sync, or download a snapshot."
-            : "Your held roster. Open days have no sit on the books. Away days pause Instant Book and hide you from Needed on. Closed weekdays follow your usual hours on the public calendar. Subscribe to booked sits and days off, or download a snapshot."}
+            : "Your held roster. Open days have no sit on the books. Away days pause Instant Book and hide you from Needed on. Closed weekdays follow your usual hours. Subscribe to booked sits, days off and usual hours, or download a snapshot."}
         </p>
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-7">
           {roster.map((day) =>
@@ -440,6 +440,15 @@ export default async function DashboardPage({
               >
                 <p className="font-medium">{day.label}</p>
                 <p className="mt-0.5">Away</p>
+              </Link>
+            ) : day.closed ? (
+              <Link
+                key={day.key}
+                href="/dashboard/profile"
+                className="rounded-xl bg-stone-50 px-2 py-2 text-center text-xs text-stone-500 no-underline"
+              >
+                <p className="font-medium">{day.label}</p>
+                <p className="mt-0.5">Closed</p>
               </Link>
             ) : (
               <div key={day.key} className="rounded-xl bg-sage px-2 py-2 text-center text-xs text-teal-deep">

@@ -8,6 +8,7 @@ import {
   fortnightLabel,
   instantBookForStart,
   instantBookNoticeOk,
+  isAvailableNowLive,
   isAwayToday,
   isInstantBookLive,
   noticeLabel,
@@ -15,6 +16,7 @@ import {
   summariseFortnight,
   weeklyHourChips,
 } from "./availability";
+import { parseWeeklyHours } from "./weekly-windows";
 
 test("weekly hour presets include the babysitting evening pattern", () => {
   assert.ok(WEEKLY_HOUR_PRESETS.includes("Thu–Sun 5pm–midnight"));
@@ -42,6 +44,16 @@ test("summariseFortnight counts free, booked, away and closed days", () => {
   assert.equal(summary.closed, 1);
   assert.equal(summary.nextFree, "2026-09-15");
   assert.equal(fortnightLabel(summary), "1 free · 1 booked · 2 away · 1 closed");
+});
+
+test("isAvailableNowLive needs the flag, no day off, and a covering window", () => {
+  const now = new Date("2026-09-07T01:00:00.000Z");
+  const sarah = parseWeeklyHours("Mon–Fri 7am–1pm");
+  assert.equal(isAvailableNowLive(true, [], sarah, now), true);
+  assert.equal(isAvailableNowLive(true, [], sarah, new Date("2026-09-07T06:00:00.000Z")), false);
+  assert.equal(isAvailableNowLive(true, ["2026-09-07"], sarah, now), false);
+  assert.equal(isAvailableNowLive(false, [], sarah, now), false);
+  assert.equal(isAvailableNowLive(true, [], [], now), true);
 });
 
 test("isInstantBookLive pauses Instant Book while today is a day off", () => {

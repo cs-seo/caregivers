@@ -102,7 +102,10 @@ export async function DirectoryResults({
         {page.pages > 1
           ? ` · showing ${(page.page - 1) * page.pageSize + 1}–${Math.min(page.page * page.pageSize, page.total)}`
           : ""}
-        {filters.availableOn ? ` · not booked or away on ${filters.availableOn}` : ""}
+        {filters.availableOn
+          ? ` · not booked or away on ${filters.availableOn}${filters.availableAt ? ` at ${filters.availableAt}` : ""}`
+          : ""}
+        {filters.availableNow ? " · available now in Sydney hours" : ""}
       </p>
       <div className="mt-6">
         <SearchForm
@@ -111,6 +114,7 @@ export async function DirectoryResults({
           city={filters.city}
           q={filters.q}
           availableOn={filters.availableOn}
+          availableAt={filters.availableAt}
         />
       </div>
       {canShortlist ? (

@@ -21,6 +21,16 @@ export function DirectoryFilters({
         />
       </label>
       <label className="block text-sm">
+        <span className="text-stone-600">Start time</span>
+        <input
+          type="time"
+          name="availableAt"
+          defaultValue={current.availableAt ?? ""}
+          className="mt-1 w-full rounded-lg border border-line px-3 py-2"
+        />
+        <span className="mt-1 block text-xs text-stone-500">Optional. Matches usual weekly hours that cover this time.</span>
+      </label>
+      <label className="block text-sm">
         <span className="text-stone-600">Keywords</span>
         <input
           name="q"
@@ -37,6 +47,7 @@ export function DirectoryFilters({
         <input type="checkbox" name="availableNow" value="1" defaultChecked={current.availableNow === "1"} />
         Available now
       </label>
+      <p className="-mt-2 text-xs text-stone-500">Carers who marked available now and whose usual hours cover this moment in Sydney.</p>
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" name="wwcc" value="1" defaultChecked={current.wwcc === "1"} />
         Child check (WWCC / Blue Card)

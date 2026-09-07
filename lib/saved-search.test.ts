@@ -33,14 +33,19 @@ test("defaultSearchName adds needed-on and Instant Book", () => {
     defaultSearchName("Aged care carers in Sydney", { availableOn: "2026-09-12", instantBook: true }),
     "Aged care carers in Sydney · needed 12 Sept 2026 · Instant Book",
   );
+  assert.equal(
+    defaultSearchName("Aged care carers in Sydney", { availableOn: "2026-09-15", availableAt: "08:00" }),
+    "Aged care carers in Sydney · needed 15 Sept 2026, 8:00 am",
+  );
 });
 
 test("filtersFromSearchHref reads path segments and query flags", () => {
-  const filters = filtersFromSearchHref("/caregivers/aged-care/nsw/sydney?availableOn=2026-09-12");
+  const filters = filtersFromSearchHref("/caregivers/aged-care/nsw/sydney?availableOn=2026-09-12&availableAt=08:00");
   assert.equal(filters?.specialty, "aged-care");
   assert.equal(filters?.state, "nsw");
   assert.equal(filters?.city, "sydney");
   assert.equal(filters?.availableOn, "2026-09-12");
+  assert.equal(filters?.availableAt, "08:00");
   const nannies = filtersFromSearchHref("/caregivers/nannies?instantBook=1");
   assert.equal(nannies?.specialty, "nannies");
   assert.equal(nannies?.instantBook, true);

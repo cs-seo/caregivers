@@ -1,5 +1,5 @@
 import { sydneyDateKey } from "./format";
-import { WEEKLY_WINDOW_PRESETS } from "./weekly-windows";
+import { isOpenAtMinutes, sydneyMinutes, WEEKLY_WINDOW_PRESETS, type WeeklyWindow } from "./weekly-windows";
 
 export const WEEKLY_HOUR_PRESETS = WEEKLY_WINDOW_PRESETS.map((preset) => preset.label);
 
@@ -43,6 +43,17 @@ export function isAwayToday(blockedKeys: Iterable<string>, now = new Date()) {
   const today = sydneyDateKey(now);
   const set = blockedKeys instanceof Set ? blockedKeys : new Set(blockedKeys);
   return set.has(today);
+}
+
+export function isAvailableNowLive(
+  availableNow: boolean,
+  blockedKeys: Iterable<string>,
+  windows: WeeklyWindow[] = [],
+  now = new Date(),
+) {
+  if (!availableNow) return false;
+  if (isAwayToday(blockedKeys, now)) return false;
+  return isOpenAtMinutes(windows, sydneyDateKey(now), sydneyMinutes(now));
 }
 
 export const NOTICE_HOURS_MAX = 72;

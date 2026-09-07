@@ -14,6 +14,7 @@ export function parseFilters(
     suburb: get("suburb") || undefined,
     q: get("q") || undefined,
     availableOn: /^\d{4}-\d{2}-\d{2}$/.test(get("availableOn") ?? "") ? get("availableOn") : undefined,
+    availableAt: /^([01]\d|2[0-3]):([0-5]\d)$/.test(get("availableAt") ?? "") ? get("availableAt") : undefined,
     instantBook: get("instantBook") === "1",
     availableNow: get("availableNow") === "1",
     wwcc: get("wwcc") === "1",
@@ -46,6 +47,7 @@ export function filterCurrent(filters: {
   state?: string;
   city?: string;
   availableOn?: string;
+  availableAt?: string;
   instantBook?: boolean;
   availableNow?: boolean;
   wwcc?: boolean;
@@ -59,6 +61,7 @@ export function filterCurrent(filters: {
   return {
     q: filters.q,
     availableOn: filters.availableOn,
+    availableAt: filters.availableOn ? filters.availableAt : undefined,
     specialty: filters.specialty,
     state: filters.state,
     city: filters.city,
@@ -76,10 +79,16 @@ export function filterCurrent(filters: {
 
 export function emptyStateLinks(filters: DirectoryFilters) {
   const links: { href: string; label: string }[] = [];
-  const { specialty, state, city, suburb, availableOn } = filters;
+  const { specialty, state, city, suburb, availableOn, availableAt } = filters;
+  if (availableOn && availableAt) {
+    links.push({
+      href: filterHref("/caregivers", filterCurrent({ ...filters, availableAt: undefined, page: 1 })),
+      label: "Search any time that day",
+    });
+  }
   if (availableOn) {
     links.push({
-      href: filterHref("/caregivers", filterCurrent({ ...filters, availableOn: undefined, page: 1 })),
+      href: filterHref("/caregivers", filterCurrent({ ...filters, availableOn: undefined, availableAt: undefined, page: 1 })),
       label: "Search again without a date",
     });
   }

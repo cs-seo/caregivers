@@ -1,11 +1,13 @@
 import { BUSY_BOOKING_STATUSES } from "./booking-overlap";
 import { sydneyDateKey, sydneyDayBounds } from "./format";
+import { isDateClosed, type WeeklyWindow } from "./weekly-windows";
 
 export function buildRoster<T extends { startAt: Date; status: string }>(
   bookings: T[],
   days = 14,
   now = new Date(),
   blockedKeys: Iterable<string> = [],
+  windows: WeeklyWindow[] = [],
 ) {
   const todayKey = sydneyDateKey(now);
   const start = sydneyDayBounds(todayKey)?.startAt ?? now;
@@ -25,6 +27,12 @@ export function buildRoster<T extends { startAt: Date; status: string }>(
       month: "short",
       timeZone: "Australia/Sydney",
     }).format(date);
-    return { key, label, booking: busy.get(key) ?? null, blocked: blocked.has(key) };
+    return {
+      key,
+      label,
+      booking: busy.get(key) ?? null,
+      blocked: blocked.has(key),
+      closed: isDateClosed(windows, key),
+    };
   });
 }

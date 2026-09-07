@@ -9,7 +9,7 @@ import { MobileBookBar } from "@/components/mobile-book-bar";
 import { Portrait } from "@/components/portrait";
 import { ReviewCard, ReviewReplyForm } from "@/components/review-card";
 import { ShortlistButton } from "@/components/shortlist-button";
-import { fortnightLabel, isInstantBookLive, noticeLabel, summariseFortnight, weeklyHourChips } from "@/lib/availability";
+import { fortnightLabel, isAvailableNowLive, isInstantBookLive, noticeLabel, summariseFortnight, weeklyHourChips } from "@/lib/availability";
 import { lastActiveLabel, monthYear } from "@/lib/format";
 import { formatAud } from "@/lib/money";
 import { getCaregiverBySlug, getShortlistedIds, getUpcomingAvailability, similarCaregivers } from "@/lib/queries";
@@ -169,7 +169,10 @@ export default async function CaregiverProfilePage({
                 {liveInstant ? <Badge tone="clay">Instant Book</Badge> : null}
                 {carer.instantBook && awayToday ? <Badge tone="stone">Instant Book paused</Badge> : null}
                 {carer.instantBook && carer.noticeHours > 0 ? <Badge tone="stone">{noticeLabel(carer.noticeHours)}</Badge> : null}
-                {awayToday ? <Badge>Away today</Badge> : carer.availableNow ? <Badge>Available now</Badge> : null}
+                {awayToday ? <Badge>Away today</Badge> : null}
+                {isAvailableNowLive(carer.availableNow, blockedKeys, carer.weeklyWindows ?? []) ? (
+                  <Badge>Available now</Badge>
+                ) : null}
                 <span className="text-sm text-stone-500">{lastActiveLabel(carer.lastActiveAt)}</span>
                 {carer.reviewCount > 0 ? (
                   <span className="text-sm text-stone-600">

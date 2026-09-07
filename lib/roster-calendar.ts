@@ -1,5 +1,5 @@
 import { sydneyDateKey, sydneyDayBounds } from "./format";
-import { awayToIcsEvent, bookingToIcsEvent, shouldIncludeInCalendar, type IcsEventInput } from "./ics";
+import { awayToIcsEvent, bookingToIcsEvent, shouldIncludeInCalendar, usualHoursToIcsEvents, type IcsEventInput } from "./ics";
 import { prisma } from "./prisma";
 
 export async function rosterCalendarForUser(user: {
@@ -28,12 +28,28 @@ export async function rosterCalendarForUser(user: {
     .map(bookingToIcsEvent);
 
   if (!isFamily && user.caregiverProfile) {
-    const away = await prisma.caregiverBlockedDate.findMany({
-      where: { caregiverId: user.caregiverProfile.id, dateKey: { gte: todayKey } },
-      orderBy: { dateKey: "asc" },
-    });
+    const [away, windows] = await Promise.all([
+      prisma.caregiverBlockedDate.findMany({
+        where: { caregiverId: user.caregiverProfile.id, dateKey: { gte: todayKey } },
+        orderBy: { dateKey: "asc" },
+      }),
+      prisma.caregiverWeeklyWindow.findMany({
+        where: { caregiverId: user.caregiverProfile.id },
+        select: { weekday: true, startMin: true, endMin: true },
+      }),
+    ]);
     events.push(
       ...away.map((row) => awayToIcsEvent(user.caregiverProfile!.id, row.dateKey, user.name, row.note)),
+    );
+    events.push(
+      ...usualHoursToIcsEvents(
+        windows,
+        user.caregiverProfile.id,
+        user.name,
+        start,
+        4,
+        away.map((row) => row.dateKey),
+      ),
     );
   }
 

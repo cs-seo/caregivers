@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { BOOKING_STATUS } from "./constants";
 import { buildRoster } from "./roster";
+import { parseWeeklyHours } from "./weekly-windows";
 
 test("buildRoster marks a held Sydney sit and leaves other days open", () => {
   const days = buildRoster(
@@ -30,4 +31,12 @@ test("buildRoster marks a blocked day as away even without a booking", () => {
   const away = days.find((day) => day.key === "2026-09-13");
   assert.equal(away?.blocked, true);
   assert.equal(away?.booking, null);
+  assert.equal(away?.closed, false);
+});
+
+test("buildRoster marks weekdays outside usual hours as closed", () => {
+  const days = buildRoster([], 14, new Date("2026-09-07T00:00:00.000Z"), [], parseWeeklyHours("Mon–Fri 7am–1pm"));
+  assert.equal(days.find((day) => day.key === "2026-09-11")?.closed, false);
+  assert.equal(days.find((day) => day.key === "2026-09-12")?.closed, true);
+  assert.equal(days.find((day) => day.key === "2026-09-13")?.closed, true);
 });

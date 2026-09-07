@@ -238,6 +238,10 @@ export default async function CarerProfileEditorPage({
             Available now
           </label>
         </div>
+        <p className="-mt-2 text-xs text-stone-500">
+          The Available now filter only lists you when this is on, you are not away today, and the current Sydney time
+          falls inside your usual weekly hours.
+        </p>
         <label className="block text-sm">
           Instant Book notice (hours)
           <input

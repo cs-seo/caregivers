@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { BOOKING_STATUS } from "./constants";
-import { awayToIcsEvent, bookingsToIcs, escapeIcsText, icsDate, nextDateKey, shouldIncludeInCalendar } from "./ics";
+import { awayToIcsEvent, bookingsToIcs, escapeIcsText, icsDate, nextDateKey, shouldIncludeInCalendar, usualHoursToIcsEvents } from "./ics";
+import { parseWeeklyHours } from "./weekly-windows";
 
 test("icsDate writes a UTC timestamp without milliseconds", () => {
   assert.equal(icsDate(new Date("2026-10-10T06:00:00.123Z")), "20261010T060000Z");
@@ -75,4 +76,21 @@ test("bookingsToIcs can advertise an hourly refresh", () => {
   const ics = bookingsToIcs([], new Date("2026-09-07T00:00:00.000Z"), "CareProof roster", 1);
   assert.match(ics, /X-PUBLISHED-TTL:PT1H/);
   assert.match(ics, /REFRESH-INTERVAL;VALUE=DURATION:PT1H/);
+});
+
+test("usualHoursToIcsEvents writes weekday windows and skips away days", () => {
+  const events = usualHoursToIcsEvents(
+    parseWeeklyHours("Mon–Fri 7am–1pm"),
+    "sarah",
+    "Sarah Nguyen",
+    new Date("2026-09-07T00:00:00.000Z"),
+    1,
+    ["2026-09-07"],
+  );
+  assert.equal(events.length, 4);
+  assert.equal(events[0]?.id, "hours-sarah-2026-09-08-420");
+  assert.match(events[0]?.summary ?? "", /Usual hours/);
+  const ics = bookingsToIcs(events, new Date("2026-09-07T00:00:00.000Z"), "CareProof roster");
+  assert.match(ics, /SUMMARY:Usual hours · Sarah Nguyen/);
+  assert.equal(events.some((event) => event.id.includes("2026-09-07")), false);
 });

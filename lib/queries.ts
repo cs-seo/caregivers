@@ -3,7 +3,7 @@ import { stillCurrentWhere } from "./credentials";
 import { sydneyDateKey, sydneyDayBounds } from "./format";
 import { prisma } from "./prisma";
 import { computeTrustScore } from "./trust";
-import { isDateClosed, weeklyOpenWhere } from "./weekly-windows";
+import { isDateClosed, parseTimeParam, sydneyMinutes, weeklyOpenAtWhere, weeklyOpenWhere } from "./weekly-windows";
 
 export const caregiverCardInclude = {
   user: { select: { name: true } },
@@ -12,6 +12,7 @@ export const caregiverCardInclude = {
   credentials: true,
   workHistory: true,
   blockedDates: { select: { dateKey: true } },
+  weeklyWindows: { select: { weekday: true, startMin: true, endMin: true } },
 } as const;
 
 export type CaregiverCard = Awaited<
@@ -92,6 +93,7 @@ export type DirectoryFilters = {
   minYears?: number;
   availableNow?: boolean;
   availableOn?: string;
+  availableAt?: string;
   page?: number;
   sort?: "rating" | "rate" | "experience";
 };
@@ -102,8 +104,31 @@ function caregiverOrderBy(filters: DirectoryFilters) {
   return [{ ratingAvg: "desc" as const }, { completedJobs: "desc" as const }];
 }
 
-function caregiverWhere(filters: DirectoryFilters) {
+function caregiverWhere(filters: DirectoryFilters, now = new Date()) {
   const day = filters.availableOn ? sydneyDayBounds(filters.availableOn) : null;
+  const atMin = parseTimeParam(filters.availableAt);
+  const todayKey = sydneyDateKey(now);
+  const availability: object[] = [];
+  if (filters.availableNow) {
+    availability.push({ availableNow: true });
+    availability.push({ blockedDates: { none: { dateKey: todayKey } } });
+    availability.push(weeklyOpenAtWhere(todayKey, sydneyMinutes(now)));
+  }
+  if (day) {
+    availability.push({
+      bookings: {
+        none: {
+          status: { in: [...BUSY_BOOKING_STATUSES] },
+          startAt: { lt: day.endAt },
+          endAt: { gt: day.startAt },
+        },
+      },
+    });
+    availability.push({ blockedDates: { none: { dateKey: filters.availableOn } } });
+    availability.push(
+      atMin != null ? weeklyOpenAtWhere(filters.availableOn!, atMin) : weeklyOpenWhere(filters.availableOn!),
+    );
+  }
   return {
     ...(filters.q
       ? {
@@ -121,10 +146,7 @@ function caregiverWhere(filters: DirectoryFilters) {
     ...(filters.city ? { city: { slug: filters.city } } : {}),
     ...(filters.suburb ? { suburb: { contains: filters.suburb } } : {}),
     ...(filters.instantBook
-      ? { instantBook: true, blockedDates: { none: { dateKey: sydneyDateKey(new Date()) } } }
-      : {}),
-    ...(filters.availableNow
-      ? { availableNow: true, blockedDates: { none: { dateKey: sydneyDateKey(new Date()) } } }
+      ? { instantBook: true, blockedDates: { none: { dateKey: todayKey } } }
       : {}),
     ...(filters.minRating ? { ratingAvg: { gte: filters.minRating } } : {}),
     ...(filters.minYears ? { yearsExperience: { gte: filters.minYears } } : {}),
@@ -143,23 +165,7 @@ function caregiverWhere(filters: DirectoryFilters) {
           },
         }
       : {}),
-    ...(day
-      ? {
-          AND: [
-            {
-              bookings: {
-                none: {
-                  status: { in: [...BUSY_BOOKING_STATUSES] },
-                  startAt: { lt: day.endAt },
-                  endAt: { gt: day.startAt },
-                },
-              },
-            },
-            { blockedDates: { none: { dateKey: filters.availableOn } } },
-            weeklyOpenWhere(filters.availableOn!),
-          ],
-        }
-      : {}),
+    ...(availability.length ? { AND: availability } : {}),
   };
 }
 

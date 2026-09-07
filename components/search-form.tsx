@@ -6,12 +6,14 @@ export async function SearchForm({
   city,
   q,
   availableOn,
+  availableAt,
 }: {
   specialty?: string;
   state?: string;
   city?: string;
   q?: string;
   availableOn?: string;
+  availableAt?: string;
 }) {
   const [specialties, states] = await Promise.all([getSpecialties(), getStates()]);
   const selectedState = states.find((item) => item.slug === state);
@@ -61,6 +63,13 @@ export async function SearchForm({
           name="availableOn"
           defaultValue={availableOn ?? ""}
           className="w-full rounded-xl border border-line bg-white px-3 py-2.5"
+        />
+        <input
+          type="time"
+          name="availableAt"
+          defaultValue={availableAt ?? ""}
+          className="mt-1 w-full rounded-xl border border-line bg-white px-3 py-2.5"
+          aria-label="Needed at"
         />
       </label>
       <label className="md:col-span-2">

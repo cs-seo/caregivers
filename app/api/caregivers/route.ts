@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { isAwayToday, isInstantBookLive } from "@/lib/availability";
+import { isAvailableNowLive, isAwayToday, isInstantBookLive } from "@/lib/availability";
 import { parseFilters } from "@/lib/directory";
 import { searchCaregivers } from "@/lib/queries";
 
@@ -20,7 +20,11 @@ export async function GET(request: Request) {
         carer.instantBook,
         carer.blockedDates.map((row) => row.dateKey),
       ),
-      availableNow: carer.availableNow && !isAwayToday(carer.blockedDates.map((row) => row.dateKey)),
+      availableNow: isAvailableNowLive(
+        carer.availableNow,
+        carer.blockedDates.map((row) => row.dateKey),
+        carer.weeklyWindows,
+      ),
       awayToday: isAwayToday(carer.blockedDates.map((row) => row.dateKey)),
       ratingAvg: carer.ratingAvg,
       photoUrl: carer.photoUrl,
