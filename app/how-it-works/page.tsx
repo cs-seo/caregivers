@@ -31,7 +31,7 @@ const faqs = [
   },
   {
     q: "Can I search for a carer who is free on a specific night?",
-    a: "Yes. Use Needed on in search or the directory filters. CareProof hides carers who already have a sit in escrow that day. Public profiles also show the next fortnight as free or booked.",
+    a: "Yes. Use Needed on in search or the directory filters. CareProof hides carers who already have a sit in escrow that day, and carers who marked the day as away. Public profiles show the next fortnight as free, booked or away.",
   },
   {
     q: "Can I get a GST tax invoice for a Home Care Package or NDIS plan?",

@@ -3,8 +3,10 @@ import { redirect } from "next/navigation";
 import { Badge } from "@/components/badges";
 import { WeeklyHoursField } from "@/components/weekly-hours-field";
 import {
+  addBlockedDateAction,
   addCredentialAction,
   addWorkHistoryAction,
+  removeBlockedDateAction,
   removeCredentialAction,
   removeWorkHistoryAction,
   updateCaregiverProfileAction,
@@ -13,7 +15,7 @@ import { CREDENTIAL_LABELS, CREDENTIAL_TYPES } from "@/lib/constants";
 import { credentialWatchlist, watchLabel } from "@/lib/credentials";
 import { monthYear } from "@/lib/format";
 import { profileChecklist } from "@/lib/profile";
-import { getSpecialties, getStates } from "@/lib/queries";
+import { getSpecialties, getStates, getUpcomingAvailability } from "@/lib/queries";
 import { requireRole } from "@/lib/session";
 import { pageMeta } from "@/lib/seo";
 import { prisma } from "@/lib/prisma";
@@ -34,7 +36,7 @@ export default async function CarerProfileEditorPage({
   if (!user?.caregiverProfile) redirect("/login?callbackUrl=/dashboard/profile");
   const query = await searchParams;
 
-  const [profile, specialties, states] = await Promise.all([
+  const [profile, specialties, states, upcoming] = await Promise.all([
     prisma.caregiverProfile.findUnique({
       where: { id: user.caregiverProfile.id },
       include: {
@@ -46,6 +48,7 @@ export default async function CarerProfileEditorPage({
     }),
     getSpecialties(),
     getStates(),
+    getUpcomingAvailability(user.caregiverProfile.id, 21),
   ]);
   if (!profile) redirect("/dashboard");
 
@@ -221,6 +224,52 @@ export default async function CarerProfileEditorPage({
           Save profile
         </button>
       </form>
+
+      <section className="mt-8 rounded-2xl border border-line bg-card p-5">
+        <h2 className="font-semibold text-ink">Days off</h2>
+        <p className="mt-1 text-sm text-stone-600">
+          Mark a day away and families cannot book it, or find you with Needed on that date. Booked sits still show as booked.
+        </p>
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+          {upcoming.map((day) => (
+            <form
+              key={day.key}
+              action={day.blocked ? removeBlockedDateAction : addBlockedDateAction}
+              className="text-xs"
+            >
+              <input type="hidden" name="dateKey" value={day.key} />
+              <button
+                className={`w-full rounded-xl px-2 py-2 ${
+                  day.blocked
+                    ? "bg-stone-100 text-stone-700"
+                    : day.booked
+                      ? "bg-orange-50 text-clay"
+                      : "bg-sage text-teal-deep"
+                }`}
+                type="submit"
+              >
+                <span className="block font-medium">{day.label}</span>
+                <span className="mt-0.5 block">
+                  {day.blocked ? "Away · clear" : day.booked ? "Booked · mark away" : "Open · mark away"}
+                </span>
+              </button>
+            </form>
+          ))}
+        </div>
+        <form action={addBlockedDateAction} className="mt-4 flex flex-wrap items-end gap-3">
+          <label className="block text-sm">
+            Another date
+            <input type="date" name="dateKey" required className="mt-1 rounded-lg border border-line px-3 py-2" />
+          </label>
+          <label className="block text-sm">
+            Note (optional)
+            <input name="note" maxLength={80} placeholder="School holidays" className="mt-1 rounded-lg border border-line px-3 py-2" />
+          </label>
+          <button className="rounded-lg bg-teal px-4 py-2 text-sm font-medium text-white" type="submit">
+            Add day off
+          </button>
+        </form>
+      </section>
 
       <section className="mt-8 rounded-2xl border border-line bg-card p-5">
         <h2 className="font-semibold text-ink">Checks and registrations</h2>

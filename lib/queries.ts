@@ -139,13 +139,18 @@ function caregiverWhere(filters: DirectoryFilters) {
       : {}),
     ...(day
       ? {
-          bookings: {
-            none: {
-              status: { in: [...BUSY_BOOKING_STATUSES] },
-              startAt: { lt: day.endAt },
-              endAt: { gt: day.startAt },
+          AND: [
+            {
+              bookings: {
+                none: {
+                  status: { in: [...BUSY_BOOKING_STATUSES] },
+                  startAt: { lt: day.endAt },
+                  endAt: { gt: day.startAt },
+                },
+              },
             },
-          },
+            { blockedDates: { none: { dateKey: filters.availableOn } } },
+          ],
         }
       : {}),
   };
@@ -281,6 +286,11 @@ export async function getUpcomingAvailability(caregiverId: string, days = 14) {
     orderBy: { startAt: "asc" },
   });
   const bookedKeys = new Set(bookings.map((booking) => sydneyDateKey(booking.startAt)));
+  const blockedRows = await prisma.caregiverBlockedDate.findMany({
+    where: { caregiverId },
+    select: { dateKey: true },
+  });
+  const blockedKeys = new Set(blockedRows.map((row) => row.dateKey));
   return Array.from({ length: days }, (_, index) => {
     const date = new Date(start.getTime() + index * 24 * 60 * 60 * 1000);
     const key = sydneyDateKey(date);
@@ -290,7 +300,7 @@ export async function getUpcomingAvailability(caregiverId: string, days = 14) {
       month: "short",
       timeZone: "Australia/Sydney",
     }).format(date);
-    return { key, label, booked: bookedKeys.has(key) };
+    return { key, label, booked: bookedKeys.has(key), blocked: blockedKeys.has(key) };
   });
 }
 

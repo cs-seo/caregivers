@@ -80,6 +80,10 @@ export default async function BookPage({
         <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
           That time overlaps a booking already held for this carer. Pick another start, or a different week.
         </p>
+      ) : query.error === "blocked" ? (
+        <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
+          This carer has marked that day as away. Pick another date, or search someone free that night.
+        </p>
       ) : query.error ? (
         <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">Please check the date, hours and care type.</p>
       ) : null}

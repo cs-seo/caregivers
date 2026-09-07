@@ -5,6 +5,7 @@ import { AuthError } from "next-auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { signIn } from "@/auth";
+import { dateKeysInWindows, firstBlockedKey, isDateKey } from "./blocked-dates";
 import { findSeriesOverlap } from "./booking-overlap";
 import { BOOKING_STATUS, ROLES, UNPAID_BOOKING_STATUSES } from "./constants";
 import { autoReleaseIfDue, holdPayment, refundPayment, releasePayment } from "./escrow";
@@ -131,6 +132,13 @@ export async function createBookingAction(formData: FormData) {
   const overlap = await findSeriesOverlap(caregiver.id, windows);
   if (overlap) {
     redirect(`/caregiver/${slug}/book?error=overlap`);
+  }
+  const blockedRows = await prisma.caregiverBlockedDate.findMany({
+    where: { caregiverId: caregiver.id, dateKey: { in: dateKeysInWindows(windows) } },
+    select: { dateKey: true },
+  });
+  if (firstBlockedKey(dateKeysInWindows(windows), blockedRows.map((row) => row.dateKey))) {
+    redirect(`/caregiver/${slug}/book?error=blocked`);
   }
 
   const created = [];
@@ -660,6 +668,37 @@ export async function updateCaregiverProfileAction(formData: FormData) {
   revalidatePath(`/caregiver/${user.caregiverProfile.slug}`);
   revalidatePath("/caregivers");
   redirect("/dashboard/profile?saved=1");
+}
+
+export async function addBlockedDateAction(formData: FormData) {
+  const user = await requireRole(ROLES.CAREGIVER);
+  if (!user?.caregiverProfile) redirect("/login");
+  const dateKey = String(formData.get("dateKey") ?? "").trim();
+  const note = String(formData.get("note") ?? "").trim().slice(0, 80);
+  if (!isDateKey(dateKey)) redirect("/dashboard/profile?error=invalid");
+  await prisma.caregiverBlockedDate.upsert({
+    where: { caregiverId_dateKey: { caregiverId: user.caregiverProfile.id, dateKey } },
+    update: { note: note || null },
+    create: { caregiverId: user.caregiverProfile.id, dateKey, note: note || null },
+  });
+  revalidatePath("/dashboard/profile");
+  revalidatePath(`/caregiver/${user.caregiverProfile.slug}`);
+  revalidatePath("/caregivers");
+  revalidatePath("/dashboard");
+}
+
+export async function removeBlockedDateAction(formData: FormData) {
+  const user = await requireRole(ROLES.CAREGIVER);
+  if (!user?.caregiverProfile) redirect("/login");
+  const dateKey = String(formData.get("dateKey") ?? "").trim();
+  if (!isDateKey(dateKey)) redirect("/dashboard/profile?error=invalid");
+  await prisma.caregiverBlockedDate.deleteMany({
+    where: { caregiverId: user.caregiverProfile.id, dateKey },
+  });
+  revalidatePath("/dashboard/profile");
+  revalidatePath(`/caregiver/${user.caregiverProfile.slug}`);
+  revalidatePath("/caregivers");
+  revalidatePath("/dashboard");
 }
 
 export async function addCredentialAction(formData: FormData) {

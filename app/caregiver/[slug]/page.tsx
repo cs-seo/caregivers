@@ -185,6 +185,11 @@ export default async function CaregiverProfilePage({
                       <p className="font-medium">{day.label}</p>
                       <p className="mt-0.5">Booked</p>
                     </div>
+                  ) : day.blocked ? (
+                    <div key={day.key} className="rounded-xl bg-stone-100 px-2 py-2 text-center text-xs text-stone-600">
+                      <p className="font-medium">{day.label}</p>
+                      <p className="mt-0.5">Away</p>
+                    </div>
                   ) : (
                     <Link
                       key={day.key}
@@ -198,8 +203,8 @@ export default async function CaregiverProfilePage({
                 )}
               </div>
               <p className="mt-2 text-xs text-stone-500">
-                Booked days already have a sit in escrow. Search{" "}
-                <Link href={`/caregivers?availableOn=${upcoming.find((day) => !day.booked)?.key ?? ""}`} className="text-teal">
+                Booked days already have a sit in escrow. Away days are marked off by the carer. Search{" "}
+                <Link href={`/caregivers?availableOn=${upcoming.find((day) => !day.booked && !day.blocked)?.key ?? ""}`} className="text-teal">
                   carers free on another day
                 </Link>
                 .

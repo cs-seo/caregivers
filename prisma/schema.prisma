@@ -118,6 +118,19 @@ model CaregiverProfile {
   proposals   Proposal[]
   reviews     Review[]
   shortlistedBy Shortlist[]
+  blockedDates CaregiverBlockedDate[]
+}
+
+model CaregiverBlockedDate {
+  id          String           @id @default(cuid())
+  caregiverId String
+  caregiver   CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  dateKey     String
+  note        String?
+  createdAt   DateTime         @default(now())
+
+  @@unique([caregiverId, dateKey])
+  @@index([dateKey])
 }
 
 model CaregiverSpecialty {

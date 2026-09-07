@@ -87,7 +87,7 @@ export async function DirectoryResults({
         {page.pages > 1
           ? ` · showing ${(page.page - 1) * page.pageSize + 1}–${Math.min(page.page * page.pageSize, page.total)}`
           : ""}
-        {filters.availableOn ? ` · not already booked on ${filters.availableOn}` : ""}
+        {filters.availableOn ? ` · not booked or away on ${filters.availableOn}` : ""}
       </p>
       <div className="mt-6">
         <SearchForm

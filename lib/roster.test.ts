@@ -22,4 +22,12 @@ test("buildRoster marks a held Sydney sit and leaves other days open", () => {
   assert.equal(booked.length, 1);
   assert.equal(booked[0]?.key, "2026-09-11");
   assert.equal(days.find((day) => day.key === "2026-09-08")?.booking, null);
+  assert.equal(days.find((day) => day.key === "2026-09-13")?.blocked, false);
+});
+
+test("buildRoster marks a blocked day as away even without a booking", () => {
+  const days = buildRoster([], 14, new Date("2026-09-07T00:00:00.000Z"), ["2026-09-13"]);
+  const away = days.find((day) => day.key === "2026-09-13");
+  assert.equal(away?.blocked, true);
+  assert.equal(away?.booking, null);
 });

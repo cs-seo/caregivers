@@ -152,7 +152,16 @@ export default async function DashboardPage({
     BOOKING_STATUS.IN_PROGRESS,
     BOOKING_STATUS.PENDING_RELEASE,
   ]);
-  const roster = buildRoster(bookings);
+  const blockedKeys =
+    !isFamily && user.caregiverProfile
+      ? (
+          await prisma.caregiverBlockedDate.findMany({
+            where: { caregiverId: user.caregiverProfile.id },
+            select: { dateKey: true },
+          })
+        ).map((row) => row.dateKey)
+      : [];
+  const roster = buildRoster(bookings, 14, new Date(), blockedKeys);
   const heldCents = bookings
     .filter((booking) => escrowStatuses.has(booking.status))
     .reduce((sum, booking) => sum + (isFamily ? booking.totalCents : booking.subtotalCents), 0);
@@ -224,7 +233,7 @@ export default async function DashboardPage({
         <p className="mt-1 text-sm text-stone-600">
           {isFamily
             ? "Sits already in escrow, plus empty days you can still book."
-            : "Your held roster. Open days have no sit on the books yet."}
+            : "Your held roster. Open days have no sit on the books. Away days are hidden from Needed on."}
         </p>
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-7">
           {roster.map((day) =>
@@ -239,7 +248,7 @@ export default async function DashboardPage({
                   {isFamily ? day.booking.caregiver.user.name : day.booking.family.name}
                 </p>
               </Link>
-            ) : isFamily ? (
+            )             : isFamily ? (
               <Link
                 key={day.key}
                 href={`/caregivers?availableOn=${day.key}`}
@@ -247,6 +256,15 @@ export default async function DashboardPage({
               >
                 <p className="font-medium">{day.label}</p>
                 <p className="mt-0.5">Find a carer</p>
+              </Link>
+            ) : day.blocked ? (
+              <Link
+                key={day.key}
+                href="/dashboard/profile"
+                className="rounded-xl bg-stone-100 px-2 py-2 text-center text-xs text-stone-600 no-underline"
+              >
+                <p className="font-medium">{day.label}</p>
+                <p className="mt-0.5">Away</p>
               </Link>
             ) : (
               <div key={day.key} className="rounded-xl bg-sage px-2 py-2 text-center text-xs text-teal-deep">

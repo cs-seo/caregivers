@@ -5,6 +5,7 @@ import { generateCarers } from "./data/generate-carers";
 import { SUBURBS_BY_CITY, slugifySuburb } from "./data/suburbs";
 import { insertCarer } from "./insert-carer";
 import {
+  seedDemoBlockedDates,
   seedDemoExpiringChecks,
   seedDemoPipeline,
   seedDemoRecurring,
@@ -712,8 +713,9 @@ async function main() {
   const recurring = await seedDemoRecurring(prisma);
   const expiring = await seedDemoExpiringChecks(prisma);
   const series = await seedDemoSeriesActions(prisma);
+  const blocked = await seedDemoBlockedDates(prisma);
   console.log(
-    `Seeded ${carerProfiles.length} featured carers + ${generatedCount} generated profiles, ${familyUsers.length} families, ${requests.length} jobs, ${suburbCount} suburbs, ${pipeline.created} live demo bookings, ${shortlisted} shortlisted, ${recurring} recurring weeks, ${expiring} expiring checks, ${series} series weeks.`,
+    `Seeded ${carerProfiles.length} featured carers + ${generatedCount} generated profiles, ${familyUsers.length} families, ${requests.length} jobs, ${suburbCount} suburbs, ${pipeline.created} live demo bookings, ${shortlisted} shortlisted, ${recurring} recurring weeks, ${expiring} expiring checks, ${series} series weeks, ${blocked} days off.`,
   );
   console.log("Demo logins: family@careproof.com.au / carer@careproof.com.au / CareProof123!");
 }

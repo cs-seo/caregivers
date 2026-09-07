@@ -5,10 +5,12 @@ export function buildRoster<T extends { startAt: Date; status: string }>(
   bookings: T[],
   days = 14,
   now = new Date(),
+  blockedKeys: Iterable<string> = [],
 ) {
   const todayKey = sydneyDateKey(now);
   const start = sydneyDayBounds(todayKey)?.startAt ?? now;
   const busy = new Map<string, T>();
+  const blocked = new Set(blockedKeys);
   for (const booking of bookings) {
     if (!(BUSY_BOOKING_STATUSES as readonly string[]).includes(booking.status)) continue;
     const key = sydneyDateKey(booking.startAt);
@@ -23,6 +25,6 @@ export function buildRoster<T extends { startAt: Date; status: string }>(
       month: "short",
       timeZone: "Australia/Sydney",
     }).format(date);
-    return { key, label, booking: busy.get(key) ?? null };
+    return { key, label, booking: busy.get(key) ?? null, blocked: blocked.has(key) };
   });
 }
