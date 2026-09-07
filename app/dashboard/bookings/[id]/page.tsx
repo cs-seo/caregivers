@@ -18,7 +18,7 @@ import {
   startBookingAction,
 } from "@/lib/actions";
 import { BOOKING_STATUS, BOOKING_STATUS_LABELS, UNPAID_BOOKING_STATUSES } from "@/lib/constants";
-import { autoReleaseIfDue } from "@/lib/escrow";
+import { autoReleaseIfDue, autoReleaseLabel, showsAutoReleaseNotice } from "@/lib/escrow";
 import { DemoCardForm } from "@/components/demo-card-form";
 import { HandoverCard } from "@/components/handover-card";
 import { ReviewCard, ReviewReplyForm } from "@/components/review-card";
@@ -117,6 +117,11 @@ export default async function BookingDetailPage({
           {comingUpKind(booking) === "now"
             ? "This sit is underway. Confirm completion or raise a dispute from the actions below."
             : "This sit is coming up. Check the handover card for keys, parking and care notes."}
+        </p>
+      ) : null}
+      {showsAutoReleaseNotice(booking.status) ? (
+        <p className="mt-3 rounded-xl border border-line bg-card p-3 text-sm text-stone-600">
+          {autoReleaseLabel(booking.endAt)}
         </p>
       ) : null}
       <div className="mt-3 flex flex-wrap gap-2">

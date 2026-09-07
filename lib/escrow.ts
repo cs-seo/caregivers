@@ -1,4 +1,5 @@
 import { BOOKING_STATUS, PAYMENT_STATUS, AUTO_RELEASE_HOURS, WORK_VERIFICATION } from "./constants";
+import { formatDateTime } from "./format";
 import { persistMissingInvoiceNumbers } from "./invoice-peers";
 import { prisma } from "./prisma";
 import { getStripe, stripeEnabled } from "./stripe";
@@ -158,9 +159,45 @@ export async function refundPayment(bookingId: string) {
   });
 }
 
+const AUTO_RELEASE_MS = AUTO_RELEASE_HOURS * 60 * 60 * 1000;
+
 export function shouldAutoRelease(endAt: Date, now = new Date()) {
-  const elapsed = now.getTime() - endAt.getTime();
-  return elapsed >= AUTO_RELEASE_HOURS * 60 * 60 * 1000;
+  return now.getTime() - endAt.getTime() >= AUTO_RELEASE_MS;
+}
+
+export function autoReleaseAt(endAt: Date) {
+  return new Date(endAt.getTime() + AUTO_RELEASE_MS);
+}
+
+export function msUntilAutoRelease(endAt: Date, now = new Date()) {
+  return autoReleaseAt(endAt).getTime() - now.getTime();
+}
+
+export function showsAutoReleaseNotice(status: string) {
+  return (
+    status === BOOKING_STATUS.ESCROW_HELD ||
+    status === BOOKING_STATUS.IN_PROGRESS ||
+    status === BOOKING_STATUS.PENDING_RELEASE
+  );
+}
+
+export function autoReleaseLabel(endAt: Date, now = new Date()) {
+  const due = autoReleaseAt(endAt);
+  const when = formatDateTime(due);
+  if (now.getTime() < endAt.getTime()) {
+    return `If nobody confirms or disputes, funds auto-release 72 hours after the sit ends — ${when}.`;
+  }
+  if (shouldAutoRelease(endAt, now)) {
+    return "This sit is due to auto-release now.";
+  }
+  const hours = msUntilAutoRelease(endAt, now) / (60 * 60 * 1000);
+  const remaining =
+    hours >= 48
+      ? `${Math.round(hours / 24)} ${Math.round(hours / 24) === 1 ? "day" : "days"}`
+      : hours < 1.5
+        ? "about 1 hour"
+        : `${Math.round(hours)} hours`;
+  return `If nobody confirms or disputes, funds auto-release in ${remaining} (${when}).`;
 }
 
 export async function autoReleaseIfDue(bookingId: string) {
