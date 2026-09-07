@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Badge } from "@/components/badges";
 import { BOOKING_STATUS, BOOKING_STATUS_LABELS } from "@/lib/constants";
 import { formatDateTime, plural, snippet } from "@/lib/format";
+import { buildRoster } from "@/lib/roster";
 import { formatAud } from "@/lib/money";
 import { profileChecklist } from "@/lib/profile";
 import { prisma } from "@/lib/prisma";
@@ -149,6 +150,7 @@ export default async function DashboardPage() {
     BOOKING_STATUS.IN_PROGRESS,
     BOOKING_STATUS.PENDING_RELEASE,
   ]);
+  const roster = buildRoster(bookings);
   const heldCents = bookings
     .filter((booking) => escrowStatuses.has(booking.status))
     .reduce((sum, booking) => sum + (isFamily ? booking.totalCents : booking.subtotalCents), 0);
@@ -209,6 +211,45 @@ export default async function DashboardPage() {
           <p className="mt-1 text-sm text-stone-500">
             {isFamily ? "Released bookings, ready for a GST tax invoice." : "Released to you after completed care."}
           </p>
+        </div>
+      </section>
+
+      <section className="mt-6 rounded-2xl border border-line bg-card p-5">
+        <h2 className="font-semibold text-ink">Next 14 days</h2>
+        <p className="mt-1 text-sm text-stone-600">
+          {isFamily
+            ? "Sits already in escrow, plus empty days you can still book."
+            : "Your held roster. Open days have no sit on the books yet."}
+        </p>
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-7">
+          {roster.map((day) =>
+            day.booking ? (
+              <Link
+                key={day.key}
+                href={`/dashboard/bookings/${day.booking.id}`}
+                className="rounded-xl bg-orange-50 px-2 py-2 text-center text-xs text-clay no-underline"
+              >
+                <p className="font-medium">{day.label}</p>
+                <p className="mt-0.5 line-clamp-2">
+                  {isFamily ? day.booking.caregiver.user.name : day.booking.family.name}
+                </p>
+              </Link>
+            ) : isFamily ? (
+              <Link
+                key={day.key}
+                href={`/caregivers?availableOn=${day.key}`}
+                className="rounded-xl bg-sage px-2 py-2 text-center text-xs text-teal-deep no-underline hover:bg-sage/80"
+              >
+                <p className="font-medium">{day.label}</p>
+                <p className="mt-0.5">Find a carer</p>
+              </Link>
+            ) : (
+              <div key={day.key} className="rounded-xl bg-sage px-2 py-2 text-center text-xs text-teal-deep">
+                <p className="font-medium">{day.label}</p>
+                <p className="mt-0.5">Open</p>
+              </div>
+            ),
+          )}
         </div>
       </section>
 
