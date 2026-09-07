@@ -1,3 +1,4 @@
+import { credentialWatchlist, watchLabel } from "@/lib/credentials";
 import { credentialLabel } from "@/lib/trust";
 
 export function Badge({
@@ -24,16 +25,22 @@ export function CredentialBadges({
   credentials,
   abn,
 }: {
-  credentials: { type: string; verified: boolean }[];
+  credentials: { type: string; verified: boolean; expiresAt?: Date | string | null }[];
   abn?: string | null;
 }) {
+  const watch = new Map(credentialWatchlist(credentials).map((item) => [item.type, item]));
   return (
     <div className="flex flex-wrap gap-2">
       {credentials
         .filter((c) => c.verified)
-        .map((credential) => (
-          <Badge key={credential.type}>{credentialLabel(credential.type)}</Badge>
-        ))}
+        .map((credential) => {
+          const alert = watch.get(credential.type);
+          return (
+            <Badge key={credential.type} tone={alert ? "clay" : "sage"}>
+              {alert ? watchLabel(alert) : credentialLabel(credential.type)}
+            </Badge>
+          );
+        })}
       {abn ? <Badge tone="stone">ABN {abn}</Badge> : null}
     </div>
   );
@@ -73,6 +80,11 @@ export function CredentialDetails({
                   })}`
                 : ""}
             </p>
+            {credentialWatchlist([credential]).map((item) => (
+              <p key={item.type} className="mt-1 text-xs font-medium text-clay">
+                {watchLabel(item)}
+              </p>
+            ))}
           </li>
         ))}
       {abn ? (

@@ -55,6 +55,8 @@ export default function TrustPage() {
           A generic “police checked” badge is not enough. CareProof stores the document families actually ask for in
           each state: WWCC in NSW, Victoria, SA, Tasmania and WA; Blue Card in Queensland; WWVP in the ACT; Ochre Card
           in the Northern Territory; plus NDIS Worker Screening, Aged Care Worker Screening and AHPRA for nurses.
+          Expiry dates sit on the profile. Checks inside 60 days turn amber so a family does not book against a lapsed
+          WWCC or first-aid certificate.
         </p>
       </section>
       <section>

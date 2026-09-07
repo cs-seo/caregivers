@@ -9,6 +9,7 @@ import {
   updateCaregiverProfileAction,
 } from "@/lib/actions";
 import { CREDENTIAL_LABELS, CREDENTIAL_TYPES } from "@/lib/constants";
+import { credentialWatchlist, watchLabel } from "@/lib/credentials";
 import { monthYear } from "@/lib/format";
 import { profileChecklist } from "@/lib/profile";
 import { getSpecialties, getStates } from "@/lib/queries";
@@ -48,6 +49,7 @@ export default async function CarerProfileEditorPage({
   if (!profile) redirect("/dashboard");
 
   const checklist = profileChecklist(profile);
+  const expiring = credentialWatchlist(profile.credentials);
   const selected = new Set(profile.specialties.map((item) => item.specialtyId));
 
   return (
@@ -77,6 +79,11 @@ export default async function CarerProfileEditorPage({
       {query.error ? (
         <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
           Check the required fields and try again.
+        </p>
+      ) : null}
+      {expiring.length ? (
+        <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
+          {expiring.map((item) => watchLabel(item)).join(" · ")}
         </p>
       ) : null}
 

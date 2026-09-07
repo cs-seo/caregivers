@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { Badge } from "@/components/badges";
 import { BOOKING_STATUS, BOOKING_STATUS_LABELS } from "@/lib/constants";
+import { credentialWatchlist, watchLabel } from "@/lib/credentials";
 import { formatDateTime, plural, snippet } from "@/lib/format";
 import { buildRoster } from "@/lib/roster";
 import { formatAud } from "@/lib/money";
@@ -136,6 +137,7 @@ export default async function DashboardPage() {
         })
       : null;
   const checklist = carerProfile ? profileChecklist(carerProfile) : null;
+  const expiring = carerProfile ? credentialWatchlist(carerProfile.credentials) : [];
   const shortlistCount = isFamily
     ? await prisma.shortlist.count({ where: { familyId: user.id } })
     : 0;
@@ -263,6 +265,23 @@ export default async function DashboardPage() {
           </p>
           <Link href={shortlistCount ? "/dashboard/shortlist" : "/caregivers"} className="mt-3 inline-block text-sm font-medium text-teal">
             {shortlistCount ? "Open shortlist" : "Browse carers to save"}
+          </Link>
+        </section>
+      ) : null}
+
+      {expiring.length ? (
+        <section className="mt-6 rounded-2xl border border-clay/30 bg-orange-50 p-5">
+          <h2 className="font-semibold text-ink">Checks due soon</h2>
+          <p className="mt-1 text-sm text-stone-600">
+            Families see expiry dates on your public profile. Renew these before they lapse.
+          </p>
+          <ul className="mt-3 list-disc pl-5 text-sm text-clay">
+            {expiring.map((item) => (
+              <li key={item.type}>{watchLabel(item)}</li>
+            ))}
+          </ul>
+          <Link href="/dashboard/profile" className="mt-3 inline-block text-sm font-medium text-teal">
+            Update a check
           </Link>
         </section>
       ) : null}
