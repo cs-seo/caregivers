@@ -27,6 +27,7 @@ import { inviteStatusLabel } from "@/lib/job-invite";
 import { unreadJobCountsByRequest } from "@/lib/job-messages";
 import { formatJobStart, jobDirectoryFilters, jobDirectoryHref, matchingJobs } from "@/lib/job-match";
 import { buildRoster, canToggleRosterAway } from "@/lib/roster";
+import { disputePauseBanner, isAutoReleasePaused } from "@/lib/escrow";
 import { formatAud } from "@/lib/money";
 import {
   familyPendingAcceptanceBanner,
@@ -296,6 +297,12 @@ export default async function DashboardPage({
         .filter((item) => item.pendingWeeks > 0)
     : [];
   const pendingAcceptanceCopy = familyPendingAcceptanceBanner(pendingAcceptanceItems);
+  const disputedItems = isFamily
+    ? needsAction
+        .filter((group) => group.weeks.some((week) => isAutoReleasePaused(week.status)))
+        .map((group) => ({ carerName: group.caregiverName, href: group.href }))
+    : [];
+  const disputePauseCopy = disputePauseBanner(disputedItems);
   const comingUp = comingUpBookings(bookings).slice(0, 4);
   const comingUpLabel = { now: "Happening now", soon: "Starts soon", week: "This week" } as const;
   const escrowStatuses = new Set<string>([
@@ -453,6 +460,14 @@ export default async function DashboardPage({
       {unrepliedReviews.length > 0 ? (
         <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
           {plural(unrepliedReviews.length, "review")} waiting for a public reply.
+        </p>
+      ) : null}
+      {disputePauseCopy && disputedItems[0] ? (
+        <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
+          {disputePauseCopy}{" "}
+          <Link href={disputedItems[0].href} className="font-medium text-teal">
+            {disputedItems.length === 1 ? "Open the sit" : "Open the first sit"}
+          </Link>
         </p>
       ) : null}
       {pendingAcceptanceCopy && pendingAcceptanceItems[0] ? (

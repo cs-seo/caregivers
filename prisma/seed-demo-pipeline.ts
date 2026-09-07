@@ -809,6 +809,62 @@ export async function seedDemoAwaitingPay(prisma: PrismaClient) {
   return 1;
 }
 
+const CHLOE_DISPUTE_NOTE =
+  "DEMO_DISPUTE: Friday aged care in Norwood — disputed, auto-release paused.";
+
+export async function seedDemoDispute(prisma: PrismaClient) {
+  const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
+  const chloe = await prisma.caregiverProfile.findUnique({
+    where: { slug: "chloe-bennett-aged-care-adelaide" },
+    include: { specialties: true },
+  });
+  if (!family || !chloe || !chloe.specialties[0]) return 0;
+  const existing = await prisma.booking.findFirst({
+    where: { familyId: family.id, notes: CHLOE_DISPUTE_NOTE },
+  });
+  if (existing) {
+    if (existing.status !== BOOKING_STATUS.DISPUTED) {
+      await prisma.booking.update({ where: { id: existing.id }, data: { status: BOOKING_STATUS.DISPUTED } });
+    }
+    return 1;
+  }
+
+  const hours = 3;
+  const subtotal = chloe.hourlyRateCents * hours;
+  const fee = Math.round(subtotal * 0.1);
+  const quote = {
+    hours,
+    rateCents: chloe.hourlyRateCents,
+    subtotalCents: subtotal,
+    platformFeeCents: fee,
+    gstCents: Math.round(subtotal / 11),
+    totalCents: subtotal + fee,
+  };
+  await prisma.booking.create({
+    data: {
+      familyId: family.id,
+      caregiverId: chloe.id,
+      specialtyId: chloe.specialties[0].specialtyId,
+      startAt: parseSydneyDateTimeLocal("2026-08-28T10:00"),
+      endAt: parseSydneyDateTimeLocal("2026-08-28T13:00"),
+      notes: CHLOE_DISPUTE_NOTE,
+      status: BOOKING_STATUS.DISPUTED,
+      ...quote,
+      payment: {
+        create: {
+          provider: "demo",
+          amountCents: quote.totalCents,
+          platformFeeCents: quote.platformFeeCents,
+          caregiverPayoutCents: quote.subtotalCents,
+          status: "held",
+          heldAt: parseSydneyDateTimeLocal("2026-08-28T09:00"),
+        },
+      },
+    },
+  });
+  return 1;
+}
+
 export async function seedDemoPassOn(prisma: PrismaClient) {
   const elena = await prisma.caregiverProfile.findUnique({
     where: { slug: "elena-rossi-companion-care-sydney" },
@@ -1057,11 +1113,12 @@ async function main() {
   const jobMessages = await seedDemoJobMessages(prisma);
   const passOn = await seedDemoPassOn(prisma);
   const awaitingPay = await seedDemoAwaitingPay(prisma);
+  const dispute = await seedDemoDispute(prisma);
   const jobAlerts = await seedDemoJobAlerts(prisma);
   const proposalAlerts = await seedDemoProposalAlerts(prisma);
   const inviteAlerts = await seedDemoInviteAlerts(prisma);
   console.log(
-    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}; notice ${notice}; jobStarts ${jobStarts}; expired ${expired}; hired ${hired}; invites ${invites}; jobMessages ${jobMessages}; passOn ${passOn}; awaitingPay ${awaitingPay}; jobAlerts ${jobAlerts}; proposalAlerts ${proposalAlerts}; inviteAlerts ${inviteAlerts}`,
+    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}; notice ${notice}; jobStarts ${jobStarts}; expired ${expired}; hired ${hired}; invites ${invites}; jobMessages ${jobMessages}; passOn ${passOn}; awaitingPay ${awaitingPay}; dispute ${dispute}; jobAlerts ${jobAlerts}; proposalAlerts ${proposalAlerts}; inviteAlerts ${inviteAlerts}`,
   );
   await prisma.$disconnect();
 }

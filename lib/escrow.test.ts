@@ -3,10 +3,15 @@ import { test } from "node:test";
 import {
   autoReleaseAt,
   autoReleaseLabel,
+  autoReleasePausedLabel,
+  canAutoRelease,
+  disputePauseBanner,
+  isAutoReleasePaused,
   msUntilAutoRelease,
   shouldAutoRelease,
   showsAutoReleaseNotice,
 } from "./escrow";
+import { BOOKING_STATUS, PAYMENT_STATUS } from "./constants";
 
 const end = new Date("2026-09-06T19:00:00+10:00");
 
@@ -30,6 +35,33 @@ test("showsAutoReleaseNotice is only while funds are still held", () => {
   assert.equal(showsAutoReleaseNotice("pending_release"), true);
   assert.equal(showsAutoReleaseNotice("disputed"), false);
   assert.equal(showsAutoReleaseNotice("released"), false);
+});
+
+test("isAutoReleasePaused is only a live dispute", () => {
+  assert.equal(isAutoReleasePaused(BOOKING_STATUS.DISPUTED), true);
+  assert.equal(isAutoReleasePaused(BOOKING_STATUS.IN_PROGRESS), false);
+  assert.equal(isAutoReleasePaused(BOOKING_STATUS.PENDING_RELEASE), false);
+  assert.match(autoReleasePausedLabel(), /paused while this sit is in dispute/);
+});
+
+test("canAutoRelease is false while the sit is disputed even after 72 hours", () => {
+  const due = { status: BOOKING_STATUS.IN_PROGRESS, endAt: end, payment: { status: PAYMENT_STATUS.HELD } };
+  const now = new Date("2026-09-09T20:00:00+10:00");
+  assert.equal(canAutoRelease(due, now), true);
+  assert.equal(canAutoRelease({ ...due, status: BOOKING_STATUS.DISPUTED }, now), false);
+  assert.equal(canAutoRelease({ ...due, payment: { status: PAYMENT_STATUS.RELEASED } }, now), false);
+});
+
+test("disputePauseBanner names the carer on a paused sit", () => {
+  assert.equal(disputePauseBanner([]), null);
+  assert.equal(
+    disputePauseBanner([{ carerName: "Chloe Bennett" }]),
+    "Auto-release is paused on the sit with Chloe Bennett while it is in dispute.",
+  );
+  assert.equal(
+    disputePauseBanner([{ carerName: "Chloe Bennett" }, { carerName: "Elena Rossi" }]),
+    "Auto-release is paused on 2 disputed sits.",
+  );
 });
 
 test("autoReleaseLabel describes upcoming, ticking and due releases", () => {

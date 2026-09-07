@@ -173,12 +173,38 @@ export function msUntilAutoRelease(endAt: Date, now = new Date()) {
   return autoReleaseAt(endAt).getTime() - now.getTime();
 }
 
+export function isAutoReleasePaused(status: string) {
+  return status === BOOKING_STATUS.DISPUTED;
+}
+
 export function showsAutoReleaseNotice(status: string) {
   return (
     status === BOOKING_STATUS.ESCROW_HELD ||
     status === BOOKING_STATUS.IN_PROGRESS ||
     status === BOOKING_STATUS.PENDING_RELEASE
   );
+}
+
+export function autoReleasePausedLabel() {
+  return "Auto-release is paused while this sit is in dispute. Funds stay in escrow until you release them to the carer or refund the family.";
+}
+
+export function disputePauseBanner(items: { carerName: string }[]) {
+  if (!items.length) return null;
+  if (items.length === 1) {
+    return `Auto-release is paused on the sit with ${items[0].carerName} while it is in dispute.`;
+  }
+  return `Auto-release is paused on ${items.length} disputed sits.`;
+}
+
+export function canAutoRelease(
+  booking: { status: string; endAt: Date; payment?: { status: string } | null },
+  now = new Date(),
+) {
+  if (isAutoReleasePaused(booking.status)) return false;
+  if (booking.payment?.status !== PAYMENT_STATUS.HELD) return false;
+  if (!showsAutoReleaseNotice(booking.status)) return false;
+  return shouldAutoRelease(booking.endAt, now);
 }
 
 export function autoReleaseLabel(endAt: Date, now = new Date()) {
@@ -206,15 +232,6 @@ export async function autoReleaseIfDue(bookingId: string) {
     include: { payment: true },
   });
   if (!booking) return null;
-  if (booking.status === BOOKING_STATUS.DISPUTED) return null;
-  if (
-    booking.payment?.status === PAYMENT_STATUS.HELD &&
-    shouldAutoRelease(booking.endAt) &&
-    (booking.status === BOOKING_STATUS.IN_PROGRESS ||
-      booking.status === BOOKING_STATUS.PENDING_RELEASE ||
-      booking.status === BOOKING_STATUS.ESCROW_HELD)
-  ) {
-    return releasePayment(booking.id);
-  }
-  return null;
+  if (!canAutoRelease(booking)) return null;
+  return releasePayment(booking.id);
 }

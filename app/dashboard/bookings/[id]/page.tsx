@@ -18,7 +18,13 @@ import {
   startBookingAction,
 } from "@/lib/actions";
 import { BOOKING_STATUS, BOOKING_STATUS_LABELS, UNPAID_BOOKING_STATUSES } from "@/lib/constants";
-import { autoReleaseIfDue, autoReleaseLabel, showsAutoReleaseNotice } from "@/lib/escrow";
+import {
+  autoReleaseIfDue,
+  autoReleaseLabel,
+  autoReleasePausedLabel,
+  isAutoReleasePaused,
+  showsAutoReleaseNotice,
+} from "@/lib/escrow";
 import { DemoCardForm } from "@/components/demo-card-form";
 import { HandoverCard } from "@/components/handover-card";
 import { ReviewCard, ReviewReplyForm } from "@/components/review-card";
@@ -128,7 +134,9 @@ export default async function BookingDetailPage({
             : "This sit is coming up. Check the handover card for keys, parking and care notes."}
         </p>
       ) : null}
-      {showsAutoReleaseNotice(booking.status) ? (
+      {isAutoReleasePaused(booking.status) ? (
+        <p className="mt-3 rounded-xl bg-orange-50 p-3 text-sm text-clay">{autoReleasePausedLabel()}</p>
+      ) : showsAutoReleaseNotice(booking.status) ? (
         <p className="mt-3 rounded-xl border border-line bg-card p-3 text-sm text-stone-600">
           {autoReleaseLabel(booking.endAt)}
         </p>
@@ -139,7 +147,9 @@ export default async function BookingDetailPage({
             Week {booking.recurringIndex} of {booking.recurringTotal}
           </Badge>
         ) : null}
-        <Badge tone="teal">{BOOKING_STATUS_LABELS[booking.status] ?? booking.status}</Badge>
+        <Badge tone={isAutoReleasePaused(booking.status) ? "clay" : "teal"}>
+          {BOOKING_STATUS_LABELS[booking.status] ?? booking.status}
+        </Badge>
       </div>
       {pendingNotice ? (
         <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">{pendingNotice}</p>
