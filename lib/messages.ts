@@ -1,3 +1,4 @@
+import { jobMessageUnreadWhere } from "./job-messages";
 import { prisma } from "./prisma";
 
 export function isUnreadFor(message: { senderId: string; readAt?: Date | null }, userId: string) {
@@ -19,7 +20,11 @@ export function unreadWhere(userId: string) {
 }
 
 export async function countUnreadMessages(userId: string) {
-  return prisma.message.count({ where: unreadWhere(userId) });
+  const [booking, job] = await Promise.all([
+    prisma.message.count({ where: unreadWhere(userId) }),
+    prisma.careRequestMessage.count({ where: jobMessageUnreadWhere(userId) }),
+  ]);
+  return booking + job;
 }
 
 export async function unreadCountsByBooking(userId: string) {

@@ -29,6 +29,11 @@ import {
   isSafeInviteReturnPath,
   sanitizeInviteNote,
 } from "./job-invite";
+import {
+  canSendJobMessage,
+  isCarerInvolvedInJob,
+  sanitizeJobMessage,
+} from "./job-messages";
 import { bookHref, canAttachJob, isJobSlug } from "./job-match";
 import {
   firstSitOutsideHours,
@@ -937,6 +942,58 @@ export async function applyHouseholdToUpcomingAction(_formData: FormData) {
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/household");
   redirect(`/dashboard/household?copied=${copied}`);
+}
+
+export async function sendJobMessageAction(formData: FormData) {
+  const user = await requireUser();
+  if (!user) redirect("/login");
+  const slug = String(formData.get("slug") ?? "");
+  const caregiverId = String(formData.get("caregiverId") ?? "");
+  const body = sanitizeJobMessage(String(formData.get("body") ?? ""));
+  const job = await prisma.careRequest.findUnique({
+    where: { slug },
+    include: {
+      invites: { where: { caregiverId }, select: { id: true } },
+      proposals: { where: { caregiverId }, select: { id: true } },
+      bookings: { where: { caregiverId }, select: { id: true }, take: 1 },
+    },
+  });
+  const caregiver = await prisma.caregiverProfile.findUnique({
+    where: { id: caregiverId },
+    select: { id: true, userId: true },
+  });
+  const involved = isCarerInvolvedInJob({
+    caregiverId,
+    invited: Boolean(job?.invites.length),
+    proposed: Boolean(job?.proposals.length),
+    hiredCaregiverId: job?.bookings[0]?.id ? caregiverId : null,
+  });
+  if (
+    !job ||
+    !caregiver ||
+    !canSendJobMessage({
+      job,
+      viewerId: user.id,
+      viewerCaregiverId: user.caregiverProfile?.id,
+      threadCaregiverId: caregiver.id,
+      involved,
+    })
+  ) {
+    redirect(slug ? `/care-requests/${slug}` : "/dashboard");
+  }
+  if (!body) redirect(`/care-requests/${job.slug}?error=message`);
+
+  await prisma.careRequestMessage.create({
+    data: {
+      requestId: job.id,
+      caregiverId: caregiver.id,
+      senderId: user.id,
+      body,
+    },
+  });
+  revalidatePath(`/care-requests/${job.slug}`);
+  revalidatePath("/dashboard");
+  redirect(`/care-requests/${job.slug}?sent=1`);
 }
 
 export async function sendMessageAction(formData: FormData) {

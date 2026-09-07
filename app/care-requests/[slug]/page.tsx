@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { Badge } from "@/components/badges";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { InviteButton } from "@/components/invite-button";
+import { JobMessageThread } from "@/components/job-message-thread";
 import {
   createProposalAction,
   declineInviteAction,
@@ -14,6 +15,13 @@ import {
 import { BOOKING_STATUS_LABELS } from "@/lib/constants";
 import { canWithdrawProposal, proposalStatusLabel, proposalStatusTone } from "@/lib/job-hire";
 import { INVITE_STATUS, canWithdrawInvite, inviteStatusLabel, inviteStatusTone } from "@/lib/job-invite";
+import {
+  canSendJobMessage,
+  canViewJobThread,
+  groupJobMessages,
+  isCarerInvolvedInJob,
+  markJobThreadRead,
+} from "@/lib/job-messages";
 import {
   formatJobStart,
   jobBookHref,
@@ -47,7 +55,7 @@ export default async function CareRequestPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ proposed?: string; updated?: string; error?: string }>;
+  searchParams: Promise<{ proposed?: string; updated?: string; sent?: string; error?: string }>;
 }) {
   const [{ slug }, query, session] = await Promise.all([params, searchParams, auth()]);
   const job = await prisma.careRequest.findUnique({
@@ -65,6 +73,10 @@ export default async function CareRequestPage({
           caregiver: { select: { user: { select: { name: true } } } },
         },
         orderBy: { startAt: "asc" },
+      },
+      jobMessages: {
+        include: { sender: { select: { id: true, name: true } } },
+        orderBy: { createdAt: "asc" },
       },
       proposals: {
         include: {
@@ -121,6 +133,39 @@ export default async function CareRequestPage({
       ? await Promise.all([directoryStats(directoryFilters), searchCaregivers(directoryFilters, 3)])
       : [null, []];
   const attachedBookings = job.bookings.filter((booking) => isOwner || booking.caregiverId === carer?.id);
+  const hiredCaregiverId = job.status === "hired" ? attachedBookings[0]?.caregiverId ?? null : null;
+  const messagesByCarer = groupJobMessages(job.jobMessages);
+  const viewerId = session?.user?.id ?? "";
+  const newMessageIds = new Set(
+    job.jobMessages
+      .filter((message) => message.sender.id !== viewerId && !message.readAt)
+      .map((message) => message.id),
+  );
+  if (viewerId && newMessageIds.size) {
+    if (isOwner) {
+      await Promise.all(
+        [...messagesByCarer.keys()].map((caregiverId) => markJobThreadRead(job.id, caregiverId, viewerId)),
+      );
+    } else if (carer) {
+      await markJobThreadRead(job.id, carer.id, viewerId);
+    }
+  }
+  const carerInvolved = Boolean(
+    carer &&
+      isCarerInvolvedInJob({
+        caregiverId: carer.id,
+        invited: Boolean(ownInvite),
+        proposed: alreadyProposed,
+        hiredCaregiverId,
+      }),
+  );
+  const carerCanViewThread = canViewJobThread({
+    job,
+    viewerId,
+    viewerCaregiverId: carer?.id,
+    threadCaregiverId: carer?.id ?? "",
+    involved: carerInvolved,
+  });
 
   return (
     <div className="grid gap-8 md:grid-cols-[1fr_340px]">
@@ -232,26 +277,43 @@ export default async function CareRequestPage({
             <h2 className="text-xl font-semibold">Invited carers</h2>
             <ul className="mt-4 space-y-3">
               {job.invites.map((invite) => (
-                <li key={invite.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-line bg-card p-4">
-                  <div>
-                    <Link href={`/caregiver/${invite.caregiver.slug}?job=${job.slug}`} className="font-semibold text-ink hover:text-teal">
-                      {invite.caregiver.user.name}
-                    </Link>
-                    <p className="mt-1 text-sm text-stone-500">Asked to send a proposal on this request.</p>
-                    {invite.note ? <p className="mt-2 text-sm text-stone-700">{invite.note}</p> : null}
+                <li key={invite.id} className="rounded-2xl border border-line bg-card p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <Link href={`/caregiver/${invite.caregiver.slug}?job=${job.slug}`} className="font-semibold text-ink hover:text-teal">
+                        {invite.caregiver.user.name}
+                      </Link>
+                      <p className="mt-1 text-sm text-stone-500">Asked to send a proposal on this request.</p>
+                      {invite.note ? <p className="mt-2 text-sm text-stone-700">{invite.note}</p> : null}
+                    </div>
+                    <span className="flex flex-wrap items-center gap-2">
+                      <Badge tone={inviteStatusTone(invite.status)}>{inviteStatusLabel(invite.status)}</Badge>
+                      {canWithdrawInvite(invite, job, session?.user?.id ?? "") ? (
+                        <form action={withdrawInviteAction}>
+                          <input type="hidden" name="inviteId" value={invite.id} />
+                          <input type="hidden" name="next" value={`/care-requests/${job.slug}`} />
+                          <button className="text-sm text-stone-500 hover:text-ink" type="submit">
+                            Withdraw invite
+                          </button>
+                        </form>
+                      ) : null}
+                    </span>
                   </div>
-                  <span className="flex flex-wrap items-center gap-2">
-                    <Badge tone={inviteStatusTone(invite.status)}>{inviteStatusLabel(invite.status)}</Badge>
-                    {canWithdrawInvite(invite, job, session?.user?.id ?? "") ? (
-                      <form action={withdrawInviteAction}>
-                        <input type="hidden" name="inviteId" value={invite.id} />
-                        <input type="hidden" name="next" value={`/care-requests/${job.slug}`} />
-                        <button className="text-sm text-stone-500 hover:text-ink" type="submit">
-                          Withdraw invite
-                        </button>
-                      </form>
-                    ) : null}
-                  </span>
+                  <JobMessageThread
+                    slug={job.slug}
+                    caregiverId={invite.caregiverId}
+                    counterpartName={invite.caregiver.user.name}
+                    messages={messagesByCarer.get(invite.caregiverId) ?? []}
+                    currentUserId={viewerId}
+                    canSend={canSendJobMessage({
+                      job,
+                      viewerId,
+                      threadCaregiverId: invite.caregiverId,
+                      involved: true,
+                    })}
+                    newIds={newMessageIds}
+                    compact
+                  />
                 </li>
               ))}
             </ul>
@@ -281,6 +343,23 @@ export default async function CareRequestPage({
                     </span>
                   </p>
                   <p className="mt-2 text-sm text-stone-700">{proposal.coverLetter}</p>
+                  {!job.invites.some((invite) => invite.caregiverId === proposal.caregiverId) ? (
+                    <JobMessageThread
+                      slug={job.slug}
+                      caregiverId={proposal.caregiverId}
+                      counterpartName={proposal.caregiver.user.name}
+                      messages={messagesByCarer.get(proposal.caregiverId) ?? []}
+                      currentUserId={viewerId}
+                      canSend={canSendJobMessage({
+                        job,
+                        viewerId,
+                        threadCaregiverId: proposal.caregiverId,
+                        involved: true,
+                      })}
+                      newIds={newMessageIds}
+                      compact
+                    />
+                  ) : null}
                   {job.status === "open" && proposal.status === "pending" ? (
                     <form action={hireProposalAction} className="mt-3">
                       <input type="hidden" name="proposalId" value={proposal.id} />
@@ -309,6 +388,8 @@ export default async function CareRequestPage({
       <aside className="h-fit rounded-2xl border border-line bg-card p-5">
         {query.proposed ? <p className="mb-3 text-sm text-teal">Proposal sent.</p> : null}
         {query.updated ? <p className="mb-3 text-sm text-teal">Proposal updated.</p> : null}
+        {query.sent ? <p className="mb-3 text-sm text-teal">Message sent.</p> : null}
+        {query.error === "message" ? <p className="mb-3 text-sm text-clay">Write a short message before sending.</p> : null}
         {isCarer && ownInvite?.status === INVITE_STATUS.PENDING && job.status === "open" ? (
           <p className="mb-3 rounded-xl bg-sage px-3 py-2 text-sm text-teal-deep">
             {job.family.name} invited you to apply
@@ -367,6 +448,26 @@ export default async function CareRequestPage({
               Decline this invite
             </button>
           </form>
+        ) : null}
+        {carerCanViewThread && carer ? (
+          <div className="mt-5 border-t border-line pt-4">
+            <h2 className="font-semibold">Message {job.family.name}</h2>
+            <JobMessageThread
+              slug={job.slug}
+              caregiverId={carer.id}
+              counterpartName={job.family.name}
+              messages={messagesByCarer.get(carer.id) ?? []}
+              currentUserId={viewerId}
+              canSend={canSendJobMessage({
+                job,
+                viewerId,
+                viewerCaregiverId: carer.id,
+                threadCaregiverId: carer.id,
+                involved: carerInvolved,
+              })}
+              newIds={newMessageIds}
+            />
+          </div>
         ) : null}
         {isCarer && job.status === "open" ? null : !session ? (
           <p className="text-sm">

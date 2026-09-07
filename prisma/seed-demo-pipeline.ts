@@ -646,6 +646,53 @@ export async function seedDemoHiredRequest(prisma: PrismaClient) {
   return 1;
 }
 
+const ALEX_TO_JAMES_JOB = "Could you do 8:15 if 8am is tight? Mum is usually up by then.";
+const JAMES_TO_ALEX_JOB = "Yes — 8:15 works on Mon/Wed/Fri. I’ll confirm once I see the week.";
+
+export async function seedDemoJobMessages(prisma: PrismaClient) {
+  const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
+  const jamesUser = await prisma.user.findUnique({ where: { email: "james.okafor@careproof.com.au" } });
+  const james = await prisma.caregiverProfile.findUnique({
+    where: { slug: "james-okafor-disability-support-sydney" },
+  });
+  const job = await prisma.careRequest.findUnique({
+    where: { slug: "weekday-aged-care-marrickville" },
+  });
+  if (!family || !jamesUser || !james || !job || job.status !== "open") return 0;
+
+  const existing = await prisma.careRequestMessage.findMany({
+    where: { requestId: job.id, caregiverId: james.id },
+    select: { body: true },
+  });
+  const have = new Set(existing.map((row) => row.body));
+  let created = 0;
+  if (!have.has(ALEX_TO_JAMES_JOB)) {
+    await prisma.careRequestMessage.create({
+      data: {
+        requestId: job.id,
+        caregiverId: james.id,
+        senderId: family.id,
+        body: ALEX_TO_JAMES_JOB,
+        createdAt: new Date("2026-09-06T21:00:00.000Z"),
+      },
+    });
+    created += 1;
+  }
+  if (!have.has(JAMES_TO_ALEX_JOB)) {
+    await prisma.careRequestMessage.create({
+      data: {
+        requestId: job.id,
+        caregiverId: james.id,
+        senderId: jamesUser.id,
+        body: JAMES_TO_ALEX_JOB,
+        createdAt: new Date("2026-09-06T22:10:00.000Z"),
+      },
+    });
+    created += 1;
+  }
+  return created;
+}
+
 export async function seedDemoInvites(prisma: PrismaClient) {
   const james = await prisma.caregiverProfile.findUnique({
     where: { slug: "james-okafor-disability-support-sydney" },
@@ -760,8 +807,9 @@ async function main() {
   const jobStarts = await seedDemoJobStarts(prisma);
   const hired = await seedDemoHiredRequest(prisma);
   const invites = await seedDemoInvites(prisma);
+  const jobMessages = await seedDemoJobMessages(prisma);
   console.log(
-    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}; notice ${notice}; jobStarts ${jobStarts}; hired ${hired}; invites ${invites}`,
+    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}; notice ${notice}; jobStarts ${jobStarts}; hired ${hired}; invites ${invites}; jobMessages ${jobMessages}`,
   );
   await prisma.$disconnect();
 }

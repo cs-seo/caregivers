@@ -13,6 +13,7 @@ import {
 import { formatDateTime, plural, snippet } from "@/lib/format";
 import { canWithdrawProposal, notHiredBanner, proposalStatusLabel, requestStatusLabel } from "@/lib/job-hire";
 import { inviteStatusLabel } from "@/lib/job-invite";
+import { unreadJobCountsByRequest } from "@/lib/job-messages";
 import { formatJobStart, jobDirectoryFilters, jobDirectoryHref, matchingJobs } from "@/lib/job-match";
 import { buildRoster } from "@/lib/roster";
 import { formatAud } from "@/lib/money";
@@ -139,7 +140,9 @@ export default async function DashboardPage({
     orderBy: { createdAt: "desc" },
   });
   const unreadByBooking = await unreadCountsByBooking(user.id);
-  const unreadTotal = [...unreadByBooking.values()].reduce((sum, count) => sum + count, 0);
+  const unreadJobByRequest = await unreadJobCountsByRequest(user.id);
+  const unreadBookingTotal = [...unreadByBooking.values()].reduce((sum, count) => sum + count, 0);
+  const unreadJobTotal = [...unreadJobByRequest.values()].reduce((sum, count) => sum + count, 0);
   const unrepliedReviews =
     !isFamily && user.caregiverProfile
       ? await prisma.review.findMany({
@@ -276,6 +279,7 @@ export default async function DashboardPage({
           include: {
             request: {
               select: {
+                id: true,
                 slug: true,
                 title: true,
                 startDate: true,
@@ -341,9 +345,14 @@ export default async function DashboardPage({
       {query.cancelled ? (
         <p className="mt-4 rounded-xl bg-sage p-3 text-sm">Unpaid weeks were cancelled. Funded escrow holds are unchanged.</p>
       ) : null}
-      {unreadTotal > 0 ? (
+      {unreadBookingTotal > 0 ? (
         <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
-          {plural(unreadTotal, "new message")} on your bookings. Open the highlighted sit to read and mark it seen.
+          {plural(unreadBookingTotal, "new message")} on your bookings. Open the highlighted sit to read and mark it seen.
+        </p>
+      ) : null}
+      {unreadJobTotal > 0 ? (
+        <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
+          {plural(unreadJobTotal, "new message")} on a care request. Open the job to read and mark it seen.
         </p>
       ) : null}
       {unrepliedReviews.length > 0 ? (
@@ -779,6 +788,11 @@ export default async function DashboardPage({
                   {invite.request.family.name} invited you · starts {formatJobStart(invite.request.startDate)}
                 </p>
                 {invite.note ? <p className="mt-2 text-sm text-stone-700">{invite.note}</p> : null}
+                {unreadJobByRequest.get(invite.request.id) ? (
+                  <p className="mt-2 text-sm font-medium text-clay">
+                    {plural(unreadJobByRequest.get(invite.request.id) ?? 0, "new message")}
+                  </p>
+                ) : null}
                 <div className="mt-2 flex flex-wrap gap-3 text-sm">
                   <Link href={`/care-requests/${invite.request.slug}`} className="font-medium text-teal hover:underline">
                     Send a proposal
@@ -838,6 +852,11 @@ export default async function DashboardPage({
                       {job._count.invites} {inviteStatusLabel("pending").toLowerCase()}
                     </span>
                   ) : null}
+                  {unreadJobByRequest.get(job.id) ? (
+                    <span className="mt-0.5 block text-sm font-medium text-clay">
+                      {plural(unreadJobByRequest.get(job.id) ?? 0, "new message")}
+                    </span>
+                  ) : null}
                 </li>
                 );
               })
@@ -856,6 +875,11 @@ export default async function DashboardPage({
                   {proposal.careRequest.title}
                 </Link>
                 <span className="ml-2 text-sm text-stone-500">{proposalStatusLabel(proposal.status)}</span>
+                {unreadJobByRequest.get(proposal.careRequestId) ? (
+                  <span className="ml-2 text-sm font-medium text-clay">
+                    {plural(unreadJobByRequest.get(proposal.careRequestId) ?? 0, "new message")}
+                  </span>
+                ) : null}
                 {proposal.careRequest.bookings[0] ? (
                   <span className="mt-0.5 block text-sm">
                     <Link

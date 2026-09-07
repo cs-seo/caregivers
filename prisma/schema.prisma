@@ -23,6 +23,7 @@ model User {
   familyRequests   CareRequest[]
   reviewsAuthored  Review[]       @relation("ReviewAuthor")
   messages         Message[]
+  jobMessages      CareRequestMessage[]
   shortlists       Shortlist[]
   savedSearches    SavedSearch[]
   calendarFeed     CalendarFeed?
@@ -128,6 +129,7 @@ model CaregiverProfile {
   bookings    Booking[]
   proposals   Proposal[]
   invites     CareRequestInvite[]
+  jobMessages CareRequestMessage[]
   reviews     Review[]
   shortlistedBy Shortlist[]
   blockedDates CaregiverBlockedDate[]
@@ -212,6 +214,7 @@ model CareRequest {
   createdAt     DateTime  @default(now())
   proposals     Proposal[]
   invites       CareRequestInvite[]
+  jobMessages   CareRequestMessage[]
   bookings      Booking[]
 }
 
@@ -242,6 +245,22 @@ model CareRequestInvite {
   @@unique([requestId, caregiverId])
   @@index([caregiverId, status])
   @@index([requestId, status])
+}
+
+model CareRequestMessage {
+  id          String           @id @default(cuid())
+  requestId   String
+  request     CareRequest      @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  caregiverId String
+  caregiver   CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  senderId    String
+  sender      User             @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  body        String
+  readAt      DateTime?
+  createdAt   DateTime         @default(now())
+
+  @@index([requestId, caregiverId])
+  @@index([caregiverId, readAt])
 }
 
 model Booking {
