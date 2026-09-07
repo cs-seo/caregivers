@@ -84,7 +84,7 @@ export default function TrustPage() {
         <p className="mt-2 text-stone-700">
           Cash or a private transfer leaves both sides exposed: the family has no hold if the shift does not happen,
           and the carer has no proof they will be paid. Escrow is the default on CareProof. Reviews are only accepted
-          after a released booking, so ratings stay tied to work that actually ran.
+          after a released booking, so ratings stay tied to work that actually ran. Carers can publish one public reply.
         </p>
       </section>
     </div>

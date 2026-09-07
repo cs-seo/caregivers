@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CaregiverCardView } from "@/components/caregiver-card";
 import { JsonLd } from "@/components/json-ld";
+import { ReviewCard } from "@/components/review-card";
 import { SearchForm } from "@/components/search-form";
 import { SITE_NAME, siteUrl } from "@/lib/constants";
 import { formatAud } from "@/lib/money";
@@ -162,7 +163,9 @@ export default async function HomePage() {
           </li>
           <li className="rounded-2xl bg-sage/70 p-4">
             <p className="font-semibold text-ink">Reviews after the sit</p>
-            <p className="mt-1 text-stone-600">Only families with a released escrow booking can leave a rating.</p>
+            <p className="mt-1 text-stone-600">
+              Only families with a released escrow booking can leave a rating. Carers can publish one public reply.
+            </p>
           </li>
         </ul>
         <div className="mt-5 flex flex-wrap gap-3">
@@ -265,21 +268,23 @@ export default async function HomePage() {
       {reviews.length > 0 ? (
         <section>
           <h2 className="text-2xl font-semibold text-ink">Reviews from released bookings</h2>
-          <p className="mt-2 text-sm text-stone-600">Families can only review after escrow is released.</p>
+          <p className="mt-2 text-sm text-stone-600">
+            Families can only review after escrow is released. Carers can publish one public reply.
+          </p>
           <ul className="mt-5 grid gap-4 md:grid-cols-2">
             {reviews.map((review) => (
               <li key={review.id} className="rounded-2xl border border-line bg-card p-5">
-                <p className="text-sm font-medium text-ink">
-                  {review.author.name} · {"★".repeat(review.rating)}
-                </p>
-                <p className="mt-2 text-sm text-stone-700">{review.body}</p>
-                <p className="mt-3 text-xs text-stone-500">
-                  <Link href={`/caregiver/${review.caregiver.slug}`} className="text-teal">
-                    {review.caregiver.user.name}
-                  </Link>
-                  {" · "}
-                  {review.caregiver.suburb}, {review.caregiver.city.name} {review.caregiver.city.state.abbrev}
-                </p>
+                <ReviewCard
+                  authorName={review.author.name}
+                  rating={review.rating}
+                  body={review.body}
+                  createdAt={review.createdAt}
+                  caregiverName={review.caregiver.user.name}
+                  caregiverHref={`/caregiver/${review.caregiver.slug}`}
+                  location={`${review.caregiver.suburb}, ${review.caregiver.city.name} ${review.caregiver.city.state.abbrev}`}
+                  reply={review.reply}
+                  repliedAt={review.repliedAt}
+                />
               </li>
             ))}
           </ul>

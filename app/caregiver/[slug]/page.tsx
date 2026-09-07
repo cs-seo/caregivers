@@ -7,9 +7,10 @@ import { JsonLd } from "@/components/json-ld";
 import { DaysOffCalendar } from "@/components/days-off-calendar";
 import { MobileBookBar } from "@/components/mobile-book-bar";
 import { Portrait } from "@/components/portrait";
+import { ReviewCard, ReviewReplyForm } from "@/components/review-card";
 import { ShortlistButton } from "@/components/shortlist-button";
 import { fortnightLabel, isInstantBookLive, summariseFortnight, weeklyHourChips } from "@/lib/availability";
-import { formatDate, lastActiveLabel, monthYear } from "@/lib/format";
+import { lastActiveLabel, monthYear } from "@/lib/format";
 import { formatAud } from "@/lib/money";
 import { getCaregiverBySlug, getShortlistedIds, getUpcomingAvailability, similarCaregivers } from "@/lib/queries";
 import { requireUser } from "@/lib/session";
@@ -17,6 +18,7 @@ import { breadcrumbJsonLd, pageMeta } from "@/lib/seo";
 import { siteUrl } from "@/lib/constants";
 import { trustLabel } from "@/lib/trust";
 import { WORK_VERIFICATION_LABELS } from "@/lib/constants";
+import { canReplyToReview } from "@/lib/reviews";
 import { slugifySuburb } from "@/prisma/data/suburbs";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -32,11 +34,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function CaregiverProfilePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
   const { slug } = await params;
-  const [carer, viewer] = await Promise.all([getCaregiverBySlug(slug), requireUser()]);
+  const [carer, viewer, { error }] = await Promise.all([
+    getCaregiverBySlug(slug),
+    requireUser(),
+    searchParams,
+  ]);
   if (!carer) notFound();
   const isOwner = viewer?.caregiverProfile?.id === carer.id;
   const [similar, savedIds, upcoming] = await Promise.all([
@@ -167,7 +175,7 @@ export default async function CaregiverProfilePage({
             <h2 className="text-xl font-semibold text-ink">Verified checks</h2>
             <p className="mt-2 text-sm text-stone-600">
               CareProof records credentials as first-class documents with expiry dates. Reviews can only be left after
-              a released escrow booking.
+              a released escrow booking. Carers can publish one public reply.
             </p>
             <CredentialDetails credentials={carer.credentials} abn={carer.abn} />
           </section>
@@ -247,11 +255,22 @@ export default async function CaregiverProfilePage({
               <ul className="mt-4 space-y-3">
                 {carer.reviews.map((review) => (
                   <li key={review.id} className="rounded-2xl border border-line bg-card p-4">
-                    <p className="text-sm font-medium text-ink">
-                      {review.author.name} · {"★".repeat(review.rating)}
-                    </p>
-                    <p className="mt-1 text-sm text-stone-700">{review.body}</p>
-                    <p className="mt-2 text-xs text-stone-500">{formatDate(review.createdAt)}</p>
+                    <ReviewCard
+                      authorName={review.author.name}
+                      rating={review.rating}
+                      body={review.body}
+                      createdAt={review.createdAt}
+                      caregiverName={carer.user.name}
+                      reply={review.reply}
+                      repliedAt={review.repliedAt}
+                    />
+                    {canReplyToReview(review, carer.id) && isOwner ? (
+                      <ReviewReplyForm
+                        reviewId={review.id}
+                        next={`/caregiver/${carer.slug}`}
+                        error={error === "reply"}
+                      />
+                    ) : null}
                   </li>
                 ))}
               </ul>

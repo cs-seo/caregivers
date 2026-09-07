@@ -313,5 +313,7 @@ model Review {
   caregiver   CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
   rating      Int
   body        String
+  reply       String?
+  repliedAt   DateTime?
   createdAt   DateTime         @default(now())
 }

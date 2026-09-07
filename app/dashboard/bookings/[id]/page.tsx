@@ -20,12 +20,14 @@ import {
 import { BOOKING_STATUS, BOOKING_STATUS_LABELS, UNPAID_BOOKING_STATUSES } from "@/lib/constants";
 import { autoReleaseIfDue } from "@/lib/escrow";
 import { HandoverCard } from "@/components/handover-card";
+import { ReviewCard, ReviewReplyForm } from "@/components/review-card";
 import { persistMissingInvoiceNumbers } from "@/lib/invoice-peers";
 import { comingUpKind, isComingUp } from "@/lib/coming-up";
 import { formatDateTime } from "@/lib/format";
 import { isUnreadFor, markThreadRead } from "@/lib/messages";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
+import { canReplyToReview } from "@/lib/reviews";
 import { requireUser } from "@/lib/session";
 import { pageMeta } from "@/lib/seo";
 
@@ -375,7 +377,32 @@ export default async function BookingDetailPage({
         </form>
       </section>
 
-      {isFamily && booking.status === BOOKING_STATUS.RELEASED && !booking.review ? (
+      {booking.review ? (
+        <section id="review" className="mt-8 space-y-3 rounded-2xl border border-line bg-card p-5">
+          <h2 className="font-semibold">Review</h2>
+          <p className="text-xs text-stone-500">
+            {isCarer
+              ? "This shows on your public profile. You can publish one reply."
+              : "Published after this booking was released."}
+          </p>
+          <ReviewCard
+            authorName={isFamily ? "You" : booking.family.name}
+            rating={booking.review.rating}
+            body={booking.review.body}
+            createdAt={booking.review.createdAt}
+            caregiverName={booking.caregiver.user.name}
+            reply={booking.review.reply}
+            repliedAt={booking.review.repliedAt}
+          />
+          {canReplyToReview(booking.review, booking.caregiverId) && isCarer ? (
+            <ReviewReplyForm
+              reviewId={booking.review.id}
+              next={`/dashboard/bookings/${booking.id}`}
+              error={query.error === "reply"}
+            />
+          ) : null}
+        </section>
+      ) : isFamily && booking.status === BOOKING_STATUS.RELEASED ? (
         <form action={createReviewAction} className="mt-8 space-y-3 rounded-2xl border border-line bg-card p-5">
           <h2 className="font-semibold">Leave a review</h2>
           <p className="text-xs text-stone-500">Only available after funds are released.</p>

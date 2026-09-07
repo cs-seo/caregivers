@@ -130,6 +130,17 @@ export default async function DashboardPage({
   });
   const unreadByBooking = await unreadCountsByBooking(user.id);
   const unreadTotal = [...unreadByBooking.values()].reduce((sum, count) => sum + count, 0);
+  const unrepliedReviews =
+    !isFamily && user.caregiverProfile
+      ? await prisma.review.findMany({
+          where: { caregiverId: user.caregiverProfile.id, reply: null },
+          include: {
+            author: { select: { name: true } },
+            booking: { select: { id: true, startAt: true, specialty: { select: { name: true } } } },
+          },
+          orderBy: { createdAt: "desc" },
+        })
+      : [];
   const groupedSource = bookings.map((booking) => ({
     ...booking,
     unreadCount: unreadByBooking.get(booking.id) ?? 0,
@@ -237,6 +248,11 @@ export default async function DashboardPage({
           {plural(unreadTotal, "new message")} on your bookings. Open the highlighted sit to read and mark it seen.
         </p>
       ) : null}
+      {unrepliedReviews.length > 0 ? (
+        <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
+          {plural(unrepliedReviews.length, "review")} waiting for a public reply.
+        </p>
+      ) : null}
 
       <section className="mt-6 grid gap-3 sm:grid-cols-3">
         <div className="rounded-2xl border border-line bg-card p-5">
@@ -276,6 +292,33 @@ export default async function DashboardPage({
           </p>
         </div>
       </section>
+
+      {unrepliedReviews.length ? (
+        <section className="mt-6 rounded-2xl border border-line bg-card p-5">
+          <h2 className="font-semibold text-ink">Reply needed</h2>
+          <p className="mt-1 text-sm text-stone-600">
+            Families see your reply on the public profile. You can publish one reply per review.
+          </p>
+          <ul className="mt-4 space-y-3">
+            {unrepliedReviews.map((review) => (
+              <li key={review.id} className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <p className="font-medium text-ink">
+                    {review.author.name} · {"★".repeat(review.rating)}
+                  </p>
+                  <p className="mt-1 text-sm text-stone-600">{review.body}</p>
+                  <p className="mt-1 text-xs text-stone-500">
+                    {review.booking.specialty.name} · {formatDateTime(review.booking.startAt)}
+                  </p>
+                </div>
+                <Link href={`/dashboard/bookings/${review.bookingId}#review`} className="text-sm text-teal">
+                  Reply
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {comingUp.length ? (
         <section className="mt-6 rounded-2xl border border-line bg-card p-5">

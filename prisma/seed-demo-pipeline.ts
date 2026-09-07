@@ -449,6 +449,41 @@ export async function seedDemoInvoiceNumbers(prisma: PrismaClient) {
   return stamped;
 }
 
+const DEMO_REVIEW_REPLIES = [
+  {
+    slug: "maya-chen-nanny-melbourne",
+    reply: "Thank you — the park photo was Luca's idea. Happy to Instant Book the next after-school.",
+    repliedAt: new Date("2026-06-08T10:00:00+10:00"),
+  },
+  {
+    slug: "chloe-bennett-aged-care-adelaide",
+    reply: "Glad I could flag lunch. I'll keep the same routine if you book again.",
+    repliedAt: new Date("2026-05-24T09:00:00+09:30"),
+  },
+] as const;
+
+export async function seedDemoReviewReplies(prisma: PrismaClient) {
+  let updated = 0;
+  for (const item of DEMO_REVIEW_REPLIES) {
+    const carer = await prisma.caregiverProfile.findUnique({
+      where: { slug: item.slug },
+      select: { id: true },
+    });
+    if (!carer) continue;
+    const review = await prisma.review.findFirst({
+      where: { caregiverId: carer.id, reply: null },
+      orderBy: { createdAt: "desc" },
+    });
+    if (!review) continue;
+    await prisma.review.update({
+      where: { id: review.id },
+      data: { reply: item.reply, repliedAt: item.repliedAt },
+    });
+    updated += 1;
+  }
+  return updated;
+}
+
 export async function seedDemoSavedSearches(prisma: PrismaClient) {
   const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
   if (!family) return 0;
@@ -484,8 +519,9 @@ async function main() {
   const searches = await seedDemoSavedSearches(prisma);
   const handover = await seedDemoHandover(prisma);
   const invoices = await seedDemoInvoiceNumbers(prisma);
+  const replies = await seedDemoReviewReplies(prisma);
   console.log(
-    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}`,
+    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}`,
   );
   await prisma.$disconnect();
 }

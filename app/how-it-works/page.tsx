@@ -23,7 +23,7 @@ const faqs = [
   },
   {
     q: "Can I leave a review immediately?",
-    a: "No. Reviews are only accepted after a booking is released. That keeps ratings tied to real, paid work.",
+    a: "No. Reviews are only accepted after a booking is released. That keeps ratings tied to real, paid work. The carer can then publish one public reply from the booking, the dashboard Reply needed list, or their profile. Replies cannot be edited.",
   },
   {
     q: "Can I book a standing weekly sit?",
@@ -77,8 +77,8 @@ export default function HowItWorksPage() {
         <li>
           <h2 className="text-xl font-semibold">2. Check experience, not just a bio</h2>
           <p className="mt-2 text-stone-600">
-            Profiles show verified roles, screening checks and reviews from released bookings. Trust score is calculated
-            from those facts.
+            Profiles show verified roles, screening checks and reviews from released bookings. Carers can publish one
+            public reply. Trust score is calculated from those facts.
           </p>
         </li>
         <li>

@@ -25,7 +25,8 @@ export default function TermsPage() {
         <h2 className="text-xl font-semibold text-ink">Carers</h2>
         <p className="mt-2 text-stone-700">
           You confirm your checks and work history are accurate. CareProof holds the family payment and pays your
-          advertised rate after release. The platform fee is charged on top of that rate.
+          advertised rate after release. The platform fee is charged on top of that rate. You may publish one public
+          reply to each review.
         </p>
       </section>
       <section>

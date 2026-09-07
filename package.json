@@ -7,7 +7,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test lib/money.test.ts lib/format.test.ts lib/availability.test.ts lib/roster.test.ts lib/credentials.test.ts lib/ics.test.ts lib/dashboard-groups.test.ts lib/blocked-dates.test.ts lib/statement.test.ts lib/funding.test.ts lib/trust.test.ts lib/messages.test.ts lib/saved-search.test.ts lib/calendar-feed.test.ts lib/coming-up.test.ts lib/handover.test.ts lib/month-calendar.test.ts",
+    "test": "tsx --test lib/money.test.ts lib/format.test.ts lib/availability.test.ts lib/roster.test.ts lib/credentials.test.ts lib/ics.test.ts lib/dashboard-groups.test.ts lib/blocked-dates.test.ts lib/statement.test.ts lib/funding.test.ts lib/trust.test.ts lib/messages.test.ts lib/saved-search.test.ts lib/calendar-feed.test.ts lib/coming-up.test.ts lib/handover.test.ts lib/month-calendar.test.ts lib/reviews.test.ts",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed-locations": "tsx prisma/seed-locations.ts",

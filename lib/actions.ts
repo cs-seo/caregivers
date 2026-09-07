@@ -16,6 +16,7 @@ import { quoteBooking } from "./money";
 import { prisma } from "./prisma";
 import { newCalendarToken } from "./calendar-feed";
 import { handoverFromForm, handoverToDb } from "./handover";
+import { isSafeReviewReturnPath, sanitizeReviewReply, hasReviewReply } from "./reviews";
 import { isSafeSearchHref, MAX_SAVED_SEARCHES } from "./saved-search";
 import { requireRole, requireUser } from "./session";
 
@@ -601,6 +602,40 @@ export async function createReviewAction(formData: FormData) {
 
   revalidatePath(`/caregiver/${booking.caregiver.slug}`);
   revalidatePath(`/dashboard/bookings/${booking.id}`);
+  revalidatePath("/");
+  revalidatePath("/dashboard");
+}
+
+export async function replyToReviewAction(formData: FormData) {
+  const user = await requireRole(ROLES.CAREGIVER);
+  if (!user?.caregiverProfile) redirect("/login");
+  const reviewId = String(formData.get("reviewId") ?? "");
+  const reply = sanitizeReviewReply(String(formData.get("reply") ?? ""));
+  const nextRaw = String(formData.get("next") ?? "");
+  const review = await prisma.review.findUnique({
+    where: { id: reviewId },
+    include: { caregiver: { select: { id: true, slug: true } } },
+  });
+  if (!review || review.caregiverId !== user.caregiverProfile.id) throw new Error("Not allowed");
+  const dest = isSafeReviewReturnPath(nextRaw)
+    ? nextRaw
+    : `/dashboard/bookings/${review.bookingId}`;
+  if (hasReviewReply(review)) redirect(dest);
+  if (!reply) {
+    const join = dest.includes("?") ? "&" : "?";
+    redirect(`${dest}${join}error=reply`);
+  }
+
+  await prisma.review.update({
+    where: { id: review.id },
+    data: { reply, repliedAt: new Date() },
+  });
+
+  revalidatePath(`/caregiver/${review.caregiver.slug}`);
+  revalidatePath(`/dashboard/bookings/${review.bookingId}`);
+  revalidatePath("/");
+  revalidatePath("/dashboard");
+  redirect(dest);
 }
 
 export async function runAutoReleaseAction(bookingId: string) {
