@@ -66,6 +66,11 @@ export default async function BookingDetailPage({
         select: { id: true, startAt: true, status: true, recurringIndex: true, recurringTotal: true, totalCents: true },
       })
     : [];
+  const liveWeeks = series.filter(
+    (week) => week.status !== BOOKING_STATUS.CANCELLED && week.status !== BOOKING_STATUS.REFUNDED,
+  );
+  const cancelledWeeks = series.length - liveWeeks.length;
+  const seriesTotalCents = liveWeeks.reduce((sum, week) => sum + week.totalCents, 0);
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -128,7 +133,8 @@ export default async function BookingDetailPage({
         <section className="mt-6 rounded-2xl border border-line bg-card p-5">
           <h2 className="font-semibold text-ink">Standing weekly series</h2>
           <p className="mt-1 text-sm text-stone-600">
-            Each week is a separate escrow hold. Series total {formatAud(series.reduce((sum, week) => sum + week.totalCents, 0))}.
+            Each week is a separate escrow hold. Live series total {formatAud(seriesTotalCents)}
+            {cancelledWeeks > 0 ? ` · ${cancelledWeeks} cancelled` : ""}.
           </p>
           <ul className="mt-3 space-y-2 text-sm">
             {series.map((week) => (
