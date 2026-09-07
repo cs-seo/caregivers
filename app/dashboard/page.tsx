@@ -686,7 +686,7 @@ export default async function DashboardPage({
                       <input type="hidden" name="next" value="/dashboard" />
                       <input type="hidden" name="alertsOn" value={search.alertsOn ? "0" : "1"} />
                       <button className="text-stone-500 hover:text-ink" type="submit">
-                        {search.alertsOn ? "Alerts off" : "Alerts on"}
+                        {search.alertsOn ? "Turn alerts off" : "Turn alerts on"}
                       </button>
                     </form>
                     <form action={deleteSavedSearchAction}>
