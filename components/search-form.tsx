@@ -4,10 +4,12 @@ export async function SearchForm({
   specialty,
   state,
   city,
+  q,
 }: {
   specialty?: string;
   state?: string;
   city?: string;
+  q?: string;
 }) {
   const [specialties, states] = await Promise.all([getSpecialties(), getStates()]);
   const selectedState = states.find((item) => item.slug === state);
@@ -15,7 +17,16 @@ export async function SearchForm({
 
   return (
     <form action="/caregivers" method="get" className="grid gap-3 rounded-2xl bg-card p-4 shadow-sm md:grid-cols-12">
-      <label className="md:col-span-4">
+      <label className="md:col-span-3">
+        <span className="mb-1 block text-xs font-medium text-stone-500">Keywords</span>
+        <input
+          name="q"
+          defaultValue={q ?? ""}
+          placeholder="Name or suburb"
+          className="w-full rounded-xl border border-line bg-white px-3 py-2.5"
+        />
+      </label>
+      <label className="md:col-span-3">
         <span className="mb-1 block text-xs font-medium text-stone-500">Specialty</span>
         <select
           name="specialty"
@@ -30,7 +41,7 @@ export async function SearchForm({
           ))}
         </select>
       </label>
-      <label className="md:col-span-3">
+      <label className="md:col-span-2">
         <span className="mb-1 block text-xs font-medium text-stone-500">State</span>
         <select name="state" defaultValue={state ?? ""} className="w-full rounded-xl border border-line bg-white px-3 py-2.5">
           <option value="">All Australia</option>
@@ -41,7 +52,7 @@ export async function SearchForm({
           ))}
         </select>
       </label>
-      <label className="md:col-span-3">
+      <label className="md:col-span-2">
         <span className="mb-1 block text-xs font-medium text-stone-500">City</span>
         <select name="city" defaultValue={city ?? ""} className="w-full rounded-xl border border-line bg-white px-3 py-2.5">
           <option value="">Any city</option>

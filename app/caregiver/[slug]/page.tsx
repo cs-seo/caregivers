@@ -4,8 +4,11 @@ import { Badge, CredentialDetails } from "@/components/badges";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { CaregiverCardView } from "@/components/caregiver-card";
 import { JsonLd } from "@/components/json-ld";
+import { MobileBookBar } from "@/components/mobile-book-bar";
+import { Portrait } from "@/components/portrait";
 import { ShortlistButton } from "@/components/shortlist-button";
-import { formatDate, initials, lastActiveLabel, monthYear } from "@/lib/format";
+import { weeklyHourChips } from "@/lib/availability";
+import { formatDate, lastActiveLabel, monthYear } from "@/lib/format";
 import { formatAud } from "@/lib/money";
 import { getCaregiverBySlug, getShortlistedIds, similarCaregivers } from "@/lib/queries";
 import { requireUser } from "@/lib/session";
@@ -47,7 +50,7 @@ export default async function CaregiverProfilePage({
   const canShortlist = viewer?.role === "FAMILY";
 
   return (
-    <div>
+    <div className="pb-20 md:pb-0">
       <JsonLd
         data={[
           breadcrumbJsonLd([
@@ -113,9 +116,7 @@ export default async function CaregiverProfilePage({
       <div className="grid gap-8 md:grid-cols-[1fr_320px]">
         <div>
           <div className="flex gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-teal text-lg font-semibold text-white">
-              {initials(carer.user.name)}
-            </div>
+            <Portrait name={carer.user.name} size={72} />
             <div>
               <h1 className="text-3xl font-semibold text-ink">{carer.user.name}</h1>
               {isOwner ? (
@@ -164,10 +165,19 @@ export default async function CaregiverProfilePage({
             <CredentialDetails credentials={carer.credentials} abn={carer.abn} />
           </section>
 
-          {carer.availabilityNote ? (
+          {carer.availabilityNote || carer.weeklyHours ? (
             <section className="mt-8">
               <h2 className="text-xl font-semibold text-ink">Availability</h2>
-              <p className="mt-2 text-stone-700">{carer.availabilityNote}</p>
+              {weeklyHourChips(carer.weeklyHours).length ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {weeklyHourChips(carer.weeklyHours).map((chip) => (
+                    <span key={chip} className="rounded-full bg-sage px-3 py-1 text-sm text-teal-deep">
+                      {chip}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+              {carer.availabilityNote ? <p className="mt-2 text-stone-700">{carer.availabilityNote}</p> : null}
             </section>
           ) : null}
 
@@ -227,6 +237,7 @@ export default async function CaregiverProfilePage({
               ? "Instant Book — pay into escrow now and the carer is confirmed."
               : "Request to book — the carer accepts, then you fund escrow."}
           </p>
+          {carer.weeklyHours ? <p className="mt-3 text-sm font-medium text-teal-deep">{carer.weeklyHours}</p> : null}
           {carer.availabilityNote ? <p className="mt-3 text-sm text-stone-700">{carer.availabilityNote}</p> : null}
           <p className="mt-2 text-xs text-stone-500">{lastActiveLabel(carer.lastActiveAt)}</p>
           <Link
@@ -267,6 +278,7 @@ export default async function CaregiverProfilePage({
           </div>
         </section>
       ) : null}
+      <MobileBookBar slug={carer.slug} hourlyRateCents={carer.hourlyRateCents} instantBook={carer.instantBook} />
     </div>
   );
 }

@@ -14,6 +14,7 @@ export type FeaturedCarer = {
   instantBook: boolean;
   availableNow: boolean;
   availabilityNote?: string;
+  weeklyHours?: string;
   specialties: string[];
   credentials: { type: string; issuingState?: string; number?: string; months: number }[];
   work: {
@@ -44,6 +45,7 @@ export const featuredCarers: FeaturedCarer[] = [
     instantBook: true,
     availableNow: true,
     availabilityNote: "Weekday mornings in Marrickville and the inner west. Overnight respite with 48 hours’ notice.",
+    weeklyHours: "Mon–Fri 7am–1pm · overnight by arrangement",
     specialties: ["aged-care", "nursing", "personal-care", "respite"],
     credentials: [
       { type: "ahpra", number: "NMW0002184412", months: 18 },
@@ -87,6 +89,7 @@ export const featuredCarers: FeaturedCarer[] = [
     instantBook: true,
     availableNow: true,
     availabilityNote: "After school and weekends around Bondi and the eastern suburbs. School-holiday cover with a week’s notice.",
+    weeklyHours: "Mon–Fri 3pm–7pm · Sat mornings",
     specialties: ["nannies", "after-school-care", "babysitters"],
     credentials: [
       { type: "wwcc", issuingState: "nsw", number: "WWC1234567E", months: 30 },
@@ -121,6 +124,7 @@ export const featuredCarers: FeaturedCarer[] = [
     instantBook: false,
     availableNow: true,
     availabilityNote: "Community access and weekend social shifts around Parramatta. Mid-week evenings with 24 hours’ notice.",
+    weeklyHours: "Wed–Sun 9am–5pm",
     specialties: ["disability-support", "special-needs", "personal-care"],
     credentials: [
       { type: "ndis_screening", issuingState: "nsw", months: 28 },
@@ -155,6 +159,7 @@ export const featuredCarers: FeaturedCarer[] = [
     instantBook: true,
     availableNow: false,
     availabilityNote: "Standing weekday visits in Leichhardt and the inner west. New clients usually need a week’s notice.",
+    weeklyHours: "Mon–Thu 9am–2pm",
     specialties: ["companion-care", "housekeeping", "aged-care"],
     credentials: [
       { type: "aged_care_screening", issuingState: "nsw", months: 16 },
@@ -188,6 +193,7 @@ export const featuredCarers: FeaturedCarer[] = [
     instantBook: true,
     availableNow: true,
     availabilityNote: "Overnight sits and weekday personal care around Hamilton and Newcastle. Same-week respite when the roster is open.",
+    weeklyHours: "Mon–Fri 7pm–7am · weekend days",
     specialties: ["aged-care", "personal-care", "respite"],
     credentials: [
       { type: "aged_care_screening", issuingState: "nsw", months: 22 },
@@ -1043,6 +1049,7 @@ export const featuredCarers: FeaturedCarer[] = [
     city: "canberra",
     instantBook: true,
     availableNow: true,
+    weeklyHours: "Mon–Fri 2:30pm–7pm",
     specialties: ["after-school-care", "nannies", "babysitters"],
     credentials: [
       { type: "wwcc", issuingState: "act", months: 17 },
@@ -1076,6 +1083,7 @@ export const featuredCarers: FeaturedCarer[] = [
     instantBook: true,
     availableNow: true,
     availabilityNote: "Evenings from 5pm and most weekends around Newtown. Last-minute sits if you message before 3pm.",
+    weeklyHours: "Thu–Sun 5pm–midnight",
     specialties: ["babysitters", "nannies"],
     credentials: [
       { type: "wwcc", issuingState: "nsw", number: "WWC8841203E", months: 26 },
@@ -1108,6 +1116,7 @@ export const featuredCarers: FeaturedCarer[] = [
     instantBook: true,
     availableNow: true,
     availabilityNote: "Thursday to Sunday evenings in Fitzroy and the inner north. Overnight sits with 48 hours’ notice.",
+    weeklyHours: "Thu–Sun 5pm–midnight",
     specialties: ["babysitters", "nannies", "after-school-care"],
     credentials: [
       { type: "wwcc", issuingState: "vic", number: "0194-771-220", months: 22 },
@@ -1140,6 +1149,7 @@ export const featuredCarers: FeaturedCarer[] = [
     instantBook: true,
     availableNow: true,
     availabilityNote: "Overnight and multi-evening cover around West End and South Brisbane. Day sits Monday to Wednesday.",
+    weeklyHours: "Mon–Wed 9am–4pm · overnight Fri–Sat",
     specialties: ["nannies", "babysitters"],
     credentials: [
       { type: "wwcc", issuingState: "qld", number: "88421903", months: 28 },
@@ -1172,6 +1182,7 @@ export const featuredCarers: FeaturedCarer[] = [
     instantBook: true,
     availableNow: true,
     availabilityNote: "Friday and Saturday evenings in Cottesloe and Claremont. School-holiday day sits with a week’s notice.",
+    weeklyHours: "Fri–Sat 5pm–midnight · school-holiday days",
     specialties: ["babysitters", "nannies"],
     credentials: [
       { type: "wwcc", issuingState: "wa", months: 18 },
@@ -1204,6 +1215,7 @@ export const featuredCarers: FeaturedCarer[] = [
     instantBook: true,
     availableNow: true,
     availabilityNote: "Same-day evenings if you book by 4pm. After-school pick-ups around Redfern, Surry Hills and Newtown.",
+    weeklyHours: "Mon–Fri 3pm–7pm · evenings if booked by 4pm",
     specialties: ["babysitters", "after-school-care", "nannies"],
     credentials: [
       { type: "wwcc", issuingState: "nsw", number: "WWC5521088E", months: 20 },
@@ -1236,6 +1248,7 @@ export const featuredCarers: FeaturedCarer[] = [
     instantBook: false,
     availableNow: true,
     availabilityNote: "Overnight Fridays and Saturdays in the valley and New Farm. Recurring date nights with a standing time.",
+    weeklyHours: "Fri–Sat overnight · Sun mornings",
     specialties: ["babysitters", "nannies"],
     credentials: [
       { type: "wwcc", issuingState: "qld", months: 24 },
@@ -1252,5 +1265,71 @@ export const featuredCarers: FeaturedCarer[] = [
       },
     ],
     phone: "0455 301 772",
+  },
+  {
+    email: "nora.vukovic@careproof.com.au",
+    name: "Nora Vukovic",
+    slug: "nora-vukovic-babysitter-adelaide",
+    headline: "Date-night babysitter for Norwood and the eastern suburbs",
+    bio: "I cover the restaurant hours — bath, stories, and a text once the house is quiet. Two children is the same rate. WWCC and first aid with asthma and anaphylaxis. Instant Book for Friday and Saturday.",
+    hourlyRateCents: 4000,
+    yearsExperience: 5,
+    suburb: "Norwood",
+    state: "sa",
+    city: "adelaide",
+    abn: "62 331 880 214",
+    instantBook: true,
+    availableNow: true,
+    availabilityNote: "Friday and Saturday evenings around Norwood and Kensington. Mid-week sits with 24 hours’ notice.",
+    weeklyHours: "Thu–Sun 5pm–midnight",
+    specialties: ["babysitters", "nannies"],
+    credentials: [
+      { type: "wwcc", issuingState: "sa", number: "WWC4412088E", months: 21 },
+      { type: "first_aid", months: 10 },
+      { type: "police_check", months: 9 },
+    ],
+    work: [
+      {
+        employer: "Eastern suburbs families, Norwood",
+        title: "Evening babysitter",
+        start: "2022-03-01",
+        duties: "Date nights, sibling groups and the odd Sunday lunch sit.",
+        verification: "document",
+        hours: 1400,
+      },
+    ],
+    phone: "0412 774 903",
+  },
+  {
+    email: "caleb.shore@careproof.com.au",
+    name: "Caleb Shore",
+    slug: "caleb-shore-babysitter-hobart",
+    headline: "Evening and weekend babysitter in Battery Point",
+    bio: "Parents book me when they have a table in Salamanca or a Saturday at MONA. I follow the bedtime you write down and leave the kitchen as I found it. WWCC and child first aid current. No extra charge for a second child.",
+    hourlyRateCents: 3800,
+    yearsExperience: 4,
+    suburb: "Battery Point",
+    state: "tas",
+    city: "hobart",
+    instantBook: true,
+    availableNow: true,
+    availabilityNote: "Friday to Sunday evenings in Battery Point and Sandy Bay. Saturday day sits in school holidays.",
+    weeklyHours: "Fri–Sun 4pm–11pm",
+    specialties: ["babysitters", "after-school-care"],
+    credentials: [
+      { type: "wwcc", issuingState: "tas", months: 19 },
+      { type: "first_aid", months: 7 },
+    ],
+    work: [
+      {
+        employer: "Hobart families, Battery Point and Sandy Bay",
+        title: "Weekend sitter",
+        start: "2023-02-12",
+        duties: "Evening sits, Saturday days and the occasional visitor stay.",
+        verification: "employer_confirmed",
+        hours: 860,
+      },
+    ],
+    phone: "0438 229 110",
   },
 ];

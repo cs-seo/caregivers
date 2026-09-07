@@ -66,6 +66,14 @@ export default function TrustPage() {
         </p>
       </section>
       <section>
+        <h2 className="text-xl font-semibold">Cancellations and disputes</h2>
+        <p className="mt-2 text-stone-700">
+          Cancel more than 24 hours before the start and the held amount returns in full. Inside 24 hours the family
+          can still request a refund; CareProof reviews the booking before releasing or returning funds. After the
+          visit, escrow stays held for 72 hours so either side can raise a dispute before auto-release.
+        </p>
+      </section>
+      <section>
         <h2 className="text-xl font-semibold">Why not pay the carer directly?</h2>
         <p className="mt-2 text-stone-700">
           Cash or a private transfer leaves both sides exposed: the family has no hold if the shift does not happen,

@@ -197,6 +197,16 @@ export default async function CarerProfileEditorPage({
           </label>
         </div>
         <label className="block text-sm">
+          Usual weekly hours
+          <input
+            name="weeklyHours"
+            maxLength={120}
+            defaultValue={profile.weeklyHours ?? ""}
+            placeholder="Thu–Sun 5pm–midnight"
+            className="mt-1 w-full rounded-lg border border-line px-3 py-2"
+          />
+        </label>
+        <label className="block text-sm">
           Availability note (optional)
           <textarea
             name="availabilityNote"

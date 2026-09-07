@@ -60,6 +60,7 @@ export default async function ShortlistPage() {
                     <th className="px-4 py-3 font-medium">Carer</th>
                     <th className="px-4 py-3 font-medium">Rate</th>
                     <th className="px-4 py-3 font-medium">Experience</th>
+                    <th className="px-4 py-3 font-medium">Usual hours</th>
                     <th className="px-4 py-3 font-medium">Checks</th>
                     <th className="px-4 py-3 font-medium">Book</th>
                   </tr>
@@ -78,6 +79,7 @@ export default async function ShortlistPage() {
                       </td>
                       <td className="px-4 py-3 font-medium text-teal">{formatAud(carer.hourlyRateCents)}/hr</td>
                       <td className="px-4 py-3 text-stone-600">{carer.yearsExperience} yrs</td>
+                      <td className="px-4 py-3 text-stone-600">{carer.weeklyHours ?? "Ask when you book"}</td>
                       <td className="px-4 py-3">
                         <CredentialBadges credentials={carer.credentials} abn={carer.abn} />
                       </td>

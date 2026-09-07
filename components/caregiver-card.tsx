@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { initials, lastActiveLabel } from "@/lib/format";
+import { weeklyHourChips } from "@/lib/availability";
+import { lastActiveLabel } from "@/lib/format";
 import { formatAud } from "@/lib/money";
 import { trustLabel } from "@/lib/trust";
 import type { CaregiverCard } from "@/lib/queries";
 import { Badge, CredentialBadges } from "./badges";
+import { Portrait } from "./portrait";
 import { ShortlistButton } from "./shortlist-button";
 
 export function CaregiverCardView({
@@ -17,9 +19,7 @@ export function CaregiverCardView({
   return (
     <article className="rounded-2xl border border-line bg-card p-5 shadow-sm transition hover:border-teal/40">
       <div className="flex gap-4">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-teal text-sm font-semibold text-white">
-          {initials(caregiver.user.name)}
-        </div>
+        <Portrait name={caregiver.user.name} size={56} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
@@ -40,6 +40,15 @@ export function CaregiverCardView({
           <p className="mt-2 line-clamp-2 text-sm text-stone-700">{caregiver.headline}</p>
           {caregiver.availabilityNote ? (
             <p className="mt-2 line-clamp-2 text-sm text-stone-600">{caregiver.availabilityNote}</p>
+          ) : null}
+          {weeklyHourChips(caregiver.weeklyHours).length ? (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {weeklyHourChips(caregiver.weeklyHours).map((chip) => (
+                <span key={chip} className="rounded-full bg-sage px-2 py-0.5 text-xs text-teal-deep">
+                  {chip}
+                </span>
+              ))}
+            </div>
           ) : null}
           <p className="mt-2 text-xs text-stone-500">{specialtyNames}</p>
           {caregiver.workHistory[0] ? (

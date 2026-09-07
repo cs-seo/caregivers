@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { BookingForm } from "@/components/booking-form";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { auth } from "@/auth";
+import { weeklyHourChips } from "@/lib/availability";
 import { lastActiveLabel, sydneyDateTimeLocal } from "@/lib/format";
 import { formatAud } from "@/lib/money";
 import { getCaregiverBySlug } from "@/lib/queries";
@@ -30,6 +31,7 @@ export default async function BookPage({
   const [{ slug }, query, session] = await Promise.all([params, searchParams, auth()]);
   const carer = await getCaregiverBySlug(slug);
   if (!carer) notFound();
+  const hourChips = weeklyHourChips(carer.weeklyHours);
 
   return (
     <div className="mx-auto max-w-xl">
@@ -45,6 +47,18 @@ export default async function BookPage({
         {carer.suburb}, {carer.city.name} · {formatAud(carer.hourlyRateCents)}/hr inc GST.{" "}
         {carer.instantBook ? "Instant Book confirms immediately." : "The carer will accept before you pay."}
       </p>
+      {hourChips.length ? (
+        <div className="mt-3 rounded-xl bg-sage p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Usual weekly hours</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {hourChips.map((chip) => (
+              <span key={chip} className="rounded-full bg-card px-3 py-1 text-xs font-medium text-teal-deep">
+                {chip}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
       {carer.availabilityNote ? <p className="mt-3 rounded-xl bg-sage p-3 text-sm text-stone-700">{carer.availabilityNote}</p> : null}
       <p className="mt-2 text-xs text-stone-500">{lastActiveLabel(carer.lastActiveAt)}</p>
       {query.error ? (
@@ -75,6 +89,19 @@ export default async function BookPage({
           />
         </div>
       )}
+      <section className="mt-8 rounded-2xl border border-line bg-card p-5">
+        <h2 className="text-lg font-semibold text-ink">Cancellation</h2>
+        <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-stone-600">
+          <li>More than 24 hours before start: full refund of the held amount.</li>
+          <li>Inside 24 hours: request a refund and CareProof reviews it before release or return.</li>
+          <li>After the visit, funds stay held for 72 hours so you can raise a dispute before auto-release.</li>
+        </ul>
+        <p className="mt-3 text-sm">
+          <Link href="/trust-and-safety" className="font-medium text-teal hover:underline">
+            Read the full trust and payments policy
+          </Link>
+        </p>
+      </section>
     </div>
   );
 }

@@ -3,6 +3,7 @@
  * Each generated carer is a relocated variation of an existing profile —
  * same specialties, checks, work-history shape and voice, new person/place.
  */
+import { defaultWeeklyHours } from "../../lib/availability";
 import type { FeaturedCarer } from "./featured-carers";
 import { featuredCarers } from "./featured-carers";
 import { SUBURBS_BY_CITY, slugifySuburb } from "./suburbs";
@@ -188,6 +189,7 @@ export function generateCarers(count = 480, templates: FeaturedCarer[] = feature
       instantBook: template.instantBook,
       availableNow,
       availabilityNote: defaultAvailabilityNote(template, place, availableNow),
+      weeklyHours: template.weeklyHours || defaultWeeklyHours(template.specialties),
       specialties: [...template.specialties],
       credentials: template.credentials.map((credential) => ({
         type: credential.type,

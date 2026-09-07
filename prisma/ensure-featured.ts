@@ -1,10 +1,30 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { defaultWeeklyHours } from "../lib/availability";
 import { featuredCarers } from "./data/featured-carers";
 import { insertCarer } from "./insert-carer";
 
 const prisma = new PrismaClient();
 const DEMO_PASSWORD = "CareProof123!";
+
+async function backfillWeeklyHours() {
+  const missing = await prisma.caregiverProfile.findMany({
+    where: { weeklyHours: null },
+    select: {
+      id: true,
+      specialties: { select: { specialty: { select: { slug: true } } } },
+    },
+  });
+  let updated = 0;
+  for (const profile of missing) {
+    await prisma.caregiverProfile.update({
+      where: { id: profile.id },
+      data: { weeklyHours: defaultWeeklyHours(profile.specialties.map((item) => item.specialty.slug)) },
+    });
+    updated += 1;
+  }
+  return updated;
+}
 
 async function main() {
   const [specialties, cities, existing] = await Promise.all([
@@ -27,8 +47,18 @@ async function main() {
   });
 
   let created = 0;
+  let synced = 0;
   for (const carer of featuredCarers) {
-    if (emails.has(carer.email)) continue;
+    if (emails.has(carer.email)) {
+      if (carer.weeklyHours) {
+        const result = await prisma.caregiverProfile.updateMany({
+          where: { user: { email: carer.email } },
+          data: { weeklyHours: carer.weeklyHours },
+        });
+        synced += result.count;
+      }
+      continue;
+    }
     const cityId = cityByKey[`${carer.state}:${carer.city}`];
     if (!cityId) {
       console.warn(`Skipping ${carer.email}: missing city ${carer.state}/${carer.city}`);
@@ -38,7 +68,8 @@ async function main() {
     created += 1;
     console.log(`Inserted ${carer.name}`);
   }
-  console.log(`Featured carers added: ${created}`);
+  const backfilled = await backfillWeeklyHours();
+  console.log(`Featured carers added: ${created}; hours synced: ${synced}; hours backfilled: ${backfilled}`);
 }
 
 main()

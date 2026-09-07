@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
+import { defaultWeeklyHours } from "../lib/availability";
 import type { GeneratedCarer } from "./data/generate-carers";
 
 function addMonths(months: number) {
@@ -39,6 +40,7 @@ export async function insertCarer(
             (carer.availableNow
               ? `Weekday afternoons and most weekends around ${carer.suburb}.`
               : `Book a few days ahead — usually free mid-week around ${carer.suburb}.`),
+          weeklyHours: carer.weeklyHours || defaultWeeklyHours(carer.specialties),
           lastActiveAt: new Date(),
           verifiedHours,
           specialties: {

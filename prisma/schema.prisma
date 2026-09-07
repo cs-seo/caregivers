@@ -103,6 +103,7 @@ model CaregiverProfile {
   instantBook      Boolean  @default(false)
   availableNow     Boolean  @default(false)
   availabilityNote String?
+  weeklyHours      String?
   lastActiveAt     DateTime @default(now())
   ratingAvg       Float    @default(0)
   reviewCount     Int      @default(0)

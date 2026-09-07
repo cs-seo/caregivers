@@ -89,7 +89,7 @@ export async function DirectoryResults({
           : ""}
       </p>
       <div className="mt-6">
-        <SearchForm specialty={filters.specialty} state={filters.state} city={filters.city} />
+        <SearchForm specialty={filters.specialty} state={filters.state} city={filters.city} q={filters.q} />
       </div>
       <div className="mt-8 grid gap-6 md:grid-cols-[240px_1fr]">
         <DirectoryFilters action={filterAction} current={current} />
