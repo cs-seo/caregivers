@@ -235,7 +235,9 @@ export default async function DashboardPage({
             {formatAud(isFamily ? fyTotals.familyCents : fyTotals.payoutCents)}
           </p>
           <p className="mt-1 text-sm text-stone-500">
-            {isFamily ? "Funded family spend this financial year." : "Funded payout this financial year."}{" "}
+            {isFamily ? "Funded family spend this financial year." : "Funded payout this financial year."}
+          </p>
+          <p className="mt-2 text-sm">
             <Link href="/dashboard/statement" className="text-teal">
               Statement
             </Link>
