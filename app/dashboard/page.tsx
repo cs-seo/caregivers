@@ -30,11 +30,19 @@ import { formatAud } from "@/lib/money";
 import {
   declineInviteAction,
   deleteSavedSearchAction,
+  toggleSavedSearchAlertsAction,
   applyHouseholdHandoverAction,
   withdrawProposalAction,
 } from "@/lib/actions";
 import { directoryStats } from "@/lib/queries";
-import { filtersFromSearchHref, jobsFitDeltaLabel, savedSearchDelta, savedSearchDeltaLabel } from "@/lib/saved-search";
+import {
+  filtersFromSearchHref,
+  jobsFitDeltaLabel,
+  savedSearchDelta,
+  savedSearchDeltaLabel,
+  searchAlertDelta,
+  searchAlertLabel,
+} from "@/lib/saved-search";
 import { comingUpBookings, comingUpKind } from "@/lib/coming-up";
 import { canFillFromHousehold, hasHandover } from "@/lib/handover";
 import { unreadCountsByBooking } from "@/lib/messages";
@@ -234,11 +242,19 @@ export default async function DashboardPage({
     savedSearches.map(async (search) => {
       const filters = filtersFromSearchHref(search.href);
       const current = filters ? (await directoryStats(filters)).count : 0;
-      return { id: search.id, ...savedSearchDelta(current, search.lastSeenCount, search.seenAt) };
+      return {
+        id: search.id,
+        ...savedSearchDelta(current, search.lastSeenCount, search.seenAt),
+        alert: searchAlertDelta(current, search.lastAlertedCount, search.alertedAt),
+      };
     }),
   );
   const savedSearchMatchById = new Map(savedSearchMatches.map((row) => [row.id, row]));
   const newSearchHits = savedSearchMatches.filter((row) => row.newCount > 0).length;
+  const newAlertHits = savedSearches.filter((search) => {
+    const row = savedSearchMatchById.get(search.id);
+    return Boolean(search.alertsOn && row && row.alert.newCount > 0);
+  }).length;
 
   const { action: needsAction, active, history } = groupDashboardBookings(groupedSource);
   const comingUp = comingUpBookings(bookings).slice(0, 4);
@@ -626,9 +642,17 @@ export default async function DashboardPage({
           <h2 className="font-semibold text-ink">Saved searches</h2>
           <p className="mt-1 text-sm text-stone-600">
             Keep a specialty, suburb or Needed on filter and open it again without rebuilding the form. Opening a
-            search clears the new-carer count.
+            search clears the new-carer count. Email alerts use a separate digest count — preview what would be sent
+            from{" "}
+            <Link href="/dashboard/alerts" className="font-medium text-teal hover:underline">
+              Saved search alerts
+            </Link>
+            .
             {newSearchHits
               ? ` ${newSearchHits} ${newSearchHits === 1 ? "search has" : "searches have"} new matches.`
+              : ""}
+            {newAlertHits
+              ? ` ${newAlertHits} ${newAlertHits === 1 ? "alert has" : "alerts have"} carers since the last digest.`
               : ""}
           </p>
           {savedSearches.length === 0 ? (
@@ -650,14 +674,29 @@ export default async function DashboardPage({
                         {savedSearchDeltaLabel(delta)}
                       </span>
                     ) : null}
+                    {delta ? (
+                      <span className="mt-0.5 block text-stone-500">
+                        {searchAlertLabel(delta.alert, search.alertsOn)}
+                      </span>
+                    ) : null}
                   </span>
-                  <form action={deleteSavedSearchAction}>
-                    <input type="hidden" name="id" value={search.id} />
-                    <input type="hidden" name="next" value="/dashboard" />
-                    <button className="text-stone-500 hover:text-clay" type="submit">
-                      Remove
-                    </button>
-                  </form>
+                  <span className="flex flex-wrap items-center gap-3">
+                    <form action={toggleSavedSearchAlertsAction}>
+                      <input type="hidden" name="id" value={search.id} />
+                      <input type="hidden" name="next" value="/dashboard" />
+                      <input type="hidden" name="alertsOn" value={search.alertsOn ? "0" : "1"} />
+                      <button className="text-stone-500 hover:text-ink" type="submit">
+                        {search.alertsOn ? "Alerts off" : "Alerts on"}
+                      </button>
+                    </form>
+                    <form action={deleteSavedSearchAction}>
+                      <input type="hidden" name="id" value={search.id} />
+                      <input type="hidden" name="next" value="/dashboard" />
+                      <button className="text-stone-500 hover:text-clay" type="submit">
+                        Remove
+                      </button>
+                    </form>
+                  </span>
                 </li>
                 );
               })}

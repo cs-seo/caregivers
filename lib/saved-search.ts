@@ -87,3 +87,47 @@ export function jobsFitDeltaLabel(delta: ReturnType<typeof savedSearchDelta>) {
   if (delta.newCount > 0) return `${delta.current} ${jobs} · ${delta.newCount} new`;
   return `${delta.current} ${jobs}`;
 }
+
+export function searchAlertDelta(current: number, lastAlertedCount: number, alertedAt?: Date | null) {
+  return savedSearchDelta(current, lastAlertedCount, alertedAt);
+}
+
+export function searchAlertLabel(delta: ReturnType<typeof savedSearchDelta>, alertsOn: boolean) {
+  if (!alertsOn) return "Email alerts off";
+  if (delta.current === 0) return delta.unseen ? "Alerts on · no carers yet" : "Alerts on · 0 carers";
+  if (delta.unseen) return `Alerts on · ${delta.current} carers waiting for a first digest`;
+  if (delta.newCount > 0) return `Alerts on · ${delta.newCount} new since last digest`;
+  return "Alerts on · no new carers";
+}
+
+export function composeSearchAlert(
+  items: { name: string; href: string; current: number; newCount: number }[],
+) {
+  const withNew = items.filter((item) => item.newCount > 0);
+  const subject =
+    withNew.length === 1
+      ? `CareProof: ${withNew[0].newCount} new ${withNew[0].newCount === 1 ? "carer" : "carers"} — ${withNew[0].name}`
+      : withNew.length > 1
+        ? `CareProof: ${withNew.length} saved searches have new carers`
+        : "CareProof: no new carers on your saved searches";
+  const lines =
+    withNew.length === 0
+      ? ["None of your saved searches have new carers since the last digest."]
+      : withNew.map((item) => {
+          const carers = item.current === 1 ? "carer matches" : "carers match";
+          const fresh = item.newCount === 1 ? "1 new" : `${item.newCount} new`;
+          return `${item.name}\n${item.current} ${carers} now · ${fresh}.\nOpen ${item.href}`;
+        });
+  const body = [
+    "New carers on the searches you asked CareProof to watch.",
+    "",
+    ...lines,
+    "",
+    "Turn a search’s alerts off from your dashboard if you do not want another digest.",
+  ].join("\n");
+  return { subject, body, hasNew: withNew.length > 0 };
+}
+
+export function searchAlertMailto(to: string, alert: { subject: string; body: string }) {
+  return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(alert.subject)}&body=${encodeURIComponent(alert.body)}`;
+}

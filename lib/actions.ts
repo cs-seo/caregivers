@@ -1457,6 +1457,41 @@ export async function deleteSavedSearchAction(formData: FormData) {
   revalidatePath(next);
 }
 
+function savedSearchReturnPath(raw: string) {
+  if (raw === "/dashboard" || raw === "/dashboard/alerts" || raw.startsWith("/dashboard?")) return raw;
+  return "/dashboard";
+}
+
+export async function toggleSavedSearchAlertsAction(formData: FormData) {
+  const user = await requireRole(ROLES.FAMILY);
+  if (!user) redirect("/login?callbackUrl=/dashboard");
+  const id = String(formData.get("id") ?? "");
+  const next = savedSearchReturnPath(String(formData.get("next") ?? "/dashboard"));
+  const alertsOn = String(formData.get("alertsOn") ?? "") === "1";
+  await prisma.savedSearch.updateMany({ where: { id, familyId: user.id }, data: { alertsOn } });
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/alerts");
+  redirect(next);
+}
+
+export async function markSavedSearchAlertSentAction(formData: FormData) {
+  const user = await requireRole(ROLES.FAMILY);
+  if (!user) redirect("/login?callbackUrl=/dashboard/alerts");
+  const id = String(formData.get("id") ?? "");
+  const next = savedSearchReturnPath(String(formData.get("next") ?? "/dashboard/alerts"));
+  const search = await prisma.savedSearch.findFirst({ where: { id, familyId: user.id } });
+  if (!search) redirect(next);
+  const filters = filtersFromSearchHref(search.href);
+  const matches = filters ? (await directoryStats(filters)).count : 0;
+  await prisma.savedSearch.update({
+    where: { id: search.id },
+    data: { lastAlertedCount: matches, alertedAt: new Date() },
+  });
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/alerts");
+  redirect(`${next}${next.includes("?") ? "&" : "?"}sent=1`);
+}
+
 export async function rotateCalendarFeedAction() {
   const user = await requireUser();
   if (!user) redirect("/login?callbackUrl=/dashboard/calendar");

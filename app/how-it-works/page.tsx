@@ -43,7 +43,7 @@ const faqs = [
   },
   {
     q: "Can I save a search for later?",
-    a: "Yes. On any directory page, families can save the current filters — specialty, suburb, Needed on, Instant Book or checks. The dashboard shows how many carers match now, and how many are new since you last opened that search. Opening the list marks it seen.",
+    a: "Yes. On any directory page, families can save the current filters — specialty, suburb, Needed on, Instant Book or checks. The dashboard shows how many carers match now, and how many are new since you last opened that search. Opening the list marks it seen. Each saved search can also email a digest when the match count grows — this demo has no mail server, so Saved search alerts shows the email and lets you send it to yourself or mark it sent.",
   },
   {
     q: "Which care requests should a carer propose on?",

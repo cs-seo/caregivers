@@ -901,6 +901,10 @@ export async function seedDemoSavedSearches(prisma: PrismaClient) {
         where: { id: existing.id },
         data: {
           name: row.name,
+          alertsOn: true,
+          ...(row.unseen
+            ? { lastAlertedCount: 20, alertedAt: new Date("2026-09-01T00:00:00.000Z") }
+            : { lastAlertedCount: 999, alertedAt: new Date("2026-09-01T00:00:00.000Z") }),
           ...(row.unseen && !existing.seenAt
             ? { lastSeenCount: 0, seenAt: null }
             : !row.unseen && !existing.seenAt
@@ -916,6 +920,9 @@ export async function seedDemoSavedSearches(prisma: PrismaClient) {
           href: row.href,
           lastSeenCount: row.unseen ? 0 : 999,
           seenAt: row.unseen ? null : new Date("2026-09-01T00:00:00.000Z"),
+          alertsOn: true,
+          lastAlertedCount: row.unseen ? 20 : 999,
+          alertedAt: new Date("2026-09-01T00:00:00.000Z"),
         },
       });
     }
