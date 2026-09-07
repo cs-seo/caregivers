@@ -92,8 +92,8 @@ export default async function StatementPage() {
           </div>
         </div>
         <p className="mt-4 text-sm text-stone-600">
-          Funded and released sits only. Unpaid and cancelled weeks are omitted. Invoice numbers match the tax invoice
-          and remittance for each sit.
+          Funded sits only, including those in dispute while funds stay held. Unpaid and cancelled weeks are omitted.
+          Invoice numbers match the tax invoice and remittance for each sit.
         </p>
 
         <dl className="mt-6 grid gap-3 sm:grid-cols-3 print:grid-cols-3">

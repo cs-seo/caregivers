@@ -50,6 +50,15 @@ test("toStatementRows keeps funded FY sits and drops cancelled or prior-year one
         status: BOOKING_STATUS.ESCROW_HELD,
       }),
       booking({
+        id: "disputed-now",
+        startAt: new Date("2026-08-28T00:00:00.000Z"),
+        status: BOOKING_STATUS.DISPUTED,
+        subtotalCents: 13200,
+        totalCents: 14520,
+        gstCents: 1200,
+        platformFeeCents: 1320,
+      }),
+      booking({
         id: "cancelled",
         startAt: new Date("2026-09-13T00:00:00.000Z"),
         status: BOOKING_STATUS.CANCELLED,
@@ -62,9 +71,12 @@ test("toStatementRows keeps funded FY sits and drops cancelled or prior-year one
     ],
     new Date("2026-09-07T00:00:00.000Z"),
   );
-  assert.equal(rows.length, 1);
+  assert.equal(rows.length, 2);
+  assert.equal(rows[0]?.id, "disputed-now");
   assert.equal(rows[0]?.invoiceNumber, "CP-2627-0001");
-  assert.equal(statementTotals(rows).familyCents, 29920);
+  assert.equal(rows[1]?.id, "held-now");
+  assert.equal(statementTotals(rows).familyCents, 44440);
+  assert.equal(statementTotals(rows).payoutCents, 40400);
 });
 
 test("invoiceNumberMap numbers funded FY sits by hold time", () => {
