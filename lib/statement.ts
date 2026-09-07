@@ -1,4 +1,4 @@
-import { BOOKING_STATUS } from "./constants";
+import { BOOKING_STATUS, BOOKING_STATUS_LABELS } from "./constants";
 import { sydneyDateKey, sydneyDayBounds } from "./format";
 
 export const STATEMENT_STATUSES = new Set<string>([
@@ -48,6 +48,10 @@ export type StatementRow = {
   ndisNumber: string;
   agedCareRef: string;
 };
+
+export function statementStatusLabel(status: string) {
+  return BOOKING_STATUS_LABELS[status] ?? status;
+}
 
 export function fyInvoiceCode(startYear: number) {
   return `${String(startYear).slice(-2)}${String(startYear + 1).slice(-2)}`;
@@ -217,7 +221,7 @@ export function statementCsv(rows: StatementRow[], isFamily: boolean) {
         (row.gstCents / 100).toFixed(2),
         (row.feeCents / 100).toFixed(2),
         ((isFamily ? row.familyCents : row.payoutCents) / 100).toFixed(2),
-        row.status,
+        statementStatusLabel(row.status),
         row.abn,
         row.ndisNumber,
         row.agedCareRef,

@@ -35,7 +35,7 @@ const faqs = [
   },
   {
     q: "Can I get a GST tax invoice for a Home Care Package or NDIS plan?",
-    a: "Yes. After funds are in escrow, open the booking and print the tax invoice. CareProof stamps a financial-year number such as CP-2627-0001 when the hold is created, so later sits do not reshuffle earlier invoices. It shows the care rate inc GST, GST as 1/11, the 10% CareProof fee, the carer ABN if they listed one, and the carer payout. Carers open Remittance for the same number showing the amount held or paid to them (100% of the advertised rate). The dashboard FY statement is a printable GST summary of every funded sit in 1 July–30 June, using those same numbers — including disputed sits while funds stay held. Add an NDIS or My Aged Care number on Household and it prints on the invoice, the statement and the CSV.",
+    a: "Yes. After funds are in escrow, open the booking and print the tax invoice. CareProof stamps a financial-year number such as CP-2627-0001 when the hold is created, so later sits do not reshuffle earlier invoices. It shows the care rate inc GST, GST as 1/11, the 10% CareProof fee, the carer ABN if they listed one, and the carer payout. Carers open Remittance for the same number showing the amount held or paid to them (100% of the advertised rate). The dashboard FY statement is a printable GST summary of every funded sit in 1 July–30 June, using those same numbers — including disputed sits while funds stay held. Each row and the CSV show the sit status, so a disputed sit is labelled In dispute. Add an NDIS or My Aged Care number on Household and it prints on the invoice, the statement and the CSV.",
   },
   {
     q: "How do I message a carer or family?",

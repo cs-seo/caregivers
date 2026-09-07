@@ -351,7 +351,7 @@ export const HIRE_GUIDES = [
     extra: [
       "Save your NDIS number or My Aged Care / HCP reference on Household. It prints on every tax invoice Bill to line and on the financial-year CSV.",
       "Each funded sit has its own invoice number for the financial year, such as CP-2627-0001, assigned when funds were held. The PDF, statement and CSV use the same number. The invoice shows care rate inc GST, GST as 1/11, the 10% CareProof fee, and the carer payout. Independent carers list an ABN where they have one.",
-      "Download or print the FY statement when a coordinator or plan manager wants a running total for 1 July to 30 June, without unpaid or cancelled weeks. Disputed sits stay on the statement while funds are held. Invoice numbers on that summary match each tax invoice PDF.",
+      "Download or print the FY statement when a coordinator or plan manager wants a running total for 1 July to 30 June, without unpaid or cancelled weeks. Disputed sits stay on the statement while funds are held, labelled In dispute on each row and in the CSV. Invoice numbers on that summary match each tax invoice PDF.",
     ],
   },
 ] as const;

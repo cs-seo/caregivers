@@ -7,6 +7,7 @@ import {
   fyPeriodLabel,
   invoiceNumberMap,
   statementCsv,
+  statementStatusLabel,
   statementTotals,
   toStatementRows,
   type StatementBooking,
@@ -74,9 +75,19 @@ test("toStatementRows keeps funded FY sits and drops cancelled or prior-year one
   assert.equal(rows.length, 2);
   assert.equal(rows[0]?.id, "disputed-now");
   assert.equal(rows[0]?.invoiceNumber, "CP-2627-0001");
+  assert.equal(rows[0]?.status, BOOKING_STATUS.DISPUTED);
+  assert.equal(statementStatusLabel(rows[0]!.status), "In dispute");
   assert.equal(rows[1]?.id, "held-now");
+  assert.equal(statementStatusLabel(rows[1]!.status), "Funds in escrow");
   assert.equal(statementTotals(rows).familyCents, 44440);
   assert.equal(statementTotals(rows).payoutCents, 40400);
+});
+
+test("statementStatusLabel uses the same sit labels as the dashboard", () => {
+  assert.equal(statementStatusLabel(BOOKING_STATUS.DISPUTED), "In dispute");
+  assert.equal(statementStatusLabel(BOOKING_STATUS.RELEASED), "Paid to carer");
+  assert.equal(statementStatusLabel(BOOKING_STATUS.IN_PROGRESS), "Care in progress");
+  assert.equal(statementStatusLabel("unknown"), "unknown");
 });
 
 test("invoiceNumberMap numbers funded FY sits by hold time", () => {
@@ -161,6 +172,7 @@ test("statementCsv quotes commas and lists family totals", () => {
   assert.match(csv, /Date,Invoice,Carer,/);
   assert.match(csv, /NDIS,My Aged Care/);
   assert.match(csv, /2026-09-12,CP-2627-0001,Sarah Nguyen/);
+  assert.match(csv, /Paid to carer/);
   assert.match(csv, /299.20/);
   assert.match(csv, /430 112 223,HCP-NSW-88421/);
 });

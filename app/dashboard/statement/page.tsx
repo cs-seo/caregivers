@@ -9,7 +9,13 @@ import { requireUser } from "@/lib/session";
 import { pageMeta } from "@/lib/seo";
 import { fundingLines } from "@/lib/funding";
 import { fundedInvoicePeers, persistMissingInvoiceNumbers } from "@/lib/invoice-peers";
-import { australianFinancialYear, fyPeriodLabel, statementTotals, toStatementRows } from "@/lib/statement";
+import {
+  australianFinancialYear,
+  fyPeriodLabel,
+  statementStatusLabel,
+  statementTotals,
+  toStatementRows,
+} from "@/lib/statement";
 
 export const metadata = pageMeta({
   title: "Financial year statement",
@@ -93,7 +99,8 @@ export default async function StatementPage() {
         </div>
         <p className="mt-4 text-sm text-stone-600">
           Funded sits only, including those in dispute while funds stay held. Unpaid and cancelled weeks are omitted.
-          Invoice numbers match the tax invoice and remittance for each sit.
+          Invoice numbers match the tax invoice and remittance for each sit. Each row shows the sit status, so a
+          disputed sit is labelled In dispute.
         </p>
 
         <dl className="mt-6 grid gap-3 sm:grid-cols-3 print:grid-cols-3">
@@ -119,12 +126,13 @@ export default async function StatementPage() {
           <p className="mt-6 text-sm text-stone-500">No funded bookings in this financial year yet.</p>
         ) : (
           <div className="mt-6 overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left text-sm">
+            <table className="w-full min-w-[800px] text-left text-sm">
               <thead className="border-b border-line text-xs uppercase tracking-wide text-stone-500">
                 <tr>
                   <th className="py-2 pr-3 font-medium">Date</th>
                   <th className="py-2 pr-3 font-medium">Invoice</th>
                   <th className="py-2 pr-3 font-medium">{isFamily ? "Carer" : "Family"}</th>
+                  <th className="py-2 pr-3 font-medium">Status</th>
                   <th className="py-2 pr-3 font-medium">Hours</th>
                   <th className="py-2 pr-3 font-medium">Care</th>
                   <th className="py-2 pr-3 font-medium">GST</th>
@@ -153,6 +161,7 @@ export default async function StatementPage() {
                       {isFamily ? row.caregiverName : row.familyName}
                       <span className="block text-xs text-stone-500">{row.specialty}</span>
                     </td>
+                    <td className="py-2 pr-3">{statementStatusLabel(row.status)}</td>
                     <td className="py-2 pr-3">{row.hours}</td>
                     <td className="py-2 pr-3">{formatAud(row.careCents)}</td>
                     <td className="py-2 pr-3">{formatAud(row.gstCents)}</td>
@@ -165,7 +174,7 @@ export default async function StatementPage() {
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-ink">
-                  <td className="py-3 font-semibold text-ink" colSpan={4}>
+                  <td className="py-3 font-semibold text-ink" colSpan={5}>
                     {rows.length} {rows.length === 1 ? "sit" : "sits"}
                   </td>
                   <td className="py-3 font-semibold text-ink">{formatAud(totals.careCents)}</td>
