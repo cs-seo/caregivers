@@ -551,10 +551,16 @@ export async function seedDemoWeeklyWindows(prisma: PrismaClient) {
 export async function seedDemoSavedSearches(prisma: PrismaClient) {
   const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
   if (!family) return 0;
+  await prisma.savedSearch.deleteMany({
+    where: {
+      familyId: family.id,
+      href: "/caregivers/aged-care/nsw/sydney?availableOn=2026-09-12",
+    },
+  });
   const rows = [
     {
-      name: "Aged care in Sydney · needed 12 Sept 2026",
-      href: "/caregivers/aged-care/nsw/sydney?availableOn=2026-09-12",
+      name: "Aged care in Sydney · needed 15 Sept 2026",
+      href: "/caregivers/aged-care/nsw/sydney?availableOn=2026-09-15",
       unseen: true,
     },
     { name: "Instant Book nannies", href: "/caregivers/nannies?instantBook=1", unseen: false },
