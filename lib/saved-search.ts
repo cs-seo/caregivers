@@ -12,7 +12,7 @@ export function isSafeSearchHref(href: string) {
 }
 
 export function savedSearchHref(path: string, current: Record<string, string | undefined>) {
-  const query: Record<string, string | undefined> = { ...current, page: undefined };
+  const query: Record<string, string | undefined> = { ...current, page: undefined, job: undefined };
   if (path !== "/caregivers") {
     query.specialty = undefined;
     query.state = undefined;

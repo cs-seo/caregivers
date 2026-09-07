@@ -76,16 +76,26 @@ export function canAttachJob(job: { familyId: string; status: string } | null, f
   return Boolean(job && job.status === "open" && job.familyId === familyId);
 }
 
-export function bookHref(
-  slug: string,
-  query: { start?: string; at?: string; job?: string; error?: string } = {},
-) {
+export function bookQuery(query: { start?: string; at?: string; job?: string; error?: string } = {}) {
   const parts: string[] = [];
   if (query.start && /^\d{4}-\d{2}-\d{2}$/.test(query.start)) parts.push(`start=${query.start}`);
   if (query.at && /^([01]\d|2[0-3]):([0-5]\d)$/.test(query.at)) parts.push(`at=${query.at}`);
   if (query.job && isJobSlug(query.job)) parts.push(`job=${query.job}`);
   if (query.error && /^[a-z]+$/.test(query.error)) parts.push(`error=${query.error}`);
-  return parts.length ? `/caregiver/${slug}/book?${parts.join("&")}` : `/caregiver/${slug}/book`;
+  return parts.join("&");
+}
+
+export function bookHref(
+  slug: string,
+  query: { start?: string; at?: string; job?: string; error?: string } = {},
+) {
+  const qs = bookQuery(query);
+  return qs ? `/caregiver/${slug}/book?${qs}` : `/caregiver/${slug}/book`;
+}
+
+export function caregiverHref(slug: string, query: { start?: string; at?: string; job?: string } = {}) {
+  const qs = bookQuery(query);
+  return qs ? `/caregiver/${slug}?${qs}` : `/caregiver/${slug}`;
 }
 
 export function jobBookHref(slug: string, startDate: Date, jobSlug?: string) {
@@ -95,6 +105,7 @@ export function jobBookHref(slug: string, startDate: Date, jobSlug?: string) {
 }
 
 export function jobDirectoryFilters(job: {
+  slug: string;
   startDate: Date;
   specialty: { slug: string };
   city: { slug: string; state: { slug: string } };
@@ -105,6 +116,7 @@ export function jobDirectoryFilters(job: {
     city: job.city.slug,
     availableOn: sydneyDateKey(job.startDate),
     availableAt: isUtcDateOnly(job.startDate) ? undefined : minutesToInput(sydneyMinutes(job.startDate)),
+    job: isJobSlug(job.slug) ? job.slug : undefined,
   };
 }
 
@@ -112,5 +124,6 @@ export function jobDirectoryHref(job: Parameters<typeof jobDirectoryFilters>[0])
   const filters = jobDirectoryFilters(job);
   const query = [`availableOn=${filters.availableOn}`];
   if (filters.availableAt) query.push(`availableAt=${filters.availableAt}`);
+  if (filters.job) query.push(`job=${filters.job}`);
   return `/caregivers/${filters.specialty}/${filters.state}/${filters.city}?${query.join("&")}`;
 }

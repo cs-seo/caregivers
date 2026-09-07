@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { bookHref } from "@/lib/job-match";
 import { formatAud } from "@/lib/money";
 
 export function MobileBookBar({
@@ -6,13 +7,17 @@ export function MobileBookBar({
   hourlyRateCents,
   instantBook,
   start,
+  at,
+  job,
 }: {
   slug: string;
   hourlyRateCents: number;
   instantBook: boolean;
   start?: string | null;
+  at?: string;
+  job?: string;
 }) {
-  const href = start ? `/caregiver/${slug}/book?start=${start}` : `/caregiver/${slug}/book`;
+  const href = bookHref(slug, { start: start ?? undefined, at, job });
   return (
     <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-card/95 p-3 backdrop-blur md:hidden">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">

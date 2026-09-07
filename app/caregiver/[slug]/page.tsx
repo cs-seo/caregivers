@@ -11,6 +11,7 @@ import { ReviewCard, ReviewReplyForm } from "@/components/review-card";
 import { ShortlistButton } from "@/components/shortlist-button";
 import { fortnightLabel, isAvailableNowLive, isInstantBookLive, noticeLabel, summariseFortnight, weeklyHourChips } from "@/lib/availability";
 import { lastActiveLabel, monthYear } from "@/lib/format";
+import { bookHref, isJobSlug } from "@/lib/job-match";
 import { formatAud } from "@/lib/money";
 import { getCaregiverBySlug, getShortlistedIds, getUpcomingAvailability, similarCaregivers } from "@/lib/queries";
 import { requireUser } from "@/lib/session";
@@ -42,14 +43,18 @@ export default async function CaregiverProfilePage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; start?: string; at?: string; job?: string }>;
 }) {
   const { slug } = await params;
-  const [carer, viewer, { error }] = await Promise.all([
+  const [carer, viewer, query] = await Promise.all([
     getCaregiverBySlug(slug),
     requireUser(),
     searchParams,
   ]);
+  const error = query.error;
+  const jobSlug = query.job && isJobSlug(query.job) ? query.job : "";
+  const startDate = query.start && /^\d{4}-\d{2}-\d{2}$/.test(query.start) ? query.start : "";
+  const startClock = /^([01]\d|2[0-3]):([0-5]\d)$/.test(query.at ?? "") ? query.at : "";
   if (!carer) notFound();
   const isOwner = viewer?.caregiverProfile?.id === carer.id;
   const [similar, savedIds, upcoming] = await Promise.all([
@@ -199,7 +204,7 @@ export default async function CaregiverProfilePage({
                 {fortnight.nextFree ? (
                   <>
                     {" · "}
-                    <Link href={`/caregiver/${carer.slug}/book?start=${fortnight.nextFree}`} className="text-teal">
+                    <Link href={bookHref(carer.slug, { start: fortnight.nextFree, job: jobSlug })} className="text-teal">
                       Book the next free day
                     </Link>
                   </>
@@ -219,7 +224,7 @@ export default async function CaregiverProfilePage({
               ) : null}
               {carer.availabilityNote ? <p className="mt-2 text-stone-700">{carer.availabilityNote}</p> : null}
               <div className="mt-4">
-                <DaysOffCalendar days={upcoming} bookSlug={carer.slug} />
+                <DaysOffCalendar days={upcoming} bookSlug={carer.slug} bookJob={jobSlug || undefined} />
               </div>
               <p className="mt-2 text-xs text-stone-500">
                 Free days open the book form. Booked days already have a sit in escrow. Away days are marked off by the
@@ -306,7 +311,11 @@ export default async function CaregiverProfilePage({
           {carer.availabilityNote ? <p className="mt-3 text-sm text-stone-700">{carer.availabilityNote}</p> : null}
           <p className="mt-2 text-xs text-stone-500">{lastActiveLabel(carer.lastActiveAt)}</p>
           <Link
-            href={fortnight.nextFree ? `/caregiver/${carer.slug}/book?start=${fortnight.nextFree}` : `/caregiver/${carer.slug}/book`}
+            href={bookHref(carer.slug, {
+              start: startDate || fortnight.nextFree || undefined,
+              at: startDate ? startClock : undefined,
+              job: jobSlug,
+            })}
             className="mt-4 block rounded-xl bg-teal py-3 text-center font-semibold text-white no-underline hover:bg-teal-deep"
           >
             {liveInstant ? "Book now" : "Request to book"}
@@ -333,6 +342,9 @@ export default async function CaregiverProfilePage({
               <CaregiverCardView
                 key={item.id}
                 caregiver={item}
+                neededOn={startDate || undefined}
+                neededAt={startClock || undefined}
+                job={jobSlug || undefined}
                 shortlist={{
                   saved: savedIds.has(item.id),
                   signedIn: Boolean(canShortlist),
@@ -347,7 +359,9 @@ export default async function CaregiverProfilePage({
         slug={carer.slug}
         hourlyRateCents={carer.hourlyRateCents}
         instantBook={liveInstant}
-        start={fortnight.nextFree}
+        start={startDate || fortnight.nextFree}
+        at={startDate ? startClock : undefined}
+        job={jobSlug || undefined}
       />
     </div>
   );

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { isAvailableNowLive, isAwayToday, isInstantBookLive, noticeLabel, weeklyHourChips } from "@/lib/availability";
 import { formatDate, lastActiveLabel, parseSydneyDateTimeLocal } from "@/lib/format";
+import { bookHref, caregiverHref } from "@/lib/job-match";
 import { formatAud } from "@/lib/money";
 import { trustLabel } from "@/lib/trust";
 import type { CaregiverCard } from "@/lib/queries";
@@ -12,10 +13,14 @@ export function CaregiverCardView({
   caregiver,
   shortlist,
   neededOn,
+  neededAt,
+  job,
 }: {
   caregiver: CaregiverCard & { trustScore: number };
   shortlist?: { saved: boolean; signedIn: boolean; next: string };
   neededOn?: string;
+  neededAt?: string;
+  job?: string;
 }) {
   const specialtyNames = caregiver.specialties.map((s) => s.specialty.name).join(" · ");
   const blockedKeys = (caregiver.blockedDates ?? []).map((row) => row.dateKey);
@@ -29,7 +34,7 @@ export function CaregiverCardView({
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
               <h2 className="text-lg font-semibold text-ink">
-                <Link href={`/caregiver/${caregiver.slug}`} className="hover:text-teal">
+                <Link href={caregiverHref(caregiver.slug, { start: neededOn, at: neededAt, job })} className="hover:text-teal">
                   {caregiver.user.name}
                 </Link>
               </h2>
@@ -86,8 +91,11 @@ export function CaregiverCardView({
           </div>
           {neededOn ? (
             <p className="mt-3 text-sm">
-              <Link href={`/caregiver/${caregiver.slug}/book?start=${neededOn}`} className="font-medium text-teal">
-                Book on {formatDate(parseSydneyDateTimeLocal(`${neededOn}T17:00`))}
+              <Link
+                href={bookHref(caregiver.slug, { start: neededOn, at: neededAt, job })}
+                className="font-medium text-teal"
+              >
+                Book on {formatDate(parseSydneyDateTimeLocal(`${neededOn}T${neededAt ?? "17:00"}`))}
               </Link>
             </p>
           ) : null}

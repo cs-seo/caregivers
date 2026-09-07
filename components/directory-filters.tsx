@@ -11,6 +11,7 @@ export function DirectoryFilters({
       {current.specialty ? <input type="hidden" name="specialty" value={current.specialty} /> : null}
       {current.state ? <input type="hidden" name="state" value={current.state} /> : null}
       {current.city ? <input type="hidden" name="city" value={current.city} /> : null}
+      {current.job ? <input type="hidden" name="job" value={current.job} /> : null}
       <label className="block text-sm">
         <span className="text-stone-600">Needed on</span>
         <input

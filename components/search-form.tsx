@@ -7,6 +7,7 @@ export async function SearchForm({
   q,
   availableOn,
   availableAt,
+  job,
 }: {
   specialty?: string;
   state?: string;
@@ -14,6 +15,7 @@ export async function SearchForm({
   q?: string;
   availableOn?: string;
   availableAt?: string;
+  job?: string;
 }) {
   const [specialties, states] = await Promise.all([getSpecialties(), getStates()]);
   const selectedState = states.find((item) => item.slug === state);
@@ -21,6 +23,7 @@ export async function SearchForm({
 
   return (
     <form action="/caregivers" method="get" className="grid gap-3 rounded-2xl bg-card p-4 shadow-sm md:grid-cols-12">
+      {job ? <input type="hidden" name="job" value={job} /> : null}
       <label className="md:col-span-2">
         <span className="mb-1 block text-xs font-medium text-stone-500">Keywords</span>
         <input

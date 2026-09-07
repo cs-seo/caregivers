@@ -20,6 +20,14 @@ test("savedSearchHref keeps path segments and drops page", () => {
     }),
     "/caregivers/aged-care/nsw/sydney?availableOn=2026-09-12",
   );
+  assert.equal(
+    savedSearchHref("/caregivers/aged-care/nsw/sydney", {
+      availableOn: "2026-09-15",
+      availableAt: "08:00",
+      job: "weekday-aged-care-marrickville",
+    }),
+    "/caregivers/aged-care/nsw/sydney?availableOn=2026-09-15&availableAt=08%3A00",
+  );
 });
 
 test("isSafeSearchHref only allows local caregiver directory paths", () => {

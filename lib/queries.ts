@@ -94,6 +94,7 @@ export type DirectoryFilters = {
   availableNow?: boolean;
   availableOn?: string;
   availableAt?: string;
+  job?: string;
   page?: number;
   sort?: "rating" | "rate" | "experience";
 };

@@ -6,6 +6,7 @@ import { JsonLd } from "@/components/json-ld";
 import { SearchForm } from "@/components/search-form";
 import { saveSearchAction } from "@/lib/actions";
 import { emptyStateLinks, filterHref } from "@/lib/directory";
+import { canAttachJob } from "@/lib/job-match";
 import { defaultSearchName, savedSearchHref } from "@/lib/saved-search";
 import { prisma } from "@/lib/prisma";
 import { formatAud } from "@/lib/money";
@@ -57,6 +58,15 @@ export async function DirectoryResults({
       data: { lastSeenCount: stats.count, seenAt: new Date() },
     });
   }
+  const attachJob =
+    canShortlist && filters.job
+      ? await prisma.careRequest.findUnique({
+          where: { slug: filters.job },
+          select: { slug: true, title: true, familyId: true, status: true },
+        })
+      : null;
+  const jobTitle =
+    attachJob && viewer?.id && canAttachJob(attachJob, viewer.id) ? attachJob.title : null;
 
   return (
     <div>
@@ -115,6 +125,7 @@ export async function DirectoryResults({
           q={filters.q}
           availableOn={filters.availableOn}
           availableAt={filters.availableAt}
+          job={filters.job}
         />
       </div>
       {canShortlist ? (
@@ -152,6 +163,12 @@ export async function DirectoryResults({
           as a family to save this search.
         </p>
       )}
+      {jobTitle ? (
+        <p className="mt-4 rounded-xl border border-teal/25 bg-sage px-3 py-2 text-sm text-ink">
+          Booking from this list will close your <span className="font-semibold">{jobTitle}</span> request
+          and attach the sit to that job.
+        </p>
+      ) : null}
       <div className="mt-8 grid gap-6 md:grid-cols-[240px_1fr]">
         <DirectoryFilters action={filterAction} current={current} />
         <div className="space-y-4">
@@ -174,6 +191,8 @@ export async function DirectoryResults({
                 key={carer.id}
                 caregiver={carer}
                 neededOn={filters.availableOn}
+                neededAt={filters.availableAt}
+                job={jobTitle ? filters.job : undefined}
                 shortlist={{
                   saved: savedIds.has(carer.id),
                   signedIn: Boolean(canShortlist),

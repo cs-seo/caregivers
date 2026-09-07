@@ -156,7 +156,7 @@ export default async function CareRequestPage({
               }
               className="mt-3 inline-block text-sm font-medium text-teal"
             >
-              {matchStats.count ? "See every match in the directory" : "Search any time that day"}
+              {matchStats.count ? "See every match — booking still closes this request" : "Search any time that day"}
             </Link>
           </section>
         ) : null}

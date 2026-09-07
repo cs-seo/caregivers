@@ -1,3 +1,4 @@
+import { isJobSlug } from "./job-match";
 import type { DirectoryFilters } from "./queries";
 
 export function parseFilters(
@@ -15,6 +16,7 @@ export function parseFilters(
     q: get("q") || undefined,
     availableOn: /^\d{4}-\d{2}-\d{2}$/.test(get("availableOn") ?? "") ? get("availableOn") : undefined,
     availableAt: /^([01]\d|2[0-3]):([0-5]\d)$/.test(get("availableAt") ?? "") ? get("availableAt") : undefined,
+    job: isJobSlug(get("job") ?? "") ? get("job") : undefined,
     instantBook: get("instantBook") === "1",
     availableNow: get("availableNow") === "1",
     wwcc: get("wwcc") === "1",
@@ -48,6 +50,7 @@ export function filterCurrent(filters: {
   city?: string;
   availableOn?: string;
   availableAt?: string;
+  job?: string;
   instantBook?: boolean;
   availableNow?: boolean;
   wwcc?: boolean;
@@ -62,6 +65,7 @@ export function filterCurrent(filters: {
     q: filters.q,
     availableOn: filters.availableOn,
     availableAt: filters.availableOn ? filters.availableAt : undefined,
+    job: filters.job && isJobSlug(filters.job) ? filters.job : undefined,
     specialty: filters.specialty,
     state: filters.state,
     city: filters.city,
