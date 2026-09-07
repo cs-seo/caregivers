@@ -13,6 +13,7 @@ import {
 import { formatDateTime, plural, snippet } from "@/lib/format";
 import { buildRoster } from "@/lib/roster";
 import { formatAud } from "@/lib/money";
+import { australianFinancialYear, statementTotals, toStatementRows } from "@/lib/statement";
 import { profileChecklist } from "@/lib/profile";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
@@ -168,6 +169,8 @@ export default async function DashboardPage({
   const settledCents = bookings
     .filter((booking) => booking.status === BOOKING_STATUS.RELEASED)
     .reduce((sum, booking) => sum + (isFamily ? booking.totalCents : booking.subtotalCents), 0);
+  const fy = australianFinancialYear();
+  const fyTotals = statementTotals(toStatementRows(bookings));
 
   return (
     <div>
@@ -207,7 +210,7 @@ export default async function DashboardPage({
         <p className="mt-4 rounded-xl bg-sage p-3 text-sm">Unpaid weeks were cancelled. Funded escrow holds are unchanged.</p>
       ) : null}
 
-      <section className="mt-6 grid gap-3 sm:grid-cols-2">
+      <section className="mt-6 grid gap-3 sm:grid-cols-3">
         <div className="rounded-2xl border border-line bg-card p-5">
           <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
             {isFamily ? "In escrow" : "Held for you"}
@@ -224,6 +227,22 @@ export default async function DashboardPage({
           <p className="mt-1 text-2xl font-semibold text-ink">{formatAud(settledCents)}</p>
           <p className="mt-1 text-sm text-stone-500">
             {isFamily ? "Released bookings, ready for a GST tax invoice." : "Released to you after completed care."}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-line bg-card p-5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">FY {fy.label}</p>
+          <p className="mt-1 text-2xl font-semibold text-ink">
+            {formatAud(isFamily ? fyTotals.familyCents : fyTotals.payoutCents)}
+          </p>
+          <p className="mt-1 text-sm text-stone-500">
+            {isFamily ? "Funded family spend this financial year." : "Funded payout this financial year."}{" "}
+            <Link href="/dashboard/statement" className="text-teal">
+              Statement
+            </Link>
+            {" · "}
+            <a href="/dashboard/statement/csv" className="text-teal">
+              CSV
+            </a>
           </p>
         </div>
       </section>

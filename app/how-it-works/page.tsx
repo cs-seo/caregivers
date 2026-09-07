@@ -35,7 +35,7 @@ const faqs = [
   },
   {
     q: "Can I get a GST tax invoice for a Home Care Package or NDIS plan?",
-    a: "Yes. After funds are in escrow, open the booking and download the tax invoice. It shows the care rate inc GST, GST as 1/11, the 10% CareProof fee, the carer ABN if they listed one, and the carer payout.",
+    a: "Yes. After funds are in escrow, open the booking and download the tax invoice. It shows the care rate inc GST, GST as 1/11, the 10% CareProof fee, the carer ABN if they listed one, and the carer payout. The dashboard also has an Australian financial-year statement and CSV of every funded sit for coordinators and plan managers.",
   },
 ];
 

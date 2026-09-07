@@ -1,0 +1,147 @@
+import { BOOKING_STATUS } from "./constants";
+import { sydneyDateKey, sydneyDayBounds } from "./format";
+
+export const STATEMENT_STATUSES = new Set<string>([
+  BOOKING_STATUS.ESCROW_HELD,
+  BOOKING_STATUS.IN_PROGRESS,
+  BOOKING_STATUS.PENDING_RELEASE,
+  BOOKING_STATUS.RELEASED,
+]);
+
+export type StatementBooking = {
+  id: string;
+  startAt: Date;
+  hours: number;
+  subtotalCents: number;
+  platformFeeCents: number;
+  gstCents: number;
+  totalCents: number;
+  status: string;
+  recurringIndex: number;
+  recurringTotal: number;
+  specialty: { name: string };
+  caregiver: { user: { name: string }; abn?: string | null };
+  family: { name: string };
+};
+
+export type StatementRow = {
+  id: string;
+  dateKey: string;
+  invoiceNumber: string;
+  caregiverName: string;
+  familyName: string;
+  specialty: string;
+  week: string;
+  hours: number;
+  careCents: number;
+  gstCents: number;
+  feeCents: number;
+  familyCents: number;
+  payoutCents: number;
+  status: string;
+  abn: string;
+};
+
+export function invoiceNumber(bookingId: string) {
+  return `CP-${bookingId.slice(-8).toUpperCase()}`;
+}
+
+export function australianFinancialYear(now = new Date()) {
+  const key = sydneyDateKey(now);
+  const year = Number(key.slice(0, 4));
+  const month = Number(key.slice(5, 7));
+  const startYear = month >= 7 ? year : year - 1;
+  const start = sydneyDayBounds(`${startYear}-07-01`);
+  const end = sydneyDayBounds(`${startYear + 1}-07-01`);
+  if (!start || !end) throw new Error("Invalid financial year");
+  return {
+    startYear,
+    label: `${startYear}–${String(startYear + 1).slice(2)}`,
+    startAt: start.startAt,
+    endAt: end.startAt,
+  };
+}
+
+export function csvCell(value: string | number) {
+  const text = String(value);
+  if (/[",\n]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
+  return text;
+}
+
+export function toStatementRows(bookings: StatementBooking[], now = new Date()): StatementRow[] {
+  const fy = australianFinancialYear(now);
+  return bookings
+    .filter((booking) => STATEMENT_STATUSES.has(booking.status))
+    .filter((booking) => booking.startAt >= fy.startAt && booking.startAt < fy.endAt)
+    .sort((a, b) => a.startAt.getTime() - b.startAt.getTime())
+    .map((booking) => ({
+      id: booking.id,
+      dateKey: sydneyDateKey(booking.startAt),
+      invoiceNumber: invoiceNumber(booking.id),
+      caregiverName: booking.caregiver.user.name,
+      familyName: booking.family.name,
+      specialty: booking.specialty.name,
+      week:
+        booking.recurringTotal > 1 ? `${booking.recurringIndex}/${booking.recurringTotal}` : "",
+      hours: booking.hours,
+      careCents: booking.subtotalCents,
+      gstCents: booking.gstCents,
+      feeCents: booking.platformFeeCents,
+      familyCents: booking.totalCents,
+      payoutCents: booking.subtotalCents,
+      status: booking.status,
+      abn: booking.caregiver.abn ?? "",
+    }));
+}
+
+export function statementTotals(rows: StatementRow[]) {
+  return rows.reduce(
+    (sum, row) => ({
+      careCents: sum.careCents + row.careCents,
+      gstCents: sum.gstCents + row.gstCents,
+      feeCents: sum.feeCents + row.feeCents,
+      familyCents: sum.familyCents + row.familyCents,
+      payoutCents: sum.payoutCents + row.payoutCents,
+    }),
+    { careCents: 0, gstCents: 0, feeCents: 0, familyCents: 0, payoutCents: 0 },
+  );
+}
+
+export function statementCsv(rows: StatementRow[], isFamily: boolean) {
+  const header = [
+    "Date",
+    "Invoice",
+    isFamily ? "Carer" : "Family",
+    "Specialty",
+    "Week",
+    "Hours",
+    "Care rate (inc GST)",
+    "GST (1/11)",
+    "CareProof fee",
+    isFamily ? "Family total" : "Carer payout",
+    "Status",
+    "Carer ABN",
+  ];
+  const lines = [
+    header.map(csvCell).join(","),
+    ...rows.map((row) =>
+      [
+        row.dateKey,
+        row.invoiceNumber,
+        isFamily ? row.caregiverName : row.familyName,
+        row.specialty,
+        row.week,
+        row.hours,
+        (row.careCents / 100).toFixed(2),
+        (row.gstCents / 100).toFixed(2),
+        (row.feeCents / 100).toFixed(2),
+        ((isFamily ? row.familyCents : row.payoutCents) / 100).toFixed(2),
+        row.status,
+        row.abn,
+      ]
+        .map(csvCell)
+        .join(","),
+    ),
+  ];
+  return `${lines.join("\r\n")}\r\n`;
+}
