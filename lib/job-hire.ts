@@ -18,9 +18,9 @@ export function requestStatusLabel(status: string) {
   return status;
 }
 
-export function proposalStatusLabel(status: string) {
+export function proposalStatusLabel(status: string, jobStatus?: string) {
   if (status === PROPOSAL_STATUS.ACCEPTED) return "Hired";
-  if (status === PROPOSAL_STATUS.DECLINED) return "Not hired";
+  if (status === PROPOSAL_STATUS.DECLINED) return jobStatus === "open" ? "Passed on" : "Not hired";
   if (status === PROPOSAL_STATUS.PENDING) return "Pending";
   return status;
 }
@@ -44,6 +44,20 @@ export function canWithdrawProposal(
   );
 }
 
+export function canPassOnProposal(
+  proposal: { status: string } | null,
+  job: { familyId: string; status: string } | null,
+  familyId: string,
+) {
+  return Boolean(
+    proposal &&
+      proposal.status === PROPOSAL_STATUS.PENDING &&
+      job &&
+      job.status === "open" &&
+      job.familyId === familyId,
+  );
+}
+
 export function notHiredBanner(
   items: { title: string; familyName: string }[],
 ) {
@@ -52,6 +66,16 @@ export function notHiredBanner(
     return `${items[0].familyName} hired someone else for ${items[0].title}.`;
   }
   return `${items.length} families hired someone else.`;
+}
+
+export function passedOnBanner(
+  items: { title: string; familyName: string }[],
+) {
+  if (!items.length) return null;
+  if (items.length === 1) {
+    return `${items[0].familyName} passed on your proposal for ${items[0].title}.`;
+  }
+  return `${items.length} families passed on a proposal.`;
 }
 
 export async function markRequestHired(careRequestId: string, hiredCaregiverId: string) {

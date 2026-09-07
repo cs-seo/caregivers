@@ -21,10 +21,11 @@ import { isSafeReviewReturnPath, sanitizeReviewReply, hasReviewReply } from "./r
 import { directoryStats } from "./queries";
 import { filtersFromSearchHref, isSafeSearchHref, MAX_SAVED_SEARCHES } from "./saved-search";
 import { requireRole, requireUser } from "./session";
-import { canWithdrawProposal, markRequestHired } from "./job-hire";
+import { canPassOnProposal, canWithdrawProposal, markRequestHired } from "./job-hire";
 import {
   INVITE_STATUS,
   canCreateInvite,
+  canUpdateInviteNote,
   canWithdrawInvite,
   isSafeInviteReturnPath,
   sanitizeInviteNote,
@@ -637,13 +638,40 @@ export async function declineInviteAction(formData: FormData) {
     redirect("/dashboard");
   }
 
+  const reply = sanitizeInviteNote(String(formData.get("reply") ?? ""));
   await prisma.careRequestInvite.update({
     where: { id: invite.id },
-    data: { status: INVITE_STATUS.DECLINED },
+    data: { status: INVITE_STATUS.DECLINED, reply: reply || null },
   });
   revalidatePath("/dashboard");
   revalidatePath(`/care-requests/${invite.request.slug}`);
   revalidatePath("/care-requests");
+}
+
+export async function updateInviteNoteAction(formData: FormData) {
+  const nextRaw = String(formData.get("next") ?? "/dashboard");
+  const next = isSafeInviteReturnPath(nextRaw) ? nextRaw : "/dashboard";
+  const user = await requireRole(ROLES.FAMILY);
+  if (!user) redirect(`/login?callbackUrl=${encodeURIComponent(next)}`);
+
+  const inviteId = String(formData.get("inviteId") ?? "");
+  const invite = await prisma.careRequestInvite.findUnique({
+    where: { id: inviteId },
+    include: { request: { select: { slug: true, familyId: true, status: true } }, caregiver: { select: { slug: true } } },
+  });
+  if (!invite || !canUpdateInviteNote(invite, invite.request, user.id)) {
+    redirect(next);
+  }
+
+  const note = sanitizeInviteNote(String(formData.get("note") ?? ""));
+  await prisma.careRequestInvite.update({
+    where: { id: invite.id },
+    data: { note: note || null },
+  });
+  revalidatePath(next);
+  revalidatePath(`/care-requests/${invite.request.slug}`);
+  revalidatePath(`/caregiver/${invite.caregiver.slug}`);
+  revalidatePath("/dashboard");
 }
 
 export async function withdrawInviteAction(formData: FormData) {
@@ -693,6 +721,37 @@ export async function withdrawProposalAction(formData: FormData) {
   revalidatePath("/dashboard");
   revalidatePath(`/care-requests/${proposal.careRequest.slug}`);
   revalidatePath("/care-requests");
+}
+
+export async function passOnProposalAction(formData: FormData) {
+  const user = await requireRole(ROLES.FAMILY);
+  if (!user) redirect("/login");
+  const proposalId = String(formData.get("proposalId") ?? "");
+  const proposal = await prisma.proposal.findUnique({
+    where: { id: proposalId },
+    include: { careRequest: { select: { slug: true, familyId: true, status: true } } },
+  });
+  if (!proposal || !canPassOnProposal(proposal, proposal.careRequest, user.id)) {
+    redirect(proposal ? `/care-requests/${proposal.careRequest.slug}` : "/dashboard");
+  }
+
+  const familyNote = sanitizeInviteNote(String(formData.get("familyNote") ?? ""));
+  await prisma.proposal.update({
+    where: { id: proposal.id },
+    data: { status: "declined", familyNote: familyNote || null },
+  });
+  await prisma.careRequestInvite.updateMany({
+    where: {
+      requestId: proposal.careRequestId,
+      caregiverId: proposal.caregiverId,
+      status: INVITE_STATUS.APPLIED,
+    },
+    data: { status: INVITE_STATUS.DECLINED },
+  });
+  revalidatePath("/dashboard");
+  revalidatePath(`/care-requests/${proposal.careRequest.slug}`);
+  revalidatePath("/care-requests");
+  redirect(`/care-requests/${proposal.careRequest.slug}?passed=1`);
 }
 
 export async function hireProposalAction(formData: FormData) {

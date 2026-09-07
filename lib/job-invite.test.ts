@@ -4,6 +4,7 @@ import {
   INVITE_STATUS,
   canCreateInvite,
   canInviteToJob,
+  canUpdateInviteNote,
   canWithdrawInvite,
   hiredInviteStatus,
   inviteButtonLabel,
@@ -33,6 +34,12 @@ test("canWithdrawInvite is only for a pending invite on the family's open reques
   assert.equal(canWithdrawInvite({ status: INVITE_STATUS.PENDING }, { familyId: "alex", status: "hired" }, "alex"), false);
   assert.equal(canWithdrawInvite({ status: INVITE_STATUS.PENDING }, job, "other"), false);
   assert.equal(canWithdrawInvite(null, job, "alex"), false);
+});
+
+test("canUpdateInviteNote matches a withdrawable pending invite", () => {
+  const job = { familyId: "alex", status: "open" };
+  assert.equal(canUpdateInviteNote({ status: INVITE_STATUS.PENDING }, job, "alex"), true);
+  assert.equal(canUpdateInviteNote({ status: INVITE_STATUS.DECLINED }, job, "alex"), false);
 });
 
 test("canCreateInvite skips carers who already proposed or have a live invite", () => {

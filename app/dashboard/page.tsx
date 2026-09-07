@@ -11,7 +11,14 @@ import {
   type DashboardBookingGroup,
 } from "@/lib/dashboard-groups";
 import { formatDateTime, plural, snippet } from "@/lib/format";
-import { canWithdrawProposal, notHiredBanner, proposalStatusLabel, requestStatusLabel } from "@/lib/job-hire";
+import {
+  canWithdrawProposal,
+  notHiredBanner,
+  passedOnBanner,
+  proposalStatusLabel,
+  requestStatusLabel,
+} from "@/lib/job-hire";
+import { INVITE_NOTE_LIMIT } from "@/lib/job-invite";
 import { inviteStatusLabel } from "@/lib/job-invite";
 import { unreadJobCountsByRequest } from "@/lib/job-messages";
 import { formatJobStart, jobDirectoryFilters, jobDirectoryHref, matchingJobs } from "@/lib/job-match";
@@ -292,13 +299,21 @@ export default async function DashboardPage({
       : [];
   const proposedJobIds = new Set(carerProposals.map((proposal) => proposal.careRequestId));
   const notHiredJobs = carerProposals
-    .filter((proposal) => proposal.status === "declined")
+    .filter((proposal) => proposal.status === "declined" && proposal.careRequest.status === "hired")
+    .map((proposal) => ({
+      title: proposal.careRequest.title,
+      familyName: proposal.careRequest.family.name,
+      slug: proposal.careRequest.slug,
+    }));
+  const passedOnJobs = carerProposals
+    .filter((proposal) => proposal.status === "declined" && proposal.careRequest.status === "open")
     .map((proposal) => ({
       title: proposal.careRequest.title,
       familyName: proposal.careRequest.family.name,
       slug: proposal.careRequest.slug,
     }));
   const notHiredCopy = notHiredBanner(notHiredJobs);
+  const passedOnCopy = passedOnBanner(passedOnJobs);
   const heldCents = bookings
     .filter((booking) => escrowStatuses.has(booking.status))
     .reduce((sum, booking) => sum + (isFamily ? booking.totalCents : booking.subtotalCents), 0);
@@ -384,6 +399,14 @@ export default async function DashboardPage({
           {notHiredCopy}{" "}
           <Link href={`/care-requests/${notHiredJobs[0].slug}`} className="font-medium text-teal">
             {notHiredJobs.length === 1 ? "Open the request" : "Open the first request"}
+          </Link>
+        </p>
+      ) : null}
+      {passedOnCopy && passedOnJobs[0] ? (
+        <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
+          {passedOnCopy}{" "}
+          <Link href={`/care-requests/${passedOnJobs[0].slug}`} className="font-medium text-teal">
+            {passedOnJobs.length === 1 ? "Open the request" : "Open the first request"}
           </Link>
         </p>
       ) : null}
@@ -797,8 +820,15 @@ export default async function DashboardPage({
                   <Link href={`/care-requests/${invite.request.slug}`} className="font-medium text-teal hover:underline">
                     Send a proposal
                   </Link>
-                  <form action={declineInviteAction}>
+                  <form action={declineInviteAction} className="flex flex-wrap items-end gap-2">
                     <input type="hidden" name="inviteId" value={invite.id} />
+                    <textarea
+                      name="reply"
+                      rows={1}
+                      maxLength={INVITE_NOTE_LIMIT}
+                      placeholder="Optional reason"
+                      className="w-48 rounded-lg border border-line px-2 py-1 text-sm text-ink"
+                    />
                     <button className="text-stone-500 hover:text-ink" type="submit">
                       Decline
                     </button>
@@ -874,7 +904,9 @@ export default async function DashboardPage({
                 <Link href={`/care-requests/${proposal.careRequest.slug}`} className="text-teal hover:underline">
                   {proposal.careRequest.title}
                 </Link>
-                <span className="ml-2 text-sm text-stone-500">{proposalStatusLabel(proposal.status)}</span>
+                <span className="ml-2 text-sm text-stone-500">
+                  {proposalStatusLabel(proposal.status, proposal.careRequest.status)}
+                </span>
                 {unreadJobByRequest.get(proposal.careRequestId) ? (
                   <span className="ml-2 text-sm font-medium text-clay">
                     {plural(unreadJobByRequest.get(proposal.careRequestId) ?? 0, "new message")}

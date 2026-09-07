@@ -9,12 +9,21 @@ import {
   createProposalAction,
   declineInviteAction,
   hireProposalAction,
+  passOnProposalAction,
+  updateInviteNoteAction,
   withdrawInviteAction,
   withdrawProposalAction,
 } from "@/lib/actions";
 import { BOOKING_STATUS_LABELS } from "@/lib/constants";
-import { canWithdrawProposal, proposalStatusLabel, proposalStatusTone } from "@/lib/job-hire";
-import { INVITE_STATUS, canWithdrawInvite, inviteStatusLabel, inviteStatusTone } from "@/lib/job-invite";
+import { canPassOnProposal, canWithdrawProposal, proposalStatusLabel, proposalStatusTone } from "@/lib/job-hire";
+import {
+  INVITE_NOTE_LIMIT,
+  INVITE_STATUS,
+  canUpdateInviteNote,
+  canWithdrawInvite,
+  inviteStatusLabel,
+  inviteStatusTone,
+} from "@/lib/job-invite";
 import {
   canSendJobMessage,
   canViewJobThread,
@@ -55,7 +64,7 @@ export default async function CareRequestPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ proposed?: string; updated?: string; sent?: string; error?: string }>;
+  searchParams: Promise<{ proposed?: string; updated?: string; sent?: string; passed?: string; error?: string }>;
 }) {
   const [{ slug }, query, session] = await Promise.all([params, searchParams, auth()]);
   const job = await prisma.careRequest.findUnique({
@@ -285,6 +294,9 @@ export default async function CareRequestPage({
                       </Link>
                       <p className="mt-1 text-sm text-stone-500">Asked to send a proposal on this request.</p>
                       {invite.note ? <p className="mt-2 text-sm text-stone-700">{invite.note}</p> : null}
+                      {invite.status === INVITE_STATUS.DECLINED && invite.reply ? (
+                        <p className="mt-2 text-sm text-stone-600">They declined: “{invite.reply}”</p>
+                      ) : null}
                     </div>
                     <span className="flex flex-wrap items-center gap-2">
                       <Badge tone={inviteStatusTone(invite.status)}>{inviteStatusLabel(invite.status)}</Badge>
@@ -299,6 +311,26 @@ export default async function CareRequestPage({
                       ) : null}
                     </span>
                   </div>
+                  {canUpdateInviteNote(invite, job, session?.user?.id ?? "") ? (
+                    <form action={updateInviteNoteAction} className="mt-3 space-y-2">
+                      <input type="hidden" name="inviteId" value={invite.id} />
+                      <input type="hidden" name="next" value={`/care-requests/${job.slug}`} />
+                      <label className="block text-xs text-stone-500">
+                        Invite note
+                        <textarea
+                          name="note"
+                          rows={2}
+                          maxLength={INVITE_NOTE_LIMIT}
+                          defaultValue={invite.note ?? ""}
+                          placeholder="Why this carer, or what they should know."
+                          className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm text-ink"
+                        />
+                      </label>
+                      <button className="text-sm font-medium text-teal hover:underline" type="submit">
+                        Save note
+                      </button>
+                    </form>
+                  ) : null}
                   <JobMessageThread
                     slug={job.slug}
                     caregiverId={invite.caregiverId}
@@ -360,16 +392,39 @@ export default async function CareRequestPage({
                       compact
                     />
                   ) : null}
-                  {job.status === "open" && proposal.status === "pending" ? (
-                    <form action={hireProposalAction} className="mt-3">
-                      <input type="hidden" name="proposalId" value={proposal.id} />
-                      <button className="rounded-lg bg-teal px-4 py-2 text-sm font-medium text-white" type="submit">
-                        Hire and pay into escrow
-                      </button>
-                    </form>
+                  {proposal.familyNote ? (
+                    <p className="mt-2 text-sm text-stone-600">You wrote: “{proposal.familyNote}”</p>
+                  ) : null}
+                  {canPassOnProposal(proposal, job, session?.user?.id ?? "") ? (
+                    <div className="mt-3 flex flex-wrap items-end gap-4">
+                      <form action={hireProposalAction}>
+                        <input type="hidden" name="proposalId" value={proposal.id} />
+                        <button className="rounded-lg bg-teal px-4 py-2 text-sm font-medium text-white" type="submit">
+                          Hire and pay into escrow
+                        </button>
+                      </form>
+                      <form action={passOnProposalAction} className="min-w-[16rem] flex-1 space-y-2">
+                        <input type="hidden" name="proposalId" value={proposal.id} />
+                        <label className="block text-xs text-stone-500">
+                          Optional note if you pass
+                          <textarea
+                            name="familyNote"
+                            rows={2}
+                            maxLength={INVITE_NOTE_LIMIT}
+                            placeholder="Rate, hours, or why this is not the right fit."
+                            className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm text-ink"
+                          />
+                        </label>
+                        <button className="text-sm text-stone-500 hover:text-ink" type="submit">
+                          Pass on this proposal
+                        </button>
+                      </form>
+                    </div>
                   ) : (
                     <p className="mt-2">
-                      <Badge tone={proposalStatusTone(proposal.status)}>{proposalStatusLabel(proposal.status)}</Badge>
+                      <Badge tone={proposalStatusTone(proposal.status)}>
+                        {proposalStatusLabel(proposal.status, job.status)}
+                      </Badge>
                     </p>
                   )}
                 </li>
@@ -389,6 +444,7 @@ export default async function CareRequestPage({
         {query.proposed ? <p className="mb-3 text-sm text-teal">Proposal sent.</p> : null}
         {query.updated ? <p className="mb-3 text-sm text-teal">Proposal updated.</p> : null}
         {query.sent ? <p className="mb-3 text-sm text-teal">Message sent.</p> : null}
+        {query.passed ? <p className="mb-3 text-sm text-teal">Proposal passed on. The request stays open.</p> : null}
         {query.error === "message" ? <p className="mb-3 text-sm text-clay">Write a short message before sending.</p> : null}
         {isCarer && ownInvite?.status === INVITE_STATUS.PENDING && job.status === "open" ? (
           <p className="mb-3 rounded-xl bg-sage px-3 py-2 text-sm text-teal-deep">
@@ -442,12 +498,34 @@ export default async function CareRequestPage({
           </form>
         ) : null}
         {isCarer && ownInvite?.status === INVITE_STATUS.PENDING && job.status === "open" && !alreadyProposed ? (
-          <form action={declineInviteAction} className="mt-3">
+          <form action={declineInviteAction} className="mt-3 space-y-2">
             <input type="hidden" name="inviteId" value={ownInvite.id} />
+            <label className="block text-xs text-stone-500">
+              Optional reason
+              <textarea
+                name="reply"
+                rows={2}
+                maxLength={INVITE_NOTE_LIMIT}
+                placeholder="Hours, suburb, or why this sit is not a fit."
+                className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm text-ink"
+              />
+            </label>
             <button className="w-full text-sm text-stone-500 hover:text-ink" type="submit">
               Decline this invite
             </button>
           </form>
+        ) : null}
+        {isCarer && ownInvite?.status === INVITE_STATUS.DECLINED ? (
+          <p className="mt-3 text-sm text-stone-600">
+            You declined this invite
+            {ownInvite.reply ? `: “${ownInvite.reply}”` : "."}
+          </p>
+        ) : null}
+        {isCarer && ownProposal?.status === "declined" && job.status === "open" ? (
+          <p className="mt-3 text-sm text-stone-600">
+            This family passed on your proposal
+            {ownProposal.familyNote ? `: “${ownProposal.familyNote}”` : "."}
+          </p>
         ) : null}
         {carerCanViewThread && carer ? (
           <div className="mt-5 border-t border-line pt-4">
@@ -479,7 +557,9 @@ export default async function CareRequestPage({
         ) : (
           <p className="text-sm text-stone-600">
             {ownProposal?.status === "declined"
-              ? "This family hired someone else."
+              ? job.status === "open"
+                ? `This family passed on your proposal${ownProposal.familyNote ? `: “${ownProposal.familyNote}”` : "."}`
+                : "This family hired someone else."
               : `This request is ${job.status}.`}
             {attachedBookings[0] ? (
               <>

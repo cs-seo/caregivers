@@ -693,6 +693,70 @@ export async function seedDemoJobMessages(prisma: PrismaClient) {
   return created;
 }
 
+const ELENA_NORWOOD_NOTE = "Could you cover two overnight sits in Norwood this month?";
+const ELENA_NORWOOD_REPLY = "I only work mornings in Leichhardt that week — overnight Adelaide is too far.";
+const CHLOE_NORWOOD_NOTE = "We need someone who can stay both nights this month.";
+
+export async function seedDemoPassOn(prisma: PrismaClient) {
+  const elena = await prisma.caregiverProfile.findUnique({
+    where: { slug: "elena-rossi-companion-care-sydney" },
+  });
+  const chloe = await prisma.caregiverProfile.findUnique({
+    where: { slug: "chloe-bennett-aged-care-adelaide" },
+  });
+  const job = await prisma.careRequest.findUnique({
+    where: { slug: "overnight-respite-adelaide" },
+  });
+  if (!elena || !chloe || !job || job.status !== "open") return 0;
+
+  let changed = 0;
+  const invite = await prisma.careRequestInvite.findUnique({
+    where: { requestId_caregiverId: { requestId: job.id, caregiverId: elena.id } },
+  });
+  if (!invite) {
+    await prisma.careRequestInvite.create({
+      data: {
+        requestId: job.id,
+        caregiverId: elena.id,
+        status: "declined",
+        note: ELENA_NORWOOD_NOTE,
+        reply: ELENA_NORWOOD_REPLY,
+      },
+    });
+    changed += 1;
+  } else if (invite.status !== "declined" || !invite.reply) {
+    await prisma.careRequestInvite.update({
+      where: { id: invite.id },
+      data: { status: "declined", note: invite.note ?? ELENA_NORWOOD_NOTE, reply: ELENA_NORWOOD_REPLY },
+    });
+    changed += 1;
+  }
+
+  const proposal = await prisma.proposal.findUnique({
+    where: { careRequestId_caregiverId: { careRequestId: job.id, caregiverId: chloe.id } },
+  });
+  if (!proposal) {
+    await prisma.proposal.create({
+      data: {
+        careRequestId: job.id,
+        caregiverId: chloe.id,
+        coverLetter: "I live in Adelaide and can do overnight respite. Aged care screening is current.",
+        rateCents: 5000,
+        status: "declined",
+        familyNote: CHLOE_NORWOOD_NOTE,
+      },
+    });
+    changed += 1;
+  } else if (proposal.status !== "declined" || !proposal.familyNote) {
+    await prisma.proposal.update({
+      where: { id: proposal.id },
+      data: { status: "declined", familyNote: proposal.familyNote ?? CHLOE_NORWOOD_NOTE },
+    });
+    changed += 1;
+  }
+  return changed;
+}
+
 export async function seedDemoInvites(prisma: PrismaClient) {
   const james = await prisma.caregiverProfile.findUnique({
     where: { slug: "james-okafor-disability-support-sydney" },
@@ -808,8 +872,9 @@ async function main() {
   const hired = await seedDemoHiredRequest(prisma);
   const invites = await seedDemoInvites(prisma);
   const jobMessages = await seedDemoJobMessages(prisma);
+  const passOn = await seedDemoPassOn(prisma);
   console.log(
-    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}; notice ${notice}; jobStarts ${jobStarts}; hired ${hired}; invites ${invites}; jobMessages ${jobMessages}`,
+    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}; notice ${notice}; jobStarts ${jobStarts}; hired ${hired}; invites ${invites}; jobMessages ${jobMessages}; passOn ${passOn}`,
   );
   await prisma.$disconnect();
 }

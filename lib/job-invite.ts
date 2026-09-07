@@ -22,6 +22,14 @@ export function canWithdrawInvite(
   return Boolean(invite && invite.status === INVITE_STATUS.PENDING && canInviteToJob(job, familyId));
 }
 
+export function canUpdateInviteNote(
+  invite: { status: string } | null,
+  job: { familyId: string; status: string } | null,
+  familyId: string,
+) {
+  return canWithdrawInvite(invite, job, familyId);
+}
+
 export function canCreateInvite(
   job: { familyId: string; status: string } | null,
   familyId: string,
