@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { parseSydneyDateTimeLocal } from "./format";
-import { formatJobStart, isUtcDateOnly, jobBookHref, jobDirectoryHref, jobFitsCarer, jobMissLabel, jobMissReason, matchingJobs } from "./job-match";
+import { bookHref, canAttachJob, formatJobStart, isJobSlug, isUtcDateOnly, jobBookHref, jobDirectoryHref, jobFitsCarer, jobMissLabel, jobMissReason, matchingJobs } from "./job-match";
 import { parseWeeklyHours } from "./weekly-windows";
 
 const sarah = {
@@ -109,6 +109,39 @@ test("jobBookHref prefills the job start clock time", () => {
     jobBookHref("sarah-nguyen-aged-care-sydney", parseSydneyDateTimeLocal("2026-09-15T08:00")),
     "/caregiver/sarah-nguyen-aged-care-sydney/book?start=2026-09-15&at=08:00",
   );
+  assert.equal(
+    jobBookHref(
+      "sarah-nguyen-aged-care-sydney",
+      parseSydneyDateTimeLocal("2026-09-15T08:00"),
+      "weekday-aged-care-marrickville",
+    ),
+    "/caregiver/sarah-nguyen-aged-care-sydney/book?start=2026-09-15&at=08:00&job=weekday-aged-care-marrickville",
+  );
   assert.equal(jobMissLabel(null, "family"), "Fits this start");
   assert.equal(jobMissLabel("hours", "family"), "Outside their usual weekly hours");
+});
+
+test("canAttachJob only links an open request owned by the family", () => {
+  assert.equal(isJobSlug("weekday-aged-care-marrickville"), true);
+  assert.equal(isJobSlug("../evil"), false);
+  assert.equal(canAttachJob({ familyId: "alex", status: "open" }, "alex"), true);
+  assert.equal(canAttachJob({ familyId: "alex", status: "hired" }, "alex"), false);
+  assert.equal(canAttachJob({ familyId: "alex", status: "open" }, "other"), false);
+  assert.equal(canAttachJob(null, "alex"), false);
+});
+
+test("bookHref keeps a safe job slug on error redirects", () => {
+  assert.equal(
+    bookHref("sarah-nguyen-aged-care-sydney", {
+      start: "2026-09-15",
+      at: "08:00",
+      job: "weekday-aged-care-marrickville",
+      error: "hours",
+    }),
+    "/caregiver/sarah-nguyen-aged-care-sydney/book?start=2026-09-15&at=08:00&job=weekday-aged-care-marrickville&error=hours",
+  );
+  assert.equal(
+    bookHref("sarah-nguyen-aged-care-sydney", { job: "../evil", error: "overlap" }),
+    "/caregiver/sarah-nguyen-aged-care-sydney/book?error=overlap",
+  );
 });

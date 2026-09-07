@@ -68,12 +68,30 @@ export function jobMissLabel(reason: JobMiss | null, audience: "carer" | "family
   return JOB_MISS[reason];
 }
 
-export function jobBookHref(slug: string, startDate: Date) {
+export function isJobSlug(value: string) {
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value) && value.length > 0 && value.length <= 80;
+}
+
+export function canAttachJob(job: { familyId: string; status: string } | null, familyId: string) {
+  return Boolean(job && job.status === "open" && job.familyId === familyId);
+}
+
+export function bookHref(
+  slug: string,
+  query: { start?: string; at?: string; job?: string; error?: string } = {},
+) {
+  const parts: string[] = [];
+  if (query.start && /^\d{4}-\d{2}-\d{2}$/.test(query.start)) parts.push(`start=${query.start}`);
+  if (query.at && /^([01]\d|2[0-3]):([0-5]\d)$/.test(query.at)) parts.push(`at=${query.at}`);
+  if (query.job && isJobSlug(query.job)) parts.push(`job=${query.job}`);
+  if (query.error && /^[a-z]+$/.test(query.error)) parts.push(`error=${query.error}`);
+  return parts.length ? `/caregiver/${slug}/book?${parts.join("&")}` : `/caregiver/${slug}/book`;
+}
+
+export function jobBookHref(slug: string, startDate: Date, jobSlug?: string) {
   const dateKey = sydneyDateKey(startDate);
   const clock = isUtcDateOnly(startDate) ? undefined : minutesToInput(sydneyMinutes(startDate));
-  return clock
-    ? `/caregiver/${slug}/book?start=${dateKey}&at=${clock}`
-    : `/caregiver/${slug}/book?start=${dateKey}`;
+  return bookHref(slug, { start: dateKey, at: clock, job: jobSlug });
 }
 
 export function jobDirectoryFilters(job: {

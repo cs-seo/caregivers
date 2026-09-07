@@ -8,12 +8,14 @@ export function BookingForm({
   hourlyRateCents,
   instantBook,
   defaultStart,
+  job,
 }: {
   slug: string;
   specialties: { id: string; name: string }[];
   hourlyRateCents: number;
   instantBook: boolean;
   defaultStart?: string;
+  job?: { slug: string; title: string; specialtyId: string } | null;
 }) {
   const sample = quoteBooking(hourlyRateCents, 4);
   const day = quoteDaySit(hourlyRateCents);
@@ -26,9 +28,23 @@ export function BookingForm({
   return (
     <form action={createBookingAction} className="space-y-4">
       <input type="hidden" name="slug" value={slug} />
+      {job ? (
+        <>
+          <input type="hidden" name="job" value={job.slug} />
+          <p className="rounded-xl border border-teal/25 bg-sage px-3 py-2 text-sm text-ink">
+            This booking will close your <span className="font-semibold">{job.title}</span> request
+            and attach the sit to that job.
+          </p>
+        </>
+      ) : null}
       <label className="block text-sm">
         <span className="font-medium text-stone-700">Care type</span>
-        <select name="specialtyId" required className="mt-1 w-full rounded-xl border border-line px-3 py-2.5">
+        <select
+          name="specialtyId"
+          required
+          defaultValue={job?.specialtyId}
+          className="mt-1 w-full rounded-xl border border-line px-3 py-2.5"
+        >
           {specialties.map((specialty) => (
             <option key={specialty.id} value={specialty.id}>
               {specialty.name}

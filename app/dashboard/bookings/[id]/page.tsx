@@ -61,6 +61,7 @@ export default async function BookingDetailPage({
     include: {
       caregiver: { include: { user: true } },
       family: { select: { id: true, name: true } },
+      careRequest: { select: { slug: true, title: true } },
       specialty: true,
       payment: true,
       review: true,
@@ -102,6 +103,14 @@ export default async function BookingDetailPage({
         {isFamily ? booking.caregiver.user.name : booking.family.name} · {formatDateTime(booking.startAt)} –{" "}
         {formatDateTime(booking.endAt)} · {booking.hours} hours
       </p>
+      {booking.careRequest ? (
+        <p className="mt-2 text-sm text-stone-600">
+          Attached to{" "}
+          <Link href={`/care-requests/${booking.careRequest.slug}`} className="font-medium text-teal hover:underline">
+            {booking.careRequest.title}
+          </Link>
+        </p>
+      ) : null}
       {isComingUp(booking) ? (
         <p className="mt-3 rounded-xl bg-sage p-3 text-sm text-teal-deep">
           {comingUpKind(booking) === "now"

@@ -128,7 +128,7 @@ export default async function CareRequestPage({
             <h2 className="text-xl font-semibold">Carers free at this time</h2>
             <p className="mt-2 text-sm text-stone-600">
               {matchStats.count
-                ? `${matchStats.count} verified ${matchStats.count === 1 ? "carer is" : "carers are"} free in ${job.city.name} at ${formatJobStart(job.startDate)}. Browse them to Instant Book while you wait on proposals.`
+                ? `${matchStats.count} verified ${matchStats.count === 1 ? "carer is" : "carers are"} free in ${job.city.name} at ${formatJobStart(job.startDate)}. Book one to close this request and attach the sit — same as hiring a proposal.`
                 : `No listed carers are free in ${job.city.name} at ${formatJobStart(job.startDate)}. Proposals below may still come in.`}
             </p>
             {matchCarers.length ? (
@@ -140,7 +140,7 @@ export default async function CareRequestPage({
                     </Link>
                     <span className="flex items-center gap-3 text-stone-500">
                       {formatAud(carer.hourlyRateCents)}/hr
-                      <Link href={jobBookHref(carer.slug, job.startDate)} className="font-medium text-teal hover:underline">
+                      <Link href={jobBookHref(carer.slug, job.startDate, job.slug)} className="font-medium text-teal hover:underline">
                         Book
                       </Link>
                     </span>

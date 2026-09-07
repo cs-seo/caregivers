@@ -13,7 +13,9 @@ import {
 } from "@/lib/availability";
 import { credentialWatchlist, watchLabel } from "@/lib/credentials";
 import { lastActiveLabel, parseSydneyDateTimeLocal, sydneyDateTimeLocal } from "@/lib/format";
+import { bookHref, canAttachJob, isJobSlug } from "@/lib/job-match";
 import { formatAud } from "@/lib/money";
+import { prisma } from "@/lib/prisma";
 import { getCaregiverBySlug, getUpcomingAvailability } from "@/lib/queries";
 import { suggestedStartLocal } from "@/lib/weekly-windows";
 import { pageMeta } from "@/lib/seo";
@@ -36,7 +38,7 @@ export default async function BookPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ error?: string; start?: string; at?: string }>;
+  searchParams: Promise<{ error?: string; start?: string; at?: string; job?: string }>;
 }) {
   const [{ slug }, query, session] = await Promise.all([params, searchParams, auth()]);
   const carer = await getCaregiverBySlug(slug);
@@ -49,6 +51,7 @@ export default async function BookPage({
   const checkAlerts = credentialWatchlist(carer.credentials);
   const startDate = query.start && /^\d{4}-\d{2}-\d{2}$/.test(query.start) ? query.start : "";
   const startClock = /^([01]\d|2[0-3]):([0-5]\d)$/.test(query.at ?? "") ? query.at : "";
+  const jobSlug = query.job && isJobSlug(query.job) ? query.job : "";
   const startIsBlocked = startDate ? blockedKeys.includes(startDate) : false;
   const startIsClosed = startDate ? upcoming.some((day) => day.key === startDate && day.closed) : false;
   const defaultStart =
@@ -61,7 +64,18 @@ export default async function BookPage({
   const liveAway = isInstantBookLive(carer.instantBook, blockedKeys);
   const liveInstant = instantBookForStart(carer.instantBook, blockedKeys, defaultStartAt, carer.noticeHours);
   const noticePaused = liveAway && !liveInstant && carer.instantBook;
-  const bookPath = startDate ? `/caregiver/${carer.slug}/book?start=${startDate}` : `/caregiver/${carer.slug}/book`;
+  const bookPath = bookHref(carer.slug, { start: startDate, at: startClock, job: jobSlug });
+  const attachJob =
+    session?.user.role === "FAMILY" && jobSlug
+      ? await prisma.careRequest.findUnique({
+          where: { slug: jobSlug },
+          select: { slug: true, title: true, specialtyId: true, familyId: true, status: true },
+        })
+      : null;
+  const job =
+    attachJob && session?.user.id && canAttachJob(attachJob, session.user.id)
+      ? { slug: attachJob.slug, title: attachJob.title, specialtyId: attachJob.specialtyId }
+      : null;
 
   return (
     <div className="mx-auto max-w-xl">
@@ -102,7 +116,7 @@ export default async function BookPage({
         <p className="text-sm font-medium text-ink">Pick a free day</p>
         <p className="mt-1 text-xs text-stone-500">This month and next. Away, closed and booked days cannot be selected.</p>
         <div className="mt-3">
-          <DaysOffCalendar days={upcoming} bookSlug={carer.slug} />
+          <DaysOffCalendar days={upcoming} bookSlug={carer.slug} bookJob={job?.slug} />
         </div>
       </div>
       {checkAlerts.length ? (
@@ -154,6 +168,7 @@ export default async function BookPage({
             instantBook={liveInstant}
             specialties={carer.specialties.map((s) => ({ id: s.specialty.id, name: s.specialty.name }))}
             defaultStart={defaultStart}
+            job={job}
           />
         </div>
       )}

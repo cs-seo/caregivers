@@ -21,11 +21,19 @@ import { isSafeReviewReturnPath, sanitizeReviewReply, hasReviewReply } from "./r
 import { directoryStats } from "./queries";
 import { filtersFromSearchHref, isSafeSearchHref, MAX_SAVED_SEARCHES } from "./saved-search";
 import { requireRole, requireUser } from "./session";
+import { bookHref, canAttachJob, isJobSlug } from "./job-match";
 import {
   firstSitOutsideHours,
   formatWeeklyHours,
   windowsFromForm,
 } from "./weekly-windows";
+
+function bookingFormHref(slug: string, formData: FormData, error?: string) {
+  const rawStart = String(formData.get("startAt") ?? "");
+  const start = /^\d{4}-\d{2}-\d{2}/.test(rawStart) ? rawStart.slice(0, 10) : "";
+  const at = rawStart.includes("T") ? rawStart.slice(11, 16) : "";
+  return bookHref(slug, { start, at, job: String(formData.get("job") ?? "").trim(), error });
+}
 
 function slugify(value: string) {
   return value
@@ -106,7 +114,7 @@ export async function registerAction(formData: FormData) {
 
 export async function createBookingAction(formData: FormData) {
   const user = await requireRole(ROLES.FAMILY);
-  if (!user) redirect(`/login?callbackUrl=/caregiver/${formData.get("slug")}/book`);
+  if (!user) redirect(`/login?callbackUrl=${encodeURIComponent(bookingFormHref(String(formData.get("slug") ?? ""), formData))}`);
 
   const slug = String(formData.get("slug") ?? "");
   const specialtyId = String(formData.get("specialtyId") ?? "");
@@ -129,7 +137,7 @@ export async function createBookingAction(formData: FormData) {
   });
   if (!caregiver) throw new Error("Carer not found");
   if (!specialtyId || Number.isNaN(startAt.getTime()) || hours < 1 || hours > 24 || !startIsInFuture(startAt)) {
-    redirect(`/caregiver/${slug}/book?error=invalid`);
+    redirect(bookingFormHref(slug, formData, "invalid"));
   }
 
   const quote = quoteBooking(caregiver.hourlyRateCents, hours);
@@ -153,22 +161,32 @@ export async function createBookingAction(formData: FormData) {
   });
   const overlap = await findSeriesOverlap(caregiver.id, windows);
   if (overlap) {
-    redirect(`/caregiver/${slug}/book?error=overlap`);
+    redirect(bookingFormHref(slug, formData, "overlap"));
   }
   const blockedRows = await prisma.caregiverBlockedDate.findMany({
     where: { caregiverId: caregiver.id, dateKey: { in: dateKeysInWindows(windows) } },
     select: { dateKey: true },
   });
   if (firstBlockedKey(dateKeysInWindows(windows), blockedRows.map((row) => row.dateKey))) {
-    redirect(`/caregiver/${slug}/book?error=blocked`);
+    redirect(bookingFormHref(slug, formData, "blocked"));
   }
   const weeklyWindows = await prisma.caregiverWeeklyWindow.findMany({
     where: { caregiverId: caregiver.id },
     select: { weekday: true, startMin: true, endMin: true },
   });
   if (firstSitOutsideHours(weeklyWindows, windows)) {
-    redirect(`/caregiver/${slug}/book?error=hours`);
+    redirect(bookingFormHref(slug, formData, "hours"));
   }
+
+  const jobSlug = String(formData.get("job") ?? "").trim();
+  const attachJob =
+    jobSlug && isJobSlug(jobSlug)
+      ? await prisma.careRequest.findUnique({
+          where: { slug: jobSlug },
+          select: { id: true, slug: true, familyId: true, status: true },
+        })
+      : null;
+  const attachJobId = attachJob && canAttachJob(attachJob, user.id) ? attachJob.id : null;
 
   const householdHandover = handoverToDb({
     handoverAccess: user.familyProfile?.handoverAccess ?? "",
@@ -188,6 +206,7 @@ export async function createBookingAction(formData: FormData) {
       data: {
         familyId: user.id,
         caregiverId: caregiver.id,
+        careRequestId: attachJobId,
         specialtyId,
         startAt: weekStart,
         endAt: weekEnd,
@@ -206,6 +225,18 @@ export async function createBookingAction(formData: FormData) {
       },
     });
     created.push(booking);
+  }
+
+  if (attachJobId && attachJob) {
+    await prisma.careRequest.update({
+      where: { id: attachJobId },
+      data: { status: "hired" },
+    });
+    await prisma.proposal.updateMany({
+      where: { careRequestId: attachJobId, caregiverId: caregiver.id, status: "pending" },
+      data: { status: "accepted" },
+    });
+    revalidatePath(`/care-requests/${attachJob.slug}`);
   }
 
   if (liveInstant) {

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { addBlockedDateAction, removeBlockedDateAction } from "@/lib/actions";
 import { sydneyDateKey } from "@/lib/format";
+import { bookHref, isJobSlug } from "@/lib/job-match";
 import {
   WEEKDAY_LABELS,
   addMonths,
@@ -16,10 +17,12 @@ export function DaysOffCalendar({
   days,
   now = new Date(),
   bookSlug,
+  bookJob,
 }: {
   days: DayState[];
   now?: Date;
   bookSlug?: string;
+  bookJob?: string;
 }) {
   const todayKey = sydneyDateKey(now);
   const current = sydneyYearMonth(now);
@@ -80,7 +83,7 @@ export function DaysOffCalendar({
                 return (
                   <Link
                     key={cell.key}
-                    href={`/caregiver/${bookSlug}/book?start=${cell.key}`}
+                    href={bookHref(bookSlug, { start: cell.key, job: bookJob && isJobSlug(bookJob) ? bookJob : undefined })}
                     title={`${cell.key} · free · book`}
                     className={`block rounded-lg px-1 py-2 text-center text-xs no-underline ${tone} ${today ? "ring-1 ring-teal" : ""}`}
                   >
