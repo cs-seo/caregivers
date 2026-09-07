@@ -35,3 +35,15 @@ export function quoteDaySit(hourlyRateCents: number) {
 export function quoteOvernightSit(hourlyRateCents: number) {
   return quoteBooking(hourlyRateCents, 10);
 }
+
+export function quoteWeeklySeries(hourlyRateCents: number, hours: number, weeks: number) {
+  const week = quoteBooking(hourlyRateCents, hours);
+  const safeWeeks = Math.min(12, Math.max(1, Math.round(weeks)));
+  return {
+    ...week,
+    weeks: safeWeeks,
+    seriesSubtotalCents: week.subtotalCents * safeWeeks,
+    seriesFeeCents: week.platformFeeCents * safeWeeks,
+    seriesTotalCents: week.totalCents * safeWeeks,
+  };
+}

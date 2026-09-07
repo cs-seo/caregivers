@@ -44,6 +44,8 @@ function BookingList({
     payment: { status: string } | null;
     messages: { body: string }[];
     _count: { messages: number };
+    recurringIndex: number;
+    recurringTotal: number;
   }[];
   isFamily: boolean;
   empty: ReactNode;
@@ -64,7 +66,14 @@ function BookingList({
                   </Link>
                   <p className="text-sm text-stone-500">{formatDateTime(booking.startAt)}</p>
                 </div>
-                <Badge>{BOOKING_STATUS_LABELS[booking.status] ?? booking.status}</Badge>
+                <div className="flex flex-wrap gap-2">
+                  {booking.recurringTotal > 1 ? (
+                    <Badge tone="clay">
+                      Week {booking.recurringIndex} of {booking.recurringTotal}
+                    </Badge>
+                  ) : null}
+                  <Badge>{BOOKING_STATUS_LABELS[booking.status] ?? booking.status}</Badge>
+                </div>
               </div>
               <p className="mt-2 text-sm text-stone-600">
                 {formatAud(booking.totalCents)} family total · carer payout {formatAud(booking.subtotalCents)}

@@ -25,6 +25,10 @@ const faqs = [
     q: "Can I leave a review immediately?",
     a: "No. Reviews are only accepted after a booking is released. That keeps ratings tied to real, paid work.",
   },
+  {
+    q: "Can I book a standing weekly sit?",
+    a: "Yes. On the book page choose 2 to 12 weeks. CareProof creates one escrow booking per week so you can cancel or dispute a single Friday without touching the rest of the series.",
+  },
 ];
 
 export default function HowItWorksPage() {
@@ -61,8 +65,8 @@ export default function HowItWorksPage() {
           <h2 className="text-xl font-semibold">3. Book in a few steps</h2>
           <p className="mt-2 text-stone-600">
             Instant Book pays into escrow immediately. Request to book waits for the carer. Job posts collect proposals
-            you can hire with one click. For babysitting, pick a date night, last-minute sit, overnight or a recurring
-            Friday — the hourly rate does not rise with a second child.
+            you can hire with one click. For babysitting, pick a date night, last-minute sit, overnight or a standing
+            weekly series — the hourly rate does not rise with a second child.
           </p>
         </li>
         <li>

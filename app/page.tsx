@@ -152,7 +152,9 @@ export default async function HomePage() {
         <ul className="mt-5 grid gap-3 text-sm sm:grid-cols-3">
           <li className="rounded-2xl bg-sage/70 p-4">
             <p className="font-semibold text-ink">One-off or recurring</p>
-            <p className="mt-1 text-stone-600">Date night tonight, or a standing Friday. No membership to browse.</p>
+            <p className="mt-1 text-stone-600">
+              Date night tonight, or book 4–12 standing Fridays. Each week is its own escrow hold.
+            </p>
           </li>
           <li className="rounded-2xl bg-sage/70 p-4">
             <p className="font-semibold text-ink">No extra per sibling</p>

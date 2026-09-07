@@ -70,7 +70,8 @@ export default function TrustPage() {
         <p className="mt-2 text-stone-700">
           Cancel more than 24 hours before the start and the held amount returns in full. Inside 24 hours the family
           can still request a refund; CareProof reviews the booking before releasing or returning funds. After the
-          visit, escrow stays held for 72 hours so either side can raise a dispute before auto-release.
+          visit, escrow stays held for 72 hours so either side can raise a dispute before auto-release. Standing weekly
+          series use the same rules per week — cancelling Friday week three does not unwind week one.
         </p>
       </section>
       <section>

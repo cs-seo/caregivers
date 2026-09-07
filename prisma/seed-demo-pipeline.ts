@@ -120,6 +120,65 @@ export async function seedDemoPipeline(prisma: PrismaClient) {
   return { created: 3, ids: [request.id, held.id, progress.id] };
 }
 
+export async function seedDemoRecurring(prisma: PrismaClient) {
+  const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
+  const priya = await prisma.caregiverProfile.findUnique({
+    where: { slug: "priya-nair-nanny-sydney" },
+    include: { specialties: true },
+  });
+  if (!family || !priya) return 0;
+  const existing = await prisma.booking.count({
+    where: { familyId: family.id, notes: { startsWith: "DEMO_RECURRING:" } },
+  });
+  if (existing > 0) return 0;
+
+  const hours = 4;
+  const subtotal = priya.hourlyRateCents * hours;
+  const fee = Math.round(subtotal * 0.1);
+  const quote = {
+    hours,
+    rateCents: priya.hourlyRateCents,
+    subtotalCents: subtotal,
+    platformFeeCents: fee,
+    gstCents: Math.round(subtotal / 11),
+    totalCents: subtotal + fee,
+  };
+  const groupId = "demo-recurring-priya-fridays";
+  const firstFriday = new Date("2026-09-11T17:00:00+10:00");
+  let created = 0;
+  for (let index = 0; index < 4; index += 1) {
+    const startAt = new Date(firstFriday.getTime() + index * 7 * 24 * 60 * 60 * 1000);
+    const endAt = new Date(startAt.getTime() + hours * 60 * 60 * 1000);
+    await prisma.booking.create({
+      data: {
+        familyId: family.id,
+        caregiverId: priya.id,
+        specialtyId: priya.specialties[0].specialtyId,
+        startAt,
+        endAt,
+        notes: `DEMO_RECURRING: standing Friday after-school · week ${index + 1} of 4`,
+        status: BOOKING_STATUS.ESCROW_HELD,
+        recurringGroupId: groupId,
+        recurringIndex: index + 1,
+        recurringTotal: 4,
+        ...quote,
+        payment: {
+          create: {
+            provider: "demo",
+            amountCents: quote.totalCents,
+            platformFeeCents: quote.platformFeeCents,
+            caregiverPayoutCents: quote.subtotalCents,
+            status: "held",
+            heldAt: new Date(),
+          },
+        },
+      },
+    });
+    created += 1;
+  }
+  return created;
+}
+
 export async function seedDemoShortlist(prisma: PrismaClient) {
   const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
   if (!family) return 0;
@@ -145,7 +204,8 @@ async function main() {
   const prisma = new PrismaClient();
   const result = await seedDemoPipeline(prisma);
   const saved = await seedDemoShortlist(prisma);
-  console.log(`Demo pipeline bookings created: ${result.created}; shortlist ${saved}`);
+  const recurring = await seedDemoRecurring(prisma);
+  console.log(`Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}`);
   await prisma.$disconnect();
 }
 

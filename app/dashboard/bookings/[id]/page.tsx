@@ -54,6 +54,13 @@ export default async function BookingDetailPage({
   const isFamily = booking.familyId === user.id;
   const isCarer = booking.caregiver.userId === user.id;
   if (!isFamily && !isCarer) redirect("/dashboard");
+  const series = booking.recurringGroupId
+    ? await prisma.booking.findMany({
+        where: { recurringGroupId: booking.recurringGroupId },
+        orderBy: { recurringIndex: "asc" },
+        select: { id: true, startAt: true, status: true, recurringIndex: true, recurringTotal: true, totalCents: true },
+      })
+    : [];
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -65,7 +72,12 @@ export default async function BookingDetailPage({
         {isFamily ? booking.caregiver.user.name : booking.family.name} · {formatDateTime(booking.startAt)} –{" "}
         {formatDateTime(booking.endAt)} · {booking.hours} hours
       </p>
-      <div className="mt-3">
+      <div className="mt-3 flex flex-wrap gap-2">
+        {booking.recurringTotal > 1 ? (
+          <Badge tone="clay">
+            Week {booking.recurringIndex} of {booking.recurringTotal}
+          </Badge>
+        ) : null}
         <Badge tone="teal">{BOOKING_STATUS_LABELS[booking.status] ?? booking.status}</Badge>
       </div>
       {query.paid ? (
@@ -101,7 +113,33 @@ export default async function BookingDetailPage({
           <dd>{booking.payment ? `${booking.payment.provider} · ${booking.payment.status}` : "Not funded"}</dd>
         </div>
       </dl>
-      {booking.notes ? <p className="mt-4 text-sm text-stone-600">Notes: {booking.notes}</p> : null}
+      {booking.notes ? <p className="mt-4 text-sm text-stone-600 whitespace-pre-line">Notes: {booking.notes}</p> : null}
+      {series.length > 1 ? (
+        <section className="mt-6 rounded-2xl border border-line bg-card p-5">
+          <h2 className="font-semibold text-ink">Standing weekly series</h2>
+          <p className="mt-1 text-sm text-stone-600">
+            Each week is a separate escrow hold. Series total {formatAud(series.reduce((sum, week) => sum + week.totalCents, 0))}.
+          </p>
+          <ul className="mt-3 space-y-2 text-sm">
+            {series.map((week) => (
+              <li key={week.id} className="flex flex-wrap items-center justify-between gap-2">
+                <Link
+                  href={`/dashboard/bookings/${week.id}`}
+                  className={week.id === booking.id ? "font-semibold text-teal" : "text-teal hover:underline"}
+                >
+                  Week {week.recurringIndex} · {formatDateTime(week.startAt)}
+                </Link>
+                <span className="text-stone-500">{BOOKING_STATUS_LABELS[week.status] ?? week.status}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+      <p className="mt-4 text-sm">
+        <a href={`/dashboard/bookings/${booking.id}/ics`} className="text-teal hover:underline">
+          Add this sit to your calendar
+        </a>
+      </p>
 
       <div className="mt-6 flex flex-wrap gap-3">
         {isCarer && booking.status === BOOKING_STATUS.PENDING_ACCEPTANCE ? (

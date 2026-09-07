@@ -99,9 +99,11 @@ export async function createBookingAction(formData: FormData) {
   const occasion = String(formData.get("occasion") ?? "").trim();
   const children = String(formData.get("children") ?? "").trim();
   const notesRaw = String(formData.get("notes") ?? "").trim();
+  const weeks = Math.min(12, Math.max(1, Math.round(Number(formData.get("weeks") ?? 1) || 1)));
   const extras = [
     occasion ? `Occasion: ${occasion.replace(/-/g, " ")}` : "",
     children ? `Children: ${children}` : "",
+    weeks > 1 ? `Standing weekly sit · ${weeks} weeks` : "",
   ].filter(Boolean);
   const notes = [extras.join(" · "), notesRaw].filter(Boolean).join("\n") || "";
 
@@ -115,37 +117,52 @@ export async function createBookingAction(formData: FormData) {
   }
 
   const quote = quoteBooking(caregiver.hourlyRateCents, hours);
-  const endAt = new Date(startAt.getTime() + hours * 60 * 60 * 1000);
   const status = caregiver.instantBook
     ? BOOKING_STATUS.AWAITING_PAYMENT
     : BOOKING_STATUS.PENDING_ACCEPTANCE;
+  const groupId = weeks > 1 ? crypto.randomUUID() : null;
 
-  const booking = await prisma.booking.create({
-    data: {
-      familyId: user.id,
-      caregiverId: caregiver.id,
-      specialtyId,
-      startAt,
-      endAt,
-      notes: notes || null,
-      status,
-      hours: quote.hours,
-      rateCents: quote.rateCents,
-      subtotalCents: quote.subtotalCents,
-      platformFeeCents: quote.platformFeeCents,
-      gstCents: quote.gstCents,
-      totalCents: quote.totalCents,
-    },
-  });
+  const created = [];
+  for (let index = 0; index < weeks; index += 1) {
+    const weekStart = new Date(startAt.getTime() + index * 7 * 24 * 60 * 60 * 1000);
+    const weekEnd = new Date(weekStart.getTime() + hours * 60 * 60 * 1000);
+    const weekNotes =
+      weeks > 1
+        ? [`Week ${index + 1} of ${weeks}`, notes].filter(Boolean).join("\n")
+        : notes;
+    const booking = await prisma.booking.create({
+      data: {
+        familyId: user.id,
+        caregiverId: caregiver.id,
+        specialtyId,
+        startAt: weekStart,
+        endAt: weekEnd,
+        notes: weekNotes || null,
+        status,
+        recurringGroupId: groupId,
+        recurringIndex: index + 1,
+        recurringTotal: weeks,
+        hours: quote.hours,
+        rateCents: quote.rateCents,
+        subtotalCents: quote.subtotalCents,
+        platformFeeCents: quote.platformFeeCents,
+        gstCents: quote.gstCents,
+        totalCents: quote.totalCents,
+      },
+    });
+    created.push(booking);
+  }
 
   if (caregiver.instantBook) {
-    await holdPayment(booking.id);
+    for (const booking of created) {
+      await holdPayment(booking.id);
+    }
     revalidatePath("/dashboard");
-    redirect(`/dashboard/bookings/${booking.id}?paid=1`);
+    redirect(`/dashboard/bookings/${created[0].id}?paid=1`);
   }
 
   revalidatePath("/dashboard");
-  redirect(`/dashboard/bookings/${booking.id}`);
+  redirect(`/dashboard/bookings/${created[0].id}`);
 }
 
 export async function payBookingAction(formData: FormData) {

@@ -1,6 +1,6 @@
 import { createBookingAction } from "@/lib/actions";
 import { BOOKING_OCCASIONS } from "@/lib/constants";
-import { formatAud, quoteBooking, quoteDaySit, quoteOvernightSit } from "@/lib/money";
+import { formatAud, quoteBooking, quoteDaySit, quoteOvernightSit, quoteWeeklySeries } from "@/lib/money";
 
 export function BookingForm({
   slug,
@@ -18,6 +18,7 @@ export function BookingForm({
   const sample = quoteBooking(hourlyRateCents, 4);
   const day = quoteDaySit(hourlyRateCents);
   const overnight = quoteOvernightSit(hourlyRateCents);
+  const fourWeeks = quoteWeeklySeries(hourlyRateCents, 4, 4);
   const childCare = specialties.some((item) =>
     ["Babysitter", "Nanny", "After-school care"].includes(item.name),
   );
@@ -73,6 +74,20 @@ export function BookingForm({
         />
       </label>
       <label className="block text-sm">
+        <span className="font-medium text-stone-700">Repeat weekly</span>
+        <select name="weeks" defaultValue="1" className="mt-1 w-full rounded-xl border border-line px-3 py-2.5">
+          <option value="1">One-off sit</option>
+          <option value="2">2 weeks</option>
+          <option value="4">4 weeks</option>
+          <option value="6">6 weeks</option>
+          <option value="8">8 weeks</option>
+          <option value="12">12 weeks</option>
+        </select>
+        <span className="mt-1 block text-xs text-stone-500">
+          Each week is its own escrow booking. Cancel or dispute one week without touching the others.
+        </span>
+      </label>
+      <label className="block text-sm">
         <span className="font-medium text-stone-700">Hours</span>
         <input
           type="number"
@@ -108,6 +123,10 @@ export function BookingForm({
           <li className="flex justify-between">
             <span>Overnight (10 hrs)</span>
             <span>{formatAud(overnight.totalCents)}</span>
+          </li>
+          <li className="flex justify-between">
+            <span>4 standing Fridays (4 hrs each)</span>
+            <span>{formatAud(fourWeeks.seriesTotalCents)}</span>
           </li>
         </ul>
         <p className="mt-2 text-xs text-stone-600">

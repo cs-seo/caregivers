@@ -210,6 +210,9 @@ model Booking {
   totalCents       Int
   notes            String?
   status           String
+  recurringGroupId String?
+  recurringIndex   Int       @default(1)
+  recurringTotal   Int       @default(1)
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   payment          Payment?
