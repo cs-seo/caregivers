@@ -1,3 +1,12 @@
+export const WEEKLY_HOUR_PRESETS = [
+  "Thu–Sun 5pm–midnight",
+  "Mon–Fri 3pm–7pm",
+  "Mon–Fri 8am–6pm",
+  "Mon–Fri 7am–1pm",
+  "Wed–Sun 9am–5pm",
+  "Fri–Mon, overnight by arrangement",
+] as const;
+
 export function defaultWeeklyHours(specialties: string[]) {
   if (specialties.includes("babysitters")) return "Thu–Sun 5pm–midnight";
   if (specialties.includes("after-school-care")) return "Mon–Fri 3pm–7pm";

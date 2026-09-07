@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { defaultWeeklyHours, weeklyHourChips } from "./availability";
+import { WEEKLY_HOUR_PRESETS, defaultWeeklyHours, weeklyHourChips } from "./availability";
+
+test("weekly hour presets include the babysitting evening pattern", () => {
+  assert.ok(WEEKLY_HOUR_PRESETS.includes("Thu–Sun 5pm–midnight"));
+});
 
 test("defaultWeeklyHours prefers babysitting evenings", () => {
   assert.equal(defaultWeeklyHours(["babysitters", "nannies"]), "Thu–Sun 5pm–midnight");
