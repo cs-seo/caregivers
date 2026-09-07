@@ -11,7 +11,7 @@ import {
   type DashboardBookingGroup,
 } from "@/lib/dashboard-groups";
 import { formatDateTime, plural, snippet } from "@/lib/format";
-import { proposalStatusLabel } from "@/lib/job-hire";
+import { proposalStatusLabel, requestStatusLabel } from "@/lib/job-hire";
 import { formatJobStart, jobDirectoryFilters, jobDirectoryHref, matchingJobs } from "@/lib/job-match";
 import { buildRoster } from "@/lib/roster";
 import { formatAud } from "@/lib/money";
@@ -153,7 +153,11 @@ export default async function DashboardPage({
   const familyJobs = isFamily
     ? await prisma.careRequest.findMany({
         where: { familyId: user.id },
-        include: { specialty: true, city: { include: { state: true } } },
+        include: {
+          specialty: true,
+          city: { include: { state: true } },
+          bookings: { select: { id: true }, orderBy: { startAt: "asc" }, take: 1 },
+        },
         orderBy: { createdAt: "desc" },
       })
     : [];
@@ -172,7 +176,17 @@ export default async function DashboardPage({
   const carerProposals = !isFamily
     ? await prisma.proposal.findMany({
         where: { caregiverId: user.caregiverProfile?.id ?? "__none__" },
-        include: { careRequest: true },
+        include: {
+          careRequest: {
+            include: {
+              bookings: {
+                where: { caregiverId: user.caregiverProfile?.id ?? "__none__" },
+                select: { id: true },
+                take: 1,
+              },
+            },
+          },
+        },
         orderBy: { createdAt: "desc" },
       })
     : [];
@@ -716,7 +730,14 @@ export default async function DashboardPage({
                   <Link href={`/care-requests/${job.slug}`} className="text-teal hover:underline">
                     {job.title}
                   </Link>
-                  <span className="ml-2 text-sm text-stone-500">{job.status}</span>
+                  <span className="ml-2 text-sm text-stone-500">{requestStatusLabel(job.status)}</span>
+                  {job.bookings[0] ? (
+                    <span className="mt-0.5 block text-sm">
+                      <Link href={`/dashboard/bookings/${job.bookings[0].id}`} className="text-teal hover:underline">
+                        Open sit
+                      </Link>
+                    </span>
+                  ) : null}
                   {match ? (
                     <span className="mt-0.5 block text-sm text-stone-500">
                       {match.count
@@ -745,6 +766,16 @@ export default async function DashboardPage({
                   {proposal.careRequest.title}
                 </Link>
                 <span className="ml-2 text-sm text-stone-500">{proposalStatusLabel(proposal.status)}</span>
+                {proposal.careRequest.bookings[0] ? (
+                  <span className="mt-0.5 block text-sm">
+                    <Link
+                      href={`/dashboard/bookings/${proposal.careRequest.bookings[0].id}`}
+                      className="text-teal hover:underline"
+                    >
+                      Open sit
+                    </Link>
+                  </span>
+                ) : null}
               </li>
             ))
           )}

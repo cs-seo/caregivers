@@ -11,6 +11,12 @@ export function hiredProposalStatus(status: string, caregiverId: string, hiredCa
   return caregiverId === hiredCaregiverId ? PROPOSAL_STATUS.ACCEPTED : PROPOSAL_STATUS.DECLINED;
 }
 
+export function requestStatusLabel(status: string) {
+  if (status === "hired") return "Hired";
+  if (status === "open") return "Open";
+  return status;
+}
+
 export function proposalStatusLabel(status: string) {
   if (status === PROPOSAL_STATUS.ACCEPTED) return "Hired";
   if (status === PROPOSAL_STATUS.DECLINED) return "Not hired";
