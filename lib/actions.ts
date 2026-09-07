@@ -911,6 +911,7 @@ export async function createReviewAction(formData: FormData) {
   revalidatePath(`/dashboard/bookings/${booking.id}`);
   revalidatePath("/");
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/reviews-due");
 }
 
 export async function replyToReviewAction(formData: FormData) {

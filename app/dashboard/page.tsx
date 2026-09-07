@@ -49,6 +49,7 @@ import {
 } from "@/lib/saved-search";
 import { comingUpBookings, comingUpKind } from "@/lib/coming-up";
 import { canFillFromHousehold, hasHandover } from "@/lib/handover";
+import { canWriteReview, reviewsDueLabel } from "@/lib/reviews";
 import { unreadCountsByBooking } from "@/lib/messages";
 import { australianFinancialYear, statementTotals, toStatementRows } from "@/lib/statement";
 import { profileChecklist } from "@/lib/profile";
@@ -156,6 +157,7 @@ export default async function DashboardPage({
       family: { select: { name: true } },
       specialty: true,
       payment: true,
+      review: { select: { id: true } },
       messages: { orderBy: { createdAt: "desc" }, take: 1, select: { body: true } },
       _count: { select: { messages: true } },
     },
@@ -165,6 +167,9 @@ export default async function DashboardPage({
   const unreadJobByRequest = await unreadJobCountsByRequest(user.id);
   const unreadBookingTotal = [...unreadByBooking.values()].reduce((sum, count) => sum + count, 0);
   const unreadJobTotal = [...unreadJobByRequest.values()].reduce((sum, count) => sum + count, 0);
+  const reviewsDue = isFamily
+    ? bookings.filter((booking) => canWriteReview(booking, user.id)).slice(0, 5)
+    : [];
   const unrepliedReviews =
     !isFamily && user.caregiverProfile
       ? await prisma.review.findMany({
@@ -422,6 +427,14 @@ export default async function DashboardPage({
           {plural(unrepliedReviews.length, "review")} waiting for a public reply.
         </p>
       ) : null}
+      {reviewsDue.length > 0 ? (
+        <p className="mt-4 rounded-xl bg-sage p-3 text-sm text-teal-deep">
+          {reviewsDueLabel(reviewsDue.length)}.{" "}
+          <Link href="/dashboard/reviews-due" className="font-medium text-teal">
+            Open reviews to write
+          </Link>
+        </p>
+      ) : null}
       {fittingDelta && (fittingDelta.unseen || fittingDelta.newCount > 0) && fittingDelta.current > 0 ? (
         <p className="mt-4 rounded-xl bg-sage p-3 text-sm text-teal-deep">
           {jobsFitDeltaLabel(fittingDelta)}.{" "}
@@ -504,6 +517,34 @@ export default async function DashboardPage({
           </p>
         </div>
       </section>
+
+      {reviewsDue.length ? (
+        <section className="mt-6 rounded-2xl border border-line bg-card p-5">
+          <h2 className="font-semibold text-ink">Reviews to write</h2>
+          <p className="mt-1 text-sm text-stone-600">
+            Released sits can take a public rating.{" "}
+            <Link href="/dashboard/reviews-due" className="font-medium text-teal hover:underline">
+              Review reminder
+            </Link>{" "}
+            previews the email CareProof would send.
+          </p>
+          <ul className="mt-4 space-y-3">
+            {reviewsDue.map((booking) => (
+              <li key={booking.id} className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <p className="font-medium text-ink">
+                    {booking.specialty.name} with {booking.caregiver.user.name}
+                  </p>
+                  <p className="mt-1 text-xs text-stone-500">{formatDateTime(booking.startAt)}</p>
+                </div>
+                <Link href={`/dashboard/bookings/${booking.id}#review`} className="text-sm text-teal">
+                  Write review
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {unrepliedReviews.length ? (
         <section className="mt-6 rounded-2xl border border-line bg-card p-5">

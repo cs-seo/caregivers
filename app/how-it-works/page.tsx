@@ -23,7 +23,7 @@ const faqs = [
   },
   {
     q: "Can I leave a review immediately?",
-    a: "No. Reviews are only accepted after a booking is released. That keeps ratings tied to real, paid work. The carer can then publish one public reply from the booking, the dashboard Reply needed list, or their profile. Replies cannot be edited.",
+    a: "No. Reviews are only accepted after a booking is released. That keeps ratings tied to real, paid work. Released sits waiting for a rating appear on Reviews to write on the family dashboard — this demo has no mail server, so Review reminder shows the email and lets you send it to yourself. The carer can then publish one public reply from the booking, the dashboard Reply needed list, or their profile. Replies cannot be edited.",
   },
   {
     q: "Can I book a standing weekly sit?",
