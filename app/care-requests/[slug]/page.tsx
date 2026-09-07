@@ -4,10 +4,16 @@ import { auth } from "@/auth";
 import { Badge } from "@/components/badges";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { InviteButton } from "@/components/invite-button";
-import { createProposalAction, declineInviteAction, hireProposalAction } from "@/lib/actions";
+import {
+  createProposalAction,
+  declineInviteAction,
+  hireProposalAction,
+  withdrawInviteAction,
+  withdrawProposalAction,
+} from "@/lib/actions";
 import { BOOKING_STATUS_LABELS } from "@/lib/constants";
-import { proposalStatusLabel, proposalStatusTone } from "@/lib/job-hire";
-import { INVITE_STATUS, inviteStatusLabel, inviteStatusTone } from "@/lib/job-invite";
+import { canWithdrawProposal, proposalStatusLabel, proposalStatusTone } from "@/lib/job-hire";
+import { INVITE_STATUS, canWithdrawInvite, inviteStatusLabel, inviteStatusTone } from "@/lib/job-invite";
 import {
   formatJobStart,
   jobBookHref,
@@ -105,7 +111,8 @@ export default async function CareRequestPage({
     : null;
   const miss = matchCarer ? jobMissReason(job, matchCarer) : null;
   const fit = matchCarer ? jobFitsCarer(job, matchCarer) : false;
-  const alreadyProposed = Boolean(carer && job.proposals.some((proposal) => proposal.caregiverId === carer.id));
+  const ownProposal = carer ? job.proposals.find((proposal) => proposal.caregiverId === carer.id) : null;
+  const alreadyProposed = Boolean(ownProposal);
   const ownInvite = carer ? job.invites.find((invite) => invite.caregiverId === carer.id) : null;
   const directoryFilters = jobDirectoryFilters(job);
   const matchHref = job.status === "open" ? jobDirectoryHref(job) : null;
@@ -232,7 +239,18 @@ export default async function CareRequestPage({
                     </Link>
                     <p className="mt-1 text-sm text-stone-500">Asked to send a proposal on this request.</p>
                   </div>
-                  <Badge tone={inviteStatusTone(invite.status)}>{inviteStatusLabel(invite.status)}</Badge>
+                  <span className="flex flex-wrap items-center gap-2">
+                    <Badge tone={inviteStatusTone(invite.status)}>{inviteStatusLabel(invite.status)}</Badge>
+                    {canWithdrawInvite(invite, job, session?.user?.id ?? "") ? (
+                      <form action={withdrawInviteAction}>
+                        <input type="hidden" name="inviteId" value={invite.id} />
+                        <input type="hidden" name="next" value={`/care-requests/${job.slug}`} />
+                        <button className="text-sm text-stone-500 hover:text-ink" type="submit">
+                          Withdraw invite
+                        </button>
+                      </form>
+                    ) : null}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -296,7 +314,17 @@ export default async function CareRequestPage({
         ) : null}
         {isCarer && job.status === "open" ? (
           alreadyProposed ? (
-            <p className="text-sm text-teal">You already sent a proposal on this request.</p>
+            <div>
+              <p className="text-sm text-teal">You already sent a proposal on this request.</p>
+              {ownProposal && canWithdrawProposal(ownProposal, carer!.id, job.status) ? (
+                <form action={withdrawProposalAction} className="mt-3">
+                  <input type="hidden" name="proposalId" value={ownProposal.id} />
+                  <button className="text-sm text-stone-500 hover:text-ink" type="submit">
+                    Withdraw proposal
+                  </button>
+                </form>
+              ) : null}
+            </div>
           ) : (
           <form action={createProposalAction} className="space-y-3">
             <input type="hidden" name="slug" value={job.slug} />
@@ -340,7 +368,9 @@ export default async function CareRequestPage({
           </p>
         ) : (
           <p className="text-sm text-stone-600">
-            This request is {job.status}.
+            {ownProposal?.status === "declined"
+              ? "This family hired someone else."
+              : `This request is ${job.status}.`}
             {attachedBookings[0] ? (
               <>
                 {" "}

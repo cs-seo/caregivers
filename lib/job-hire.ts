@@ -31,6 +31,29 @@ export function proposalStatusTone(status: string): "teal" | "stone" | "clay" {
   return "clay";
 }
 
+export function canWithdrawProposal(
+  proposal: { caregiverId: string; status: string } | null,
+  caregiverId: string,
+  jobStatus: string,
+) {
+  return Boolean(
+    proposal &&
+      proposal.caregiverId === caregiverId &&
+      proposal.status === PROPOSAL_STATUS.PENDING &&
+      jobStatus === "open",
+  );
+}
+
+export function notHiredBanner(
+  items: { title: string; familyName: string }[],
+) {
+  if (!items.length) return null;
+  if (items.length === 1) {
+    return `${items[0].familyName} hired someone else for ${items[0].title}.`;
+  }
+  return `${items.length} families hired someone else.`;
+}
+
 export async function markRequestHired(careRequestId: string, hiredCaregiverId: string) {
   await prisma.careRequest.update({
     where: { id: careRequestId },

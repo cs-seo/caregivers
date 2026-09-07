@@ -11,12 +11,17 @@ import {
   type DashboardBookingGroup,
 } from "@/lib/dashboard-groups";
 import { formatDateTime, plural, snippet } from "@/lib/format";
-import { proposalStatusLabel, requestStatusLabel } from "@/lib/job-hire";
+import { canWithdrawProposal, notHiredBanner, proposalStatusLabel, requestStatusLabel } from "@/lib/job-hire";
 import { inviteStatusLabel } from "@/lib/job-invite";
 import { formatJobStart, jobDirectoryFilters, jobDirectoryHref, matchingJobs } from "@/lib/job-match";
 import { buildRoster } from "@/lib/roster";
 import { formatAud } from "@/lib/money";
-import { declineInviteAction, deleteSavedSearchAction, applyHouseholdHandoverAction } from "@/lib/actions";
+import {
+  declineInviteAction,
+  deleteSavedSearchAction,
+  applyHouseholdHandoverAction,
+  withdrawProposalAction,
+} from "@/lib/actions";
 import { directoryStats } from "@/lib/queries";
 import { filtersFromSearchHref, jobsFitDeltaLabel, savedSearchDelta, savedSearchDeltaLabel } from "@/lib/saved-search";
 import { comingUpBookings, comingUpKind } from "@/lib/coming-up";
@@ -181,6 +186,7 @@ export default async function DashboardPage({
         include: {
           careRequest: {
             include: {
+              family: { select: { name: true } },
               bookings: {
                 where: { caregiverId: user.caregiverProfile?.id ?? "__none__" },
                 select: { id: true },
@@ -281,6 +287,14 @@ export default async function DashboardPage({
         })
       : [];
   const proposedJobIds = new Set(carerProposals.map((proposal) => proposal.careRequestId));
+  const notHiredJobs = carerProposals
+    .filter((proposal) => proposal.status === "declined")
+    .map((proposal) => ({
+      title: proposal.careRequest.title,
+      familyName: proposal.careRequest.family.name,
+      slug: proposal.careRequest.slug,
+    }));
+  const notHiredCopy = notHiredBanner(notHiredJobs);
   const heldCents = bookings
     .filter((booking) => escrowStatuses.has(booking.status))
     .reduce((sum, booking) => sum + (isFamily ? booking.totalCents : booking.subtotalCents), 0);
@@ -353,6 +367,14 @@ export default async function DashboardPage({
             : `${carerInvites.length} families invited you to apply.`}{" "}
           <Link href={`/care-requests/${carerInvites[0].request.slug}`} className="font-medium text-teal">
             {carerInvites.length === 1 ? "Open the request" : "Open the first invite"}
+          </Link>
+        </p>
+      ) : null}
+      {notHiredCopy && notHiredJobs[0] ? (
+        <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
+          {notHiredCopy}{" "}
+          <Link href={`/care-requests/${notHiredJobs[0].slug}`} className="font-medium text-teal">
+            {notHiredJobs.length === 1 ? "Open the request" : "Open the first request"}
           </Link>
         </p>
       ) : null}
@@ -842,6 +864,15 @@ export default async function DashboardPage({
                       Open sit
                     </Link>
                   </span>
+                ) : null}
+                {user.caregiverProfile &&
+                canWithdrawProposal(proposal, user.caregiverProfile.id, proposal.careRequest.status) ? (
+                  <form action={withdrawProposalAction} className="mt-0.5">
+                    <input type="hidden" name="proposalId" value={proposal.id} />
+                    <button className="text-sm text-stone-500 hover:text-ink" type="submit">
+                      Withdraw proposal
+                    </button>
+                  </form>
                 ) : null}
               </li>
             ))

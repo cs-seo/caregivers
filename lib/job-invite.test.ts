@@ -4,6 +4,7 @@ import {
   INVITE_STATUS,
   canCreateInvite,
   canInviteToJob,
+  canWithdrawInvite,
   hiredInviteStatus,
   inviteButtonLabel,
   inviteStatusLabel,
@@ -15,6 +16,15 @@ test("canInviteToJob only allows the family on an open request", () => {
   assert.equal(canInviteToJob({ familyId: "alex", status: "hired" }, "alex"), false);
   assert.equal(canInviteToJob({ familyId: "alex", status: "open" }, "other"), false);
   assert.equal(canInviteToJob(null, "alex"), false);
+});
+
+test("canWithdrawInvite is only for a pending invite on the family's open request", () => {
+  const job = { familyId: "alex", status: "open" };
+  assert.equal(canWithdrawInvite({ status: INVITE_STATUS.PENDING }, job, "alex"), true);
+  assert.equal(canWithdrawInvite({ status: INVITE_STATUS.APPLIED }, job, "alex"), false);
+  assert.equal(canWithdrawInvite({ status: INVITE_STATUS.PENDING }, { familyId: "alex", status: "hired" }, "alex"), false);
+  assert.equal(canWithdrawInvite({ status: INVITE_STATUS.PENDING }, job, "other"), false);
+  assert.equal(canWithdrawInvite(null, job, "alex"), false);
 });
 
 test("canCreateInvite skips carers who already proposed or have a live invite", () => {

@@ -8,6 +8,14 @@ export function canInviteToJob(job: { familyId: string; status: string } | null,
   return Boolean(job && job.status === "open" && job.familyId === familyId);
 }
 
+export function canWithdrawInvite(
+  invite: { status: string } | null,
+  job: { familyId: string; status: string } | null,
+  familyId: string,
+) {
+  return Boolean(invite && invite.status === INVITE_STATUS.PENDING && canInviteToJob(job, familyId));
+}
+
 export function canCreateInvite(
   job: { familyId: string; status: string } | null,
   familyId: string,

@@ -21,8 +21,8 @@ import { isSafeReviewReturnPath, sanitizeReviewReply, hasReviewReply } from "./r
 import { directoryStats } from "./queries";
 import { filtersFromSearchHref, isSafeSearchHref, MAX_SAVED_SEARCHES } from "./saved-search";
 import { requireRole, requireUser } from "./session";
-import { markRequestHired } from "./job-hire";
-import { INVITE_STATUS, canCreateInvite, isSafeInviteReturnPath } from "./job-invite";
+import { canWithdrawProposal, markRequestHired } from "./job-hire";
+import { INVITE_STATUS, canCreateInvite, canWithdrawInvite, isSafeInviteReturnPath } from "./job-invite";
 import { bookHref, canAttachJob, isJobSlug } from "./job-match";
 import {
   firstSitOutsideHours,
@@ -620,6 +620,55 @@ export async function declineInviteAction(formData: FormData) {
   });
   revalidatePath("/dashboard");
   revalidatePath(`/care-requests/${invite.request.slug}`);
+  revalidatePath("/care-requests");
+}
+
+export async function withdrawInviteAction(formData: FormData) {
+  const nextRaw = String(formData.get("next") ?? "/dashboard");
+  const next = isSafeInviteReturnPath(nextRaw) ? nextRaw : "/dashboard";
+  const user = await requireRole(ROLES.FAMILY);
+  if (!user) redirect(`/login?callbackUrl=${encodeURIComponent(next)}`);
+
+  const inviteId = String(formData.get("inviteId") ?? "");
+  const invite = await prisma.careRequestInvite.findUnique({
+    where: { id: inviteId },
+    include: { request: { select: { slug: true, familyId: true, status: true } }, caregiver: { select: { slug: true } } },
+  });
+  if (!invite || !canWithdrawInvite(invite, invite.request, user.id)) {
+    redirect(next);
+  }
+
+  await prisma.careRequestInvite.delete({ where: { id: invite.id } });
+  revalidatePath(next);
+  revalidatePath(`/care-requests/${invite.request.slug}`);
+  revalidatePath(`/caregiver/${invite.caregiver.slug}`);
+  revalidatePath("/care-requests");
+  revalidatePath("/dashboard");
+}
+
+export async function withdrawProposalAction(formData: FormData) {
+  const user = await requireRole(ROLES.CAREGIVER);
+  if (!user?.caregiverProfile) redirect("/login");
+  const proposalId = String(formData.get("proposalId") ?? "");
+  const proposal = await prisma.proposal.findUnique({
+    where: { id: proposalId },
+    include: { careRequest: { select: { slug: true, status: true } } },
+  });
+  if (!proposal || !canWithdrawProposal(proposal, user.caregiverProfile.id, proposal.careRequest.status)) {
+    redirect("/dashboard");
+  }
+
+  await prisma.proposal.delete({ where: { id: proposal.id } });
+  await prisma.careRequestInvite.updateMany({
+    where: {
+      requestId: proposal.careRequestId,
+      caregiverId: proposal.caregiverId,
+      status: INVITE_STATUS.APPLIED,
+    },
+    data: { status: INVITE_STATUS.PENDING },
+  });
+  revalidatePath("/dashboard");
+  revalidatePath(`/care-requests/${proposal.careRequest.slug}`);
   revalidatePath("/care-requests");
 }
 
