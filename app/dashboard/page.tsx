@@ -11,6 +11,7 @@ import {
   type DashboardBookingGroup,
 } from "@/lib/dashboard-groups";
 import { formatDateTime, plural, snippet } from "@/lib/format";
+import { proposalStatusLabel } from "@/lib/job-hire";
 import { formatJobStart, jobDirectoryFilters, jobDirectoryHref, matchingJobs } from "@/lib/job-match";
 import { buildRoster } from "@/lib/roster";
 import { formatAud } from "@/lib/money";
@@ -743,7 +744,7 @@ export default async function DashboardPage({
                 <Link href={`/care-requests/${proposal.careRequest.slug}`} className="text-teal hover:underline">
                   {proposal.careRequest.title}
                 </Link>
-                <span className="ml-2 text-sm text-stone-500">{proposal.status}</span>
+                <span className="ml-2 text-sm text-stone-500">{proposalStatusLabel(proposal.status)}</span>
               </li>
             ))
           )}

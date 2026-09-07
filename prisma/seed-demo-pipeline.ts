@@ -550,6 +550,64 @@ export async function seedDemoWeeklyWindows(prisma: PrismaClient) {
   return updated;
 }
 
+export async function seedDemoHiredRequest(prisma: PrismaClient) {
+  const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
+  const sarah = await prisma.caregiverProfile.findUnique({
+    where: { slug: "sarah-nguyen-aged-care-sydney" },
+  });
+  const elena = await prisma.caregiverProfile.findUnique({
+    where: { slug: "elena-rossi-companion-care-sydney" },
+  });
+  const specialty = await prisma.specialty.findUnique({ where: { slug: "respite" } });
+  const city = await prisma.city.findFirst({
+    where: { slug: "sydney", state: { slug: "nsw" } },
+  });
+  if (!family || !sarah || !elena || !specialty || !city) return 0;
+
+  const job = await prisma.careRequest.upsert({
+    where: { slug: "midweek-respite-leichhardt" },
+    create: {
+      slug: "midweek-respite-leichhardt",
+      familyId: family.id,
+      specialtyId: specialty.id,
+      cityId: city.id,
+      title: "Midweek respite in Leichhardt",
+      description:
+        "One Wednesday morning sit so I can attend a specialist appointment. Mum is 79 and used to a quiet routine. Aged care screening preferred.",
+      budgetType: "hourly",
+      budgetCents: 5000,
+      startDate: parseSydneyDateTimeLocal("2026-08-20T09:00"),
+      hoursEstimate: 6,
+      status: "hired",
+    },
+    update: { status: "hired", title: "Midweek respite in Leichhardt" },
+  });
+
+  await prisma.proposal.upsert({
+    where: { careRequestId_caregiverId: { careRequestId: job.id, caregiverId: sarah.id } },
+    create: {
+      careRequestId: job.id,
+      caregiverId: sarah.id,
+      coverLetter: "I can cover Wednesday mornings in Leichhardt and already support a nearby client.",
+      rateCents: 6800,
+      status: "accepted",
+    },
+    update: { status: "accepted" },
+  });
+  await prisma.proposal.upsert({
+    where: { careRequestId_caregiverId: { careRequestId: job.id, caregiverId: elena.id } },
+    create: {
+      careRequestId: job.id,
+      caregiverId: elena.id,
+      coverLetter: "Happy to do a standing Wednesday visit if you still need someone.",
+      rateCents: 3900,
+      status: "declined",
+    },
+    update: { status: "declined" },
+  });
+  return 1;
+}
+
 export async function seedDemoJobStarts(prisma: PrismaClient) {
   const times: Record<string, Date> = {
     "weekday-aged-care-marrickville": parseSydneyDateTimeLocal("2026-09-15T08:00"),
@@ -637,8 +695,9 @@ async function main() {
   const weekly = await seedDemoWeeklyWindows(prisma);
   const notice = await seedDemoNoticeHours(prisma);
   const jobStarts = await seedDemoJobStarts(prisma);
+  const hired = await seedDemoHiredRequest(prisma);
   console.log(
-    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}; notice ${notice}; jobStarts ${jobStarts}`,
+    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}; notice ${notice}; jobStarts ${jobStarts}; hired ${hired}`,
   );
   await prisma.$disconnect();
 }

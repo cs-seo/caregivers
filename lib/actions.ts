@@ -21,6 +21,7 @@ import { isSafeReviewReturnPath, sanitizeReviewReply, hasReviewReply } from "./r
 import { directoryStats } from "./queries";
 import { filtersFromSearchHref, isSafeSearchHref, MAX_SAVED_SEARCHES } from "./saved-search";
 import { requireRole, requireUser } from "./session";
+import { markRequestHired } from "./job-hire";
 import { bookHref, canAttachJob, isJobSlug } from "./job-match";
 import {
   firstSitOutsideHours,
@@ -228,14 +229,7 @@ export async function createBookingAction(formData: FormData) {
   }
 
   if (attachJobId && attachJob) {
-    await prisma.careRequest.update({
-      where: { id: attachJobId },
-      data: { status: "hired" },
-    });
-    await prisma.proposal.updateMany({
-      where: { careRequestId: attachJobId, caregiverId: caregiver.id, status: "pending" },
-      data: { status: "accepted" },
-    });
+    await markRequestHired(attachJobId, caregiver.id);
     revalidatePath(`/care-requests/${attachJob.slug}`);
   }
 
@@ -572,6 +566,9 @@ export async function hireProposalAction(formData: FormData) {
   if (!proposal || proposal.careRequest.familyId !== user.id) {
     throw new Error("Not allowed");
   }
+  if (proposal.careRequest.status !== "open") {
+    throw new Error("Job is not open");
+  }
 
   const hours = proposal.careRequest.hoursEstimate || 4;
   const quote = quoteBooking(proposal.rateCents, hours);
@@ -597,14 +594,7 @@ export async function hireProposalAction(formData: FormData) {
     },
   });
 
-  await prisma.proposal.update({
-    where: { id: proposal.id },
-    data: { status: "accepted" },
-  });
-  await prisma.careRequest.update({
-    where: { id: proposal.careRequestId },
-    data: { status: "hired" },
-  });
+  await markRequestHired(proposal.careRequestId, proposal.caregiverId);
 
   await holdPayment(booking.id);
   revalidatePath("/dashboard");

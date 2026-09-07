@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { Badge } from "@/components/badges";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { createProposalAction, hireProposalAction } from "@/lib/actions";
+import { proposalStatusLabel, proposalStatusTone } from "@/lib/job-hire";
 import {
   formatJobStart,
   jobBookHref,
@@ -192,7 +193,9 @@ export default async function CareRequestPage({
                       </button>
                     </form>
                   ) : (
-                    <p className="mt-2 text-xs uppercase text-stone-500">{proposal.status}</p>
+                    <p className="mt-2">
+                      <Badge tone={proposalStatusTone(proposal.status)}>{proposalStatusLabel(proposal.status)}</Badge>
+                    </p>
                   )}
                 </li>
                 );

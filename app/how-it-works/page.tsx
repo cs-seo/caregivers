@@ -11,7 +11,7 @@ export const metadata = pageMeta({
 const faqs = [
   {
     q: "How do I book a carer?",
-    a: "Open a profile and use Instant Book, or post a care request and hire a proposal. Booking a matching carer from your request attaches that sit to the job and closes it — same as hiring a proposal. Either path creates one escrow-backed booking. Instant Book needs the carer’s notice window — 2 hours for many babysitters, 12 for aged care — and falls back to a request if you need someone sooner.",
+    a: "Open a profile and use Instant Book, or post a care request and hire a proposal. Booking a matching carer from your request attaches that sit to the job and closes it — same as hiring a proposal. Either path creates one escrow-backed booking and declines the other pending proposals. Instant Book needs the carer’s notice window — 2 hours for many babysitters, 12 for aged care — and falls back to a request if you need someone sooner.",
   },
   {
     q: "When is the carer paid?",
@@ -47,7 +47,7 @@ const faqs = [
   },
   {
     q: "Which care requests should a carer propose on?",
-    a: "CareProof marks jobs that match your city, specialties and usual weekly hours, including the start clock time the family set. A Saturday 6pm sit does not fit a carer who only works Saturday mornings. Days you marked away and weekdays your roster is closed are skipped. The board can show only jobs that fit, and the carer dashboard lists those matches so you are not reading every post in another state. The dashboard also shows how many fitting jobs are new since you last opened that filtered board. Families who posted a request see how many carers are free at that start, can Book one with the same clock time, or browse every match in the directory — Book from that list still closes the request. You can still propose on a mismatch if the family is flexible.",
+    a: "CareProof marks jobs that match your city, specialties and usual weekly hours, including the start clock time the family set. A Saturday 6pm sit does not fit a carer who only works Saturday mornings. Days you marked away and weekdays your roster is closed are skipped. The board can show only jobs that fit, and the carer dashboard lists those matches so you are not reading every post in another state. The dashboard also shows how many fitting jobs are new since you last opened that filtered board. Families who posted a request see how many carers are free at that start, can Book one with the same clock time, or browse every match in the directory — Book from that list still closes the request and marks other pending proposals not hired. You can still propose on a mismatch if the family is flexible.",
   },
   {
     q: "How do I prepare for an upcoming sit?",
