@@ -44,6 +44,7 @@ export type GroupableBooking = {
   payment: { status: string } | null;
   messages: { body: string }[];
   _count: { messages: number };
+  unreadCount: number;
 };
 
 export type DashboardBookingGroup = {
@@ -56,6 +57,7 @@ export type DashboardBookingGroup = {
   statusLabel: string;
   seriesLabel: string | null;
   messageCount: number;
+  unreadCount: number;
   latestMessage: string | null;
   weeks: GroupableBooking[];
   liveCents: { total: number; payout: number };
@@ -76,7 +78,9 @@ export function groupKey(booking: Pick<GroupableBooking, "id" | "recurringGroupI
   return booking.id;
 }
 
-export function pickGroupHref(weeks: Pick<GroupableBooking, "id" | "status" | "recurringIndex">[]) {
+export function pickGroupHref(weeks: Pick<GroupableBooking, "id" | "status" | "recurringIndex" | "unreadCount">[]) {
+  const unread = weeks.find((week) => week.unreadCount > 0);
+  if (unread) return `/dashboard/bookings/${unread.id}`;
   for (const status of HREF_PRIORITY) {
     const hit = weeks.find((week) => week.status === status);
     if (hit) return `/dashboard/bookings/${hit.id}`;
@@ -171,6 +175,7 @@ export function groupDashboardBookings(bookings: GroupableBooking[]): DashboardB
       statusLabel: seriesStatusLabel(weeks),
       seriesLabel: first.recurringTotal > 1 ? `${first.recurringTotal}-week series` : null,
       messageCount: weeks.reduce((sum, week) => sum + week._count.messages, 0),
+      unreadCount: weeks.reduce((sum, week) => sum + week.unreadCount, 0),
       latestMessage: latestMessage(weeks),
       weeks,
       liveCents: {

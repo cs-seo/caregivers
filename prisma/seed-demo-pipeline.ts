@@ -308,6 +308,49 @@ export async function seedDemoShortlist(prisma: PrismaClient) {
   return saved;
 }
 
+const READ_DEMO_BODIES = [
+  "Hi Sarah — Mum is expecting you from 8am. The key is in the lockbox, code 2048.",
+  "Thanks Alex. I’ll arrive at 7:50 and send a note after breakfast.",
+  "Priya, school finishes at 3:10 today. Luca has swimming gear in the blue bag.",
+];
+
+const JAMES_UNREAD = "I can do Saturday. Let’s meet at Parramatta station at 9:50.";
+const FAMILY_TO_SARAH_UNREAD = "Also please bring the blood pressure cuff from the hall cupboard.";
+
+export async function seedDemoUnreadMessages(prisma: PrismaClient) {
+  const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
+  const sarahUser = await prisma.user.findUnique({ where: { email: "carer@careproof.com.au" } });
+  const jamesUser = await prisma.user.findUnique({ where: { email: "james.okafor@careproof.com.au" } });
+  if (!family || !sarahUser || !jamesUser) return 0;
+
+  await prisma.message.updateMany({
+    where: { readAt: null, body: { in: READ_DEMO_BODIES } },
+    data: { readAt: new Date("2026-09-06T10:00:00.000Z") },
+  });
+
+  const held = await prisma.booking.findFirst({
+    where: { familyId: family.id, notes: { startsWith: "DEMO_PIPELINE: weekday aged care" } },
+  });
+  const request = await prisma.booking.findFirst({
+    where: { familyId: family.id, notes: { startsWith: "DEMO_PIPELINE: weekend community access" } },
+  });
+
+  let created = 0;
+  if (request && !(await prisma.message.findFirst({ where: { bookingId: request.id, body: JAMES_UNREAD } }))) {
+    await prisma.message.create({
+      data: { bookingId: request.id, senderId: jamesUser.id, body: JAMES_UNREAD },
+    });
+    created += 1;
+  }
+  if (held && !(await prisma.message.findFirst({ where: { bookingId: held.id, body: FAMILY_TO_SARAH_UNREAD } }))) {
+    await prisma.message.create({
+      data: { bookingId: held.id, senderId: family.id, body: FAMILY_TO_SARAH_UNREAD },
+    });
+    created += 1;
+  }
+  return created;
+}
+
 async function main() {
   const prisma = new PrismaClient();
   const result = await seedDemoPipeline(prisma);
@@ -317,8 +360,9 @@ async function main() {
   const series = await seedDemoSeriesActions(prisma);
   const blocked = await seedDemoBlockedDates(prisma);
   const funding = await seedDemoFundingRefs(prisma);
+  const unread = await seedDemoUnreadMessages(prisma);
   console.log(
-    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}`,
+    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}`,
   );
   await prisma.$disconnect();
 }

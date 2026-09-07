@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth, signOut } from "@/auth";
 import { SITE_NAME } from "@/lib/constants";
+import { countUnreadMessages } from "@/lib/messages";
 
 const nav = [
   { href: "/caregivers", label: "Find carers" },
@@ -12,6 +13,7 @@ const nav = [
 
 export async function SiteHeader() {
   const session = await auth();
+  const unread = session?.user?.id ? await countUnreadMessages(session.user.id) : 0;
 
   return (
     <header className="border-b border-line bg-card/90 backdrop-blur print:hidden">
@@ -54,6 +56,11 @@ export async function SiteHeader() {
               ) : null}
               <Link href="/dashboard" className="text-stone-700 hover:text-teal">
                 Dashboard
+                {unread > 0 ? (
+                  <span className="ml-1 rounded-full bg-orange-100 px-1.5 py-0.5 text-xs font-medium text-clay">
+                    {unread}
+                  </span>
+                ) : null}
               </Link>
               <form
                 action={async () => {

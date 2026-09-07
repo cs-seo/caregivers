@@ -23,6 +23,7 @@ function week(partial: Partial<GroupableBooking> & Pick<GroupableBooking, "id" |
     payment: null,
     messages: [],
     _count: { messages: 0 },
+    unreadCount: 0,
     ...partial,
   };
 }
@@ -73,6 +74,24 @@ test("cancelled weeks drop out of the live total and stay on an active series", 
   assert.equal(grouped.action.length, 0);
   assert.equal(grouped.active[0]?.liveCents.total, 24200);
   assert.equal(grouped.active[0]?.statusLabel, "Funds in escrow · 2 cancelled");
+});
+
+test("a group with unread mail links to that week first", () => {
+  const href = pickGroupHref([
+    week({ id: "w1", status: BOOKING_STATUS.ESCROW_HELD, recurringIndex: 1 }),
+    week({
+      id: "w2",
+      status: BOOKING_STATUS.ESCROW_HELD,
+      recurringIndex: 2,
+      unreadCount: 1,
+    }),
+  ]);
+  assert.equal(href, "/dashboard/bookings/w2");
+  const grouped = groupDashboardBookings([
+    week({ id: "w1", status: BOOKING_STATUS.ESCROW_HELD, recurringIndex: 1 }),
+    week({ id: "w2", status: BOOKING_STATUS.ESCROW_HELD, recurringIndex: 2, unreadCount: 2 }),
+  ]);
+  assert.equal(grouped.active[0]?.unreadCount, 2);
 });
 
 test("a one-off released booking is history by itself", () => {

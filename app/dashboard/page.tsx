@@ -13,6 +13,7 @@ import {
 import { formatDateTime, plural, snippet } from "@/lib/format";
 import { buildRoster } from "@/lib/roster";
 import { formatAud } from "@/lib/money";
+import { unreadCountsByBooking } from "@/lib/messages";
 import { australianFinancialYear, statementTotals, toStatementRows } from "@/lib/statement";
 import { profileChecklist } from "@/lib/profile";
 import { prisma } from "@/lib/prisma";
@@ -57,6 +58,9 @@ function BookingList({
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {group.seriesLabel ? <Badge tone="clay">{group.seriesLabel}</Badge> : null}
+                  {group.unreadCount > 0 ? (
+                    <Badge tone="clay">{plural(group.unreadCount, "new message")}</Badge>
+                  ) : null}
                   <Badge>{group.statusLabel}</Badge>
                 </div>
               </div>
@@ -82,8 +86,10 @@ function BookingList({
                 </p>
               ) : null}
               {group.messageCount > 0 ? (
-                <p className="mt-2 text-sm text-stone-500">
-                  {plural(group.messageCount, "message")}
+                <p className={`mt-2 text-sm ${group.unreadCount ? "font-medium text-teal" : "text-stone-500"}`}>
+                  {group.unreadCount
+                    ? `${plural(group.unreadCount, "new message")}`
+                    : plural(group.messageCount, "message")}
                   {group.latestMessage ? ` · “${snippet(group.latestMessage)}”` : ""}
                 </p>
               ) : (
@@ -119,6 +125,12 @@ export default async function DashboardPage({
     },
     orderBy: { createdAt: "desc" },
   });
+  const unreadByBooking = await unreadCountsByBooking(user.id);
+  const unreadTotal = [...unreadByBooking.values()].reduce((sum, count) => sum + count, 0);
+  const groupedSource = bookings.map((booking) => ({
+    ...booking,
+    unreadCount: unreadByBooking.get(booking.id) ?? 0,
+  }));
 
   const familyJobs = isFamily
     ? await prisma.careRequest.findMany({
@@ -147,7 +159,7 @@ export default async function DashboardPage({
     ? await prisma.shortlist.count({ where: { familyId: user.id } })
     : 0;
 
-  const { action: needsAction, active, history } = groupDashboardBookings(bookings);
+  const { action: needsAction, active, history } = groupDashboardBookings(groupedSource);
   const escrowStatuses = new Set<string>([
     BOOKING_STATUS.ESCROW_HELD,
     BOOKING_STATUS.IN_PROGRESS,
@@ -208,6 +220,11 @@ export default async function DashboardPage({
       </div>
       {query.cancelled ? (
         <p className="mt-4 rounded-xl bg-sage p-3 text-sm">Unpaid weeks were cancelled. Funded escrow holds are unchanged.</p>
+      ) : null}
+      {unreadTotal > 0 ? (
+        <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">
+          {plural(unreadTotal, "new message")} on your bookings. Open the highlighted sit to read and mark it seen.
+        </p>
       ) : null}
 
       <section className="mt-6 grid gap-3 sm:grid-cols-3">

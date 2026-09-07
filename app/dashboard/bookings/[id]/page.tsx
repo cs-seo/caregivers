@@ -20,6 +20,7 @@ import {
 import { BOOKING_STATUS, BOOKING_STATUS_LABELS, UNPAID_BOOKING_STATUSES } from "@/lib/constants";
 import { autoReleaseIfDue } from "@/lib/escrow";
 import { formatDateTime } from "@/lib/format";
+import { isUnreadFor, markThreadRead } from "@/lib/messages";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
@@ -59,6 +60,10 @@ export default async function BookingDetailPage({
   const isFamily = booking.familyId === user.id;
   const isCarer = booking.caregiver.userId === user.id;
   if (!isFamily && !isCarer) redirect("/dashboard");
+  const newMessageIds = new Set(
+    booking.messages.filter((message) => isUnreadFor(message, user.id)).map((message) => message.id),
+  );
+  if (newMessageIds.size) await markThreadRead(booking.id, user.id);
   const series = booking.recurringGroupId
     ? await prisma.booking.findMany({
         where: { recurringGroupId: booking.recurringGroupId },
@@ -296,6 +301,11 @@ export default async function BookingDetailPage({
               <li key={message.id} className="rounded-2xl border border-line bg-card p-4">
                 <p className="text-sm font-medium text-ink">
                   {message.sender.id === user.id ? "You" : message.sender.name}
+                  {newMessageIds.has(message.id) ? (
+                    <span className="ml-2 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-clay">
+                      New
+                    </span>
+                  ) : null}
                 </p>
                 <p className="mt-1 text-sm text-stone-700 whitespace-pre-line">{message.body}</p>
                 <p className="mt-2 text-xs text-stone-500">{formatDateTime(message.createdAt)}</p>
