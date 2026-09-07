@@ -160,8 +160,10 @@ export default async function BookingDetailPage({
         bookingId={booking.id}
         isFamily={isFamily}
         isSeries={series.length > 1}
-        saved={Boolean(query.handover)}
+        saved={query.handover === "1"}
+        copied={query.handover === "household"}
         fields={booking}
+        household={isFamily ? user.familyProfile : null}
       />
       {series.length > 1 ? (
         <section className="mt-6 rounded-2xl border border-line bg-card p-5">

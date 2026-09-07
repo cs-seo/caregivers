@@ -59,3 +59,27 @@ export function handoverGaps(source?: HandoverSource | null) {
     emergency: !fields.handoverEmergency,
   };
 }
+
+export function fillEmptyHandover(target?: HandoverSource | null, source?: HandoverSource | null): HandoverFields {
+  const current = readHandover(target);
+  const fill = readHandover(source);
+  return {
+    handoverAccess: current.handoverAccess || fill.handoverAccess,
+    handoverCare: current.handoverCare || fill.handoverCare,
+    handoverEmergency: current.handoverEmergency || fill.handoverEmergency,
+  };
+}
+
+export function handoverWouldChange(target?: HandoverSource | null, source?: HandoverSource | null) {
+  const filled = fillEmptyHandover(target, source);
+  const current = readHandover(target);
+  return (
+    filled.handoverAccess !== current.handoverAccess ||
+    filled.handoverCare !== current.handoverCare ||
+    filled.handoverEmergency !== current.handoverEmergency
+  );
+}
+
+export function canFillFromHousehold(target?: HandoverSource | null, household?: HandoverSource | null) {
+  return hasHandover(household) && handoverWouldChange(target, household);
+}

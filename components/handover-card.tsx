@@ -1,20 +1,25 @@
-import { updateBookingHandoverAction } from "@/lib/actions";
-import { HANDOVER_LIMITS, hasHandover, type HandoverSource } from "@/lib/handover";
+import { applyHouseholdHandoverAction, updateBookingHandoverAction } from "@/lib/actions";
+import { HANDOVER_LIMITS, canFillFromHousehold, hasHandover, type HandoverSource } from "@/lib/handover";
 
 export function HandoverCard({
   bookingId,
   isFamily,
   isSeries,
   saved,
+  copied,
   fields,
+  household,
 }: {
   bookingId: string;
   isFamily: boolean;
   isSeries: boolean;
   saved?: boolean;
+  copied?: boolean;
   fields: HandoverSource | null;
+  household?: HandoverSource | null;
 }) {
   const ready = hasHandover(fields);
+  const canFill = isFamily && canFillFromHousehold(fields, household);
   return (
     <section id="handover" className="mt-6 rounded-2xl border border-line bg-card p-5">
       <h2 className="font-semibold text-ink">Sit handover</h2>
@@ -23,9 +28,31 @@ export function HandoverCard({
           ? "Keys, parking, allergies and who to call. The carer sees this before they travel. It stays off the public calendar."
           : "What the family left for this sit. Confirm anything missing on the thread."}
       </p>
+      {copied ? (
+        <p className="mt-3 rounded-xl bg-sage p-3 text-sm">
+          Copied household defaults onto empty fields. Edit anything that is sit-specific.
+        </p>
+      ) : null}
       {saved ? <p className="mt-3 rounded-xl bg-sage p-3 text-sm">Handover saved.</p> : null}
       {!ready && !isFamily ? (
         <p className="mt-3 text-sm text-stone-500">No handover yet. Ask the family for access and care notes.</p>
+      ) : null}
+      {canFill ? (
+        <form action={applyHouseholdHandoverAction} className="mt-4 space-y-2 rounded-xl bg-sage/60 p-3">
+          <input type="hidden" name="bookingId" value={bookingId} />
+          <p className="text-sm text-stone-700">
+            Household defaults can fill the empty fields on this sit. Notes already here stay as they are.
+          </p>
+          {isSeries ? (
+            <label className="flex items-start gap-2 text-sm text-stone-600">
+              <input type="checkbox" name="applySeries" value="1" className="mt-1" />
+              Also fill empty weeks in this series
+            </label>
+          ) : null}
+          <button className="rounded-lg bg-teal px-4 py-2 text-sm font-medium text-white" type="submit">
+            Use household defaults
+          </button>
+        </form>
       ) : null}
       {isFamily ? (
         <form action={updateBookingHandoverAction} className="mt-4 space-y-3">

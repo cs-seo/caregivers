@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  canFillFromHousehold,
+  fillEmptyHandover,
   handoverFromForm,
   handoverGaps,
   handoverToDb,
+  handoverWouldChange,
   hasHandover,
   readHandover,
 } from "./handover";
@@ -43,4 +46,29 @@ test("handoverFromForm caps length and handoverToDb stores nulls", () => {
     handoverCare: null,
     handoverEmergency: "Alex 0400 111 222",
   });
+});
+
+test("fillEmptyHandover copies household into blank sit fields only", () => {
+  const household = {
+    handoverAccess: "Side gate lockbox 2048",
+    handoverCare: "Mum prefers tea before tablets",
+    handoverEmergency: "Alex Martin 0400 111 222",
+  };
+  assert.deepEqual(fillEmptyHandover({}, household), household);
+  assert.deepEqual(
+    fillEmptyHandover({ handoverAccess: "Front door code 3910", handoverCare: "", handoverEmergency: "" }, household),
+    {
+      handoverAccess: "Front door code 3910",
+      handoverCare: household.handoverCare,
+      handoverEmergency: household.handoverEmergency,
+    },
+  );
+});
+
+test("canFillFromHousehold is false when the sit already has those notes", () => {
+  const household = { handoverEmergency: "Alex Martin 0400 111 222" };
+  assert.equal(canFillFromHousehold({}, household), true);
+  assert.equal(canFillFromHousehold(household, household), false);
+  assert.equal(canFillFromHousehold({}, {}), false);
+  assert.equal(handoverWouldChange({ handoverAccess: "gate" }, { handoverAccess: "gate" }), false);
 });

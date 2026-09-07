@@ -15,7 +15,7 @@ import { parseSydneyDateTimeLocal, sydneyDateKey } from "./format";
 import { quoteBooking } from "./money";
 import { prisma } from "./prisma";
 import { newCalendarToken } from "./calendar-feed";
-import { handoverFromForm, handoverToDb } from "./handover";
+import { handoverFromForm, handoverToDb, fillEmptyHandover, canFillFromHousehold } from "./handover";
 import { isSafeReviewReturnPath, sanitizeReviewReply, hasReviewReply } from "./reviews";
 import { isSafeSearchHref, MAX_SAVED_SEARCHES } from "./saved-search";
 import { requireRole, requireUser } from "./session";
@@ -670,6 +670,96 @@ export async function updateBookingHandoverAction(formData: FormData) {
   revalidatePath("/dashboard");
   revalidatePath(`/dashboard/bookings/${booking.id}`);
   redirect(`/dashboard/bookings/${booking.id}?handover=1#handover`);
+}
+
+const HANDOVER_SKIP_STATUSES = [
+  BOOKING_STATUS.CANCELLED,
+  BOOKING_STATUS.REFUNDED,
+  BOOKING_STATUS.RELEASED,
+];
+
+export async function applyHouseholdHandoverAction(formData: FormData) {
+  const user = await requireRole(ROLES.FAMILY);
+  if (!user) redirect("/login");
+  const bookingId = String(formData.get("bookingId") ?? "");
+  const applySeries = formData.get("applySeries") === "1";
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    select: {
+      id: true,
+      familyId: true,
+      recurringGroupId: true,
+      handoverAccess: true,
+      handoverCare: true,
+      handoverEmergency: true,
+    },
+  });
+  if (!booking || booking.familyId !== user.id) throw new Error("Not allowed");
+  if (!canFillFromHousehold(booking, user.familyProfile)) {
+    redirect(`/dashboard/bookings/${booking.id}#handover`);
+  }
+
+  const targets =
+    applySeries && booking.recurringGroupId
+      ? await prisma.booking.findMany({
+          where: {
+            familyId: user.id,
+            recurringGroupId: booking.recurringGroupId,
+            status: { notIn: [...HANDOVER_SKIP_STATUSES] },
+          },
+          select: {
+            id: true,
+            handoverAccess: true,
+            handoverCare: true,
+            handoverEmergency: true,
+          },
+        })
+      : [booking];
+
+  for (const target of targets) {
+    if (!canFillFromHousehold(target, user.familyProfile)) continue;
+    await prisma.booking.update({
+      where: { id: target.id },
+      data: handoverToDb(fillEmptyHandover(target, user.familyProfile)),
+    });
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/household");
+  revalidatePath(`/dashboard/bookings/${booking.id}`);
+  redirect(`/dashboard/bookings/${booking.id}?handover=household#handover`);
+}
+
+export async function applyHouseholdToUpcomingAction(_formData: FormData) {
+  const user = await requireRole(ROLES.FAMILY);
+  if (!user) redirect("/login");
+  if (!canFillFromHousehold({}, user.familyProfile)) {
+    redirect("/dashboard/household");
+  }
+  const bookings = await prisma.booking.findMany({
+    where: {
+      familyId: user.id,
+      status: { notIn: [...HANDOVER_SKIP_STATUSES] },
+    },
+    select: {
+      id: true,
+      handoverAccess: true,
+      handoverCare: true,
+      handoverEmergency: true,
+    },
+  });
+  let copied = 0;
+  for (const booking of bookings) {
+    if (!canFillFromHousehold(booking, user.familyProfile)) continue;
+    await prisma.booking.update({
+      where: { id: booking.id },
+      data: handoverToDb(fillEmptyHandover(booking, user.familyProfile)),
+    });
+    copied += 1;
+  }
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/household");
+  redirect(`/dashboard/household?copied=${copied}`);
 }
 
 export async function sendMessageAction(formData: FormData) {

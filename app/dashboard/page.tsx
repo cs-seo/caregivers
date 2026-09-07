@@ -13,9 +13,9 @@ import {
 import { formatDateTime, plural, snippet } from "@/lib/format";
 import { buildRoster } from "@/lib/roster";
 import { formatAud } from "@/lib/money";
-import { deleteSavedSearchAction } from "@/lib/actions";
+import { deleteSavedSearchAction, applyHouseholdHandoverAction } from "@/lib/actions";
 import { comingUpBookings, comingUpKind } from "@/lib/coming-up";
-import { hasHandover } from "@/lib/handover";
+import { canFillFromHousehold, hasHandover } from "@/lib/handover";
 import { unreadCountsByBooking } from "@/lib/messages";
 import { australianFinancialYear, statementTotals, toStatementRows } from "@/lib/statement";
 import { profileChecklist } from "@/lib/profile";
@@ -325,7 +325,7 @@ export default async function DashboardPage({
           <h2 className="font-semibold text-ink">Coming up</h2>
           <p className="mt-1 text-sm text-stone-600">
             {isFamily
-              ? "Sits in progress or starting in the next 7 days. Open Handover for keys, parking and care notes."
+              ? "Sits in progress or starting in the next 7 days. Open Handover for keys, parking and care notes, or copy household defaults onto an empty sit."
               : "Your next sits. Confirm the handover before you travel."}
           </p>
           <ul className="mt-4 space-y-3">
@@ -342,6 +342,14 @@ export default async function DashboardPage({
                     {comingUpLabel[comingUpKind(booking)]}
                   </Badge>
                   {hasHandover(booking) ? <Badge tone="sage">Handover ready</Badge> : null}
+                  {isFamily && canFillFromHousehold(booking, user.familyProfile) ? (
+                    <form action={applyHouseholdHandoverAction}>
+                      <input type="hidden" name="bookingId" value={booking.id} />
+                      <button className="text-sm text-teal" type="submit">
+                        Use household
+                      </button>
+                    </form>
+                  ) : null}
                   <Link href={`/dashboard/bookings/${booking.id}#handover`} className="text-sm text-teal">
                     {isFamily && !hasHandover(booking) ? "Add handover" : "Handover"}
                   </Link>
