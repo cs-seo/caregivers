@@ -1465,6 +1465,7 @@ function savedSearchReturnPath(raw: string) {
     raw === "/dashboard/alerts" ||
     raw === "/dashboard/job-alerts" ||
     raw === "/dashboard/proposal-alerts" ||
+    raw === "/dashboard/invite-alerts" ||
     raw.startsWith("/dashboard?")
   ) {
     return raw;
@@ -1514,6 +1515,40 @@ export async function markJobAlertSentAction(formData: FormData) {
   });
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/job-alerts");
+  redirect(`${next}${next.includes("?") ? "&" : "?"}sent=1`);
+}
+
+export async function toggleInviteAlertsAction(formData: FormData) {
+  const user = await requireRole(ROLES.CAREGIVER);
+  if (!user?.caregiverProfile) redirect("/login?callbackUrl=/dashboard");
+  const next = savedSearchReturnPath(String(formData.get("next") ?? "/dashboard"));
+  const inviteAlertsOn = String(formData.get("alertsOn") ?? "") === "1";
+  await prisma.caregiverProfile.update({
+    where: { id: user.caregiverProfile.id },
+    data: { inviteAlertsOn },
+  });
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/invite-alerts");
+  redirect(next);
+}
+
+export async function markInviteAlertSentAction(formData: FormData) {
+  const user = await requireRole(ROLES.CAREGIVER);
+  if (!user?.caregiverProfile) redirect("/login?callbackUrl=/dashboard/invite-alerts");
+  const next = savedSearchReturnPath(String(formData.get("next") ?? "/dashboard/invite-alerts"));
+  const count = await prisma.careRequestInvite.count({
+    where: {
+      caregiverId: user.caregiverProfile.id,
+      status: "pending",
+      request: { status: "open" },
+    },
+  });
+  await prisma.caregiverProfile.update({
+    where: { id: user.caregiverProfile.id },
+    data: { lastInviteAlertedCount: count, inviteAlertedAt: new Date() },
+  });
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/invite-alerts");
   redirect(`${next}${next.includes("?") ? "&" : "?"}sent=1`);
 }
 

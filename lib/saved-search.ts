@@ -188,6 +188,51 @@ export function composeProposalAlert(
   return { subject, body, hasNew: newCount > 0 };
 }
 
+export function inviteAlertLabel(delta: ReturnType<typeof savedSearchDelta>, alertsOn: boolean) {
+  if (!alertsOn) return "Email alerts off";
+  if (delta.current === 0) {
+    return delta.unseen ? "Alerts on · no pending invites yet" : "Alerts on · 0 pending invites";
+  }
+  if (delta.unseen) {
+    return `Alerts on · ${delta.current} ${delta.current === 1 ? "invite" : "invites"} waiting for a first digest`;
+  }
+  if (delta.newCount > 0) {
+    return `Alerts on · ${delta.newCount} new ${delta.newCount === 1 ? "invite" : "invites"} since last digest`;
+  }
+  return "Alerts on · no new invites";
+}
+
+export function composeInviteAlert(
+  items: { title: string; href: string; family: string; when: string; note?: string | null }[],
+  current: number,
+  newCount: number,
+) {
+  const subject =
+    newCount > 0
+      ? `CareProof: ${newCount} new ${newCount === 1 ? "invite" : "invites"} to apply`
+      : "CareProof: no new invites to apply";
+  const listed = items.slice(0, 5);
+  const lines =
+    listed.length === 0
+      ? ["No families have invited you to an open request right now."]
+      : listed.map((item) => {
+          const note = item.note?.trim();
+          return note
+            ? `${item.title}\n${item.family} · ${item.when}\n“${note}”\nOpen ${item.href}`
+            : `${item.title}\n${item.family} · ${item.when}\nOpen ${item.href}`;
+        });
+  const body = [
+    newCount > 0
+      ? `${current} pending ${current === 1 ? "invite" : "invites"} · ${newCount} new since your last digest.`
+      : `${current} pending ${current === 1 ? "invite" : "invites"}. None are new since your last digest.`,
+    "",
+    ...lines,
+    "",
+    "Turn invite alerts off from your dashboard if you do not want another digest.",
+  ].join("\n");
+  return { subject, body, hasNew: newCount > 0 };
+}
+
 export function composeJobFitAlert(
   jobs: { title: string; href: string; when: string }[],
   current: number,

@@ -30,6 +30,7 @@ import { formatAud } from "@/lib/money";
 import {
   declineInviteAction,
   deleteSavedSearchAction,
+  toggleInviteAlertsAction,
   toggleJobAlertsAction,
   toggleProposalAlertsAction,
   toggleSavedSearchAlertsAction,
@@ -39,6 +40,7 @@ import {
 import { directoryStats } from "@/lib/queries";
 import {
   filtersFromSearchHref,
+  inviteAlertLabel,
   jobAlertLabel,
   jobsFitDeltaLabel,
   proposalAlertLabel,
@@ -340,6 +342,9 @@ export default async function DashboardPage({
           orderBy: { createdAt: "desc" },
         })
       : [];
+  const inviteAlertDelta = carerProfile
+    ? searchAlertDelta(carerInvites.length, carerProfile.lastInviteAlertedCount, carerProfile.inviteAlertedAt)
+    : null;
   const proposedJobIds = new Set(carerProposals.map((proposal) => proposal.careRequestId));
   const notHiredJobs = carerProposals
     .filter((proposal) => proposal.status === "declined" && proposal.careRequest.status === "hired")
@@ -451,6 +456,10 @@ export default async function DashboardPage({
             : `${carerInvites.length} families invited you to apply.`}{" "}
           <Link href={`/care-requests/${carerInvites[0].request.slug}`} className="font-medium text-teal">
             {carerInvites.length === 1 ? "Open the request" : "Open the first invite"}
+          </Link>
+          {" · "}
+          <Link href="/dashboard/invite-alerts" className="font-medium text-teal">
+            Invite alerts
           </Link>
         </p>
       ) : null}
@@ -938,6 +947,24 @@ export default async function DashboardPage({
       {!isFamily && carerInvites.length ? (
         <section className="mt-10">
           <h2 className="text-xl font-semibold">Invites to apply</h2>
+          <p className="mt-1 text-sm text-stone-600">
+            <Link href="/dashboard/invite-alerts" className="font-medium text-teal hover:underline">
+              Invite alerts
+            </Link>{" "}
+            preview the digest CareProof would email when a family asks you to apply.
+            {inviteAlertDelta && carerProfile
+              ? ` ${inviteAlertLabel(inviteAlertDelta, carerProfile.inviteAlertsOn)}.`
+              : ""}
+          </p>
+          {carerProfile ? (
+            <form action={toggleInviteAlertsAction} className="mt-2">
+              <input type="hidden" name="next" value="/dashboard" />
+              <input type="hidden" name="alertsOn" value={carerProfile.inviteAlertsOn ? "0" : "1"} />
+              <button className="text-sm text-stone-500 hover:text-ink" type="submit">
+                {carerProfile.inviteAlertsOn ? "Turn alerts off" : "Turn alerts on"}
+              </button>
+            </form>
+          ) : null}
           <ul className="mt-4 space-y-3">
             {carerInvites.map((invite) => (
               <li key={invite.id} className="rounded-2xl border border-line bg-card p-4">

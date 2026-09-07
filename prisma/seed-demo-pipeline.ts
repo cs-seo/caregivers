@@ -726,6 +726,23 @@ export async function seedDemoProposalAlerts(prisma: PrismaClient) {
   return 1;
 }
 
+export async function seedDemoInviteAlerts(prisma: PrismaClient) {
+  const james = await prisma.caregiverProfile.findUnique({
+    where: { slug: "james-okafor-disability-support-sydney" },
+  });
+  if (!james) return 0;
+  if (james.inviteAlertedAt) return 0;
+  await prisma.caregiverProfile.update({
+    where: { id: james.id },
+    data: {
+      inviteAlertsOn: true,
+      lastInviteAlertedCount: 0,
+      inviteAlertedAt: new Date("2026-09-01T00:00:00.000Z"),
+    },
+  });
+  return 1;
+}
+
 export async function seedDemoJobAlerts(prisma: PrismaClient) {
   const sarah = await prisma.caregiverProfile.findUnique({
     where: { slug: "sarah-nguyen-aged-care-sydney" },
@@ -991,8 +1008,9 @@ async function main() {
   const awaitingPay = await seedDemoAwaitingPay(prisma);
   const jobAlerts = await seedDemoJobAlerts(prisma);
   const proposalAlerts = await seedDemoProposalAlerts(prisma);
+  const inviteAlerts = await seedDemoInviteAlerts(prisma);
   console.log(
-    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}; notice ${notice}; jobStarts ${jobStarts}; hired ${hired}; invites ${invites}; jobMessages ${jobMessages}; passOn ${passOn}; awaitingPay ${awaitingPay}; jobAlerts ${jobAlerts}; proposalAlerts ${proposalAlerts}`,
+    `Demo pipeline bookings created: ${result.created}; shortlist ${saved}; recurring ${recurring}; expiring ${expiring}; series ${series}; blocked ${blocked}; funding ${funding}; unread ${unread}; searches ${searches}; handover ${handover}; invoices ${invoices}; replies ${replies}; portraits ${portraits}; weekly ${weekly}; notice ${notice}; jobStarts ${jobStarts}; hired ${hired}; invites ${invites}; jobMessages ${jobMessages}; passOn ${passOn}; awaitingPay ${awaitingPay}; jobAlerts ${jobAlerts}; proposalAlerts ${proposalAlerts}; inviteAlerts ${inviteAlerts}`,
   );
   await prisma.$disconnect();
 }

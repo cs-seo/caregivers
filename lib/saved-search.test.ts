@@ -1,12 +1,14 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  composeInviteAlert,
   composeJobFitAlert,
   composeProposalAlert,
   composeSearchAlert,
   defaultSearchName,
   filtersFromSearchHref,
   isSafeSearchHref,
+  inviteAlertLabel,
   jobAlertLabel,
   jobsFitDeltaLabel,
   proposalAlertLabel,
@@ -120,6 +122,35 @@ test("jobAlertLabel and composeJobFitAlert describe new fitting jobs", () => {
   assert.equal(digest.subject, "CareProof: 1 new job fits your roster");
   assert.match(digest.body, /1 open job fits you now · 1 new/);
   assert.match(digest.body, /weekday-aged-care-marrickville/);
+});
+
+test("inviteAlertLabel and composeInviteAlert describe new invites", () => {
+  const grown = savedSearchDelta(1, 0, new Date("2026-09-01"));
+  assert.equal(inviteAlertLabel(grown, true), "Alerts on · 1 new invite since last digest");
+  assert.equal(inviteAlertLabel(grown, false), "Email alerts off");
+  assert.equal(
+    inviteAlertLabel(savedSearchDelta(2, 0, null), true),
+    "Alerts on · 2 invites waiting for a first digest",
+  );
+  const digest = composeInviteAlert(
+    [
+      {
+        title: "Weekday aged care for Mum in Marrickville",
+        href: "/care-requests/weekday-aged-care-marrickville",
+        family: "Alex Martin",
+        when: "starts 15 Sept 2026, 8:00 am",
+        note: "Mum is in Marrickville and we need weekday mornings.",
+      },
+    ],
+    1,
+    1,
+  );
+  assert.equal(digest.hasNew, true);
+  assert.equal(digest.subject, "CareProof: 1 new invite to apply");
+  assert.match(digest.body, /1 pending invite · 1 new/);
+  assert.match(digest.body, /Alex Martin · starts 15 Sept 2026/);
+  assert.match(digest.body, /weekday-aged-care-marrickville/);
+  assert.match(digest.body, /weekday mornings/);
 });
 
 test("proposalAlertLabel and composeProposalAlert describe new proposals", () => {
