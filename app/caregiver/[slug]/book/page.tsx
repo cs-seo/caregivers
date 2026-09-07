@@ -26,12 +26,15 @@ export default async function BookPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; start?: string }>;
 }) {
   const [{ slug }, query, session] = await Promise.all([params, searchParams, auth()]);
   const carer = await getCaregiverBySlug(slug);
   if (!carer) notFound();
   const hourChips = weeklyHourChips(carer.weeklyHours);
+  const startDate = query.start && /^\d{4}-\d{2}-\d{2}$/.test(query.start) ? query.start : "";
+  const defaultStart = startDate ? `${startDate}T17:00` : sydneyDateTimeLocal(1, 9);
+  const bookPath = startDate ? `/caregiver/${carer.slug}/book?start=${startDate}` : `/caregiver/${carer.slug}/book`;
 
   return (
     <div className="mx-auto max-w-xl">
@@ -71,7 +74,7 @@ export default async function BookPage({
       {!session?.user ? (
         <p className="mt-4 rounded-xl bg-sage p-3 text-sm">
           Families sign in to book.{" "}
-          <Link href={`/login?callbackUrl=/caregiver/${carer.slug}/book`} className="font-medium text-teal">
+          <Link href={`/login?callbackUrl=${encodeURIComponent(bookPath)}`} className="font-medium text-teal">
             Log in
           </Link>{" "}
           or{" "}
@@ -89,7 +92,7 @@ export default async function BookPage({
             hourlyRateCents={carer.hourlyRateCents}
             instantBook={carer.instantBook}
             specialties={carer.specialties.map((s) => ({ id: s.specialty.id, name: s.specialty.name }))}
-            defaultStart={sydneyDateTimeLocal(1, 9)}
+            defaultStart={defaultStart}
           />
         </div>
       )}

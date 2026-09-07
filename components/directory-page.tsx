@@ -119,6 +119,7 @@ export async function DirectoryResults({
               <CaregiverCardView
                 key={carer.id}
                 caregiver={carer}
+                neededOn={filters.availableOn}
                 shortlist={{
                   saved: savedIds.has(carer.id),
                   signedIn: Boolean(canShortlist),

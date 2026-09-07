@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { weeklyHourChips } from "@/lib/availability";
-import { lastActiveLabel } from "@/lib/format";
+import { formatDate, lastActiveLabel, parseSydneyDateTimeLocal } from "@/lib/format";
 import { formatAud } from "@/lib/money";
 import { trustLabel } from "@/lib/trust";
 import type { CaregiverCard } from "@/lib/queries";
@@ -11,9 +11,11 @@ import { ShortlistButton } from "./shortlist-button";
 export function CaregiverCardView({
   caregiver,
   shortlist,
+  neededOn,
 }: {
   caregiver: CaregiverCard & { trustScore: number };
   shortlist?: { saved: boolean; signedIn: boolean; next: string };
+  neededOn?: string;
 }) {
   const specialtyNames = caregiver.specialties.map((s) => s.specialty.name).join(" · ");
   return (
@@ -72,6 +74,13 @@ export function CaregiverCardView({
               <span className="text-xs text-stone-600">{caregiver.yearsExperience} yrs experience</span>
             )}
           </div>
+          {neededOn ? (
+            <p className="mt-3 text-sm">
+              <Link href={`/caregiver/${caregiver.slug}/book?start=${neededOn}`} className="font-medium text-teal">
+                Book on {formatDate(parseSydneyDateTimeLocal(`${neededOn}T17:00`))}
+              </Link>
+            </p>
+          ) : null}
           {shortlist ? (
             <div className="mt-3">
               <ShortlistButton

@@ -179,17 +179,23 @@ export default async function CaregiverProfilePage({
               ) : null}
               {carer.availabilityNote ? <p className="mt-2 text-stone-700">{carer.availabilityNote}</p> : null}
               <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-7">
-                {upcoming.map((day) => (
-                  <div
-                    key={day.key}
-                    className={`rounded-xl px-2 py-2 text-center text-xs ${
-                      day.booked ? "bg-orange-50 text-clay" : "bg-sage text-teal-deep"
-                    }`}
-                  >
-                    <p className="font-medium">{day.label}</p>
-                    <p className="mt-0.5">{day.booked ? "Booked" : "Free"}</p>
-                  </div>
-                ))}
+                {upcoming.map((day) =>
+                  day.booked ? (
+                    <div key={day.key} className="rounded-xl bg-orange-50 px-2 py-2 text-center text-xs text-clay">
+                      <p className="font-medium">{day.label}</p>
+                      <p className="mt-0.5">Booked</p>
+                    </div>
+                  ) : (
+                    <Link
+                      key={day.key}
+                      href={`/caregiver/${carer.slug}/book?start=${day.key}`}
+                      className="rounded-xl bg-sage px-2 py-2 text-center text-xs text-teal-deep no-underline hover:bg-sage/80"
+                    >
+                      <p className="font-medium">{day.label}</p>
+                      <p className="mt-0.5">Free · Book</p>
+                    </Link>
+                  ),
+                )}
               </div>
               <p className="mt-2 text-xs text-stone-500">
                 Booked days already have a sit in escrow. Search{" "}
