@@ -9,6 +9,7 @@ import {
   similarJobsTitle,
   similarJobsWhere,
 } from "@/lib/job-post";
+import { postJobNextLinks, postJobNextNotice, postJobShowsNext } from "@/lib/post-job-next";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { getSpecialties, getStates } from "@/lib/queries";
@@ -41,6 +42,7 @@ export default async function PostJobPage({
       ? { cityId: preferredCity.id, specialtyId: preferredSpecialty.id }
       : null;
   const similarWhere = similarPlace ? similarJobsWhere(similarPlace) : null;
+  const showNext = session?.user.role === "FAMILY" && postJobShowsNext(prefill);
   const [similarJobs, similarCount, ownSimilarCount] = similarWhere
     ? await Promise.all([
         prisma.careRequest.findMany({
@@ -62,6 +64,20 @@ export default async function PostJobPage({
       <p className="mt-2 text-stone-600">
         Like posting a job on Upwork: describe the care, set a budget, and hire the best proposal into escrow.
       </p>
+      {showNext ? (
+        <div className="mt-6 rounded-xl bg-sage p-3 text-sm">
+          <p>{postJobNextNotice()}</p>
+          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {postJobNextLinks().map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="font-medium text-teal hover:underline">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       {preferredSpecialty && preferredCity ? (
         <section className="mt-6 rounded-2xl border border-line bg-card p-5">
           <h2 className="text-lg font-semibold text-ink">
