@@ -138,3 +138,14 @@ export function locationBoardLink(place: { city?: string; cityName?: string; sta
 export function locationBoardNotice(placeName: string) {
   return `Families in ${placeName} also post care requests. Browse the board to send a proposal or hire into escrow.`;
 }
+
+export function guideBoardLink(specialty: { slug: string; name: string }) {
+  return {
+    href: jobBoardHref({ specialty: specialty.slug }),
+    label: jobBoardTitle(specialty.name),
+  };
+}
+
+export function guideBoardNotice(specialtyName: string) {
+  return `Families also post ${specialtyName.toLowerCase()} requests. Browse the board to send a proposal or hire into escrow.`;
+}

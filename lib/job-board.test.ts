@@ -5,6 +5,8 @@ import {
   jobBoardEmptyLinks,
   jobBoardHref,
   jobBoardTitle,
+  guideBoardLink,
+  guideBoardNotice,
   locationBoardLink,
   locationBoardNotice,
   openRequestsNotice,
@@ -147,4 +149,18 @@ test("locationBoardLink points city and state hubs at the job board without a co
   });
   assert.match(locationBoardNotice("Sydney"), /Sydney/);
   assert.doesNotMatch(locationBoardNotice("Sydney"), /\d+ open/);
+});
+
+test("guideBoardLink points hire guides at the specialty board without a count", () => {
+  assert.deepEqual(guideBoardLink({ slug: "nannies", name: "Nanny" }), {
+    href: "/care-requests?specialty=nannies",
+    label: "Open nanny requests",
+  });
+  assert.deepEqual(guideBoardLink({ slug: "aged-care", name: "Aged care" }), {
+    href: "/care-requests?specialty=aged-care",
+    label: "Open aged care requests",
+  });
+  assert.match(guideBoardNotice("Nanny"), /nanny requests/);
+  assert.doesNotMatch(guideBoardNotice("Nanny"), /\d+ open/);
+  assert.doesNotMatch(guideBoardNotice("Aged care"), /\d+ open/);
 });
