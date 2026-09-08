@@ -5,6 +5,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { locationBoardLink, locationBoardNotice } from "@/lib/job-board";
 import { getSpecialties, getState } from "@/lib/queries";
 import { pageMeta } from "@/lib/seo";
+import { ntNextLinks, ntNextNotice, ntNextShows } from "@/lib/nt-next";
 import { qldNextLinks, qldNextNotice, qldNextShows } from "@/lib/qld-next";
 import { saNextLinks, saNextNotice, saNextShows } from "@/lib/sa-next";
 import { vicNextLinks, vicNextNotice, vicNextShows } from "@/lib/vic-next";
@@ -29,6 +30,7 @@ export default async function StateLocationsPage({ params }: { params: Promise<{
   const showVicNext = vicNextShows({ isFamily, stateSlug: record.slug });
   const showQldNext = qldNextShows({ isFamily, stateSlug: record.slug });
   const showSaNext = saNextShows({ isFamily, stateSlug: record.slug });
+  const showNtNext = ntNextShows({ isFamily, stateSlug: record.slug });
 
   return (
     <div>
@@ -81,6 +83,18 @@ export default async function StateLocationsPage({ params }: { params: Promise<{
           <p>{saNextNotice()}</p>
           <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
             {saNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : null}
+      {showNtNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{ntNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {ntNextLinks().map((link) => (
               <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
                 {link.label}
               </Link>
