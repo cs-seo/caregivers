@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { auth } from "@/auth";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { LinkGrid } from "@/components/seo-landing";
 import { locationSpecialtyLinks, locationSpecialtyNotice, locationSpecialtyTitle } from "@/lib/location-hub";
+import { locationNextLinks, locationNextNotice, locationNextShows } from "@/lib/location-next";
 import { getSpecialties, getStates } from "@/lib/queries";
 import { pageMeta } from "@/lib/seo";
 
@@ -13,7 +15,8 @@ export const metadata = pageMeta({
 });
 
 export default async function LocationsPage() {
-  const [states, specialties] = await Promise.all([getStates(), getSpecialties()]);
+  const [states, specialties, session] = await Promise.all([getStates(), getSpecialties(), auth()]);
+  const showLocationNext = locationNextShows({ isFamily: session?.user?.role === "FAMILY" });
   return (
     <div>
       <Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "Locations" }]} />
@@ -23,6 +26,18 @@ export default async function LocationsPage() {
         “nanny Bondi” or “NDIS support worker Chermside”.
       </p>
       <p className="mt-4 max-w-2xl text-sm text-stone-600">{locationSpecialtyNotice()}</p>
+      {showLocationNext ? (
+        <div className="mt-4 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{locationNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {locationNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : null}
       <LinkGrid title={locationSpecialtyTitle()} links={locationSpecialtyLinks(specialties)} />
       <div className="mt-8 space-y-8">
         {states.map((state) => (
