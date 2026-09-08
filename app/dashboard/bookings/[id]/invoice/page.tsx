@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { PrintLink } from "@/components/print-link";
 import { PLATFORM_ABN, PLATFORM_ENTITY, SITE_NAME } from "@/lib/constants";
 import { fundingLines } from "@/lib/funding";
+import { invoiceNextLinks, invoiceNextNotice } from "@/lib/invoice-next";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { formatAud } from "@/lib/money";
 import { persistMissingInvoiceNumbers } from "@/lib/invoice-peers";
@@ -157,6 +158,18 @@ export default async function BookingInvoicePage({
           self-managed NDIS plan. Print from the browser for a PDF.
         </p>
       </article>
+      <div className="print:hidden mt-4 rounded-xl bg-sage p-3 text-sm">
+        <p>{invoiceNextNotice()}</p>
+        <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+          {invoiceNextLinks(isFamily).map((link) => (
+            <li key={link.href}>
+              <Link href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
       <p className="print:hidden mt-4 text-sm">
         <PrintLink id="print-invoice" />
       </p>
