@@ -9,6 +9,7 @@ import { requireUser } from "@/lib/session";
 import { pageMeta } from "@/lib/seo";
 import { fundingLines } from "@/lib/funding";
 import { fundedInvoicePeers, persistMissingInvoiceNumbers } from "@/lib/invoice-peers";
+import { statementNextLinks, statementNextNotice } from "@/lib/statement-next";
 import {
   australianFinancialYear,
   fyPeriodLabel,
@@ -197,6 +198,20 @@ export default async function StatementPage() {
           coordinators and plan managers can file with a Home Care Package or self-managed NDIS plan.
         </p>
       </article>
+      {rows.length ? (
+        <div className="print:hidden mt-4 rounded-xl bg-sage p-3 text-sm">
+          <p>{statementNextNotice(isFamily)}</p>
+          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {statementNextLinks({ isFamily, bookingId: rows[0]?.id }).map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="font-medium text-teal hover:underline">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 }
