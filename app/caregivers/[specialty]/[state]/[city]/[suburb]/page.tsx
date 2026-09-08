@@ -3,8 +3,11 @@ import { DirectoryResults } from "@/components/directory-page";
 import { FaqBlock, LinkGrid, RelatedSpecialties } from "@/components/seo-landing";
 import { filterCurrent, parseFilters } from "@/lib/directory";
 import { isInviteFlash } from "@/lib/job-invite";
+import { jobBoardHref, openRequestsNotice } from "@/lib/job-board";
+import { acceptingJobWhere } from "@/lib/job-status";
 import { landingDescription, landingFaqs, landingH1, landingIntro, landingTitle } from "@/lib/seo-content";
 import { directoryStats, getSpecialties, getSpecialty, getSuburb } from "@/lib/queries";
+import { prisma } from "@/lib/prisma";
 import { pageMeta } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -51,7 +54,12 @@ export default async function SuburbDirectoryPage({
     city: place.city.slug,
     suburb: place.name,
   };
-  const exactStats = await directoryStats(locationFilters);
+  const [exactStats, openCount] = await Promise.all([
+    directoryStats(locationFilters),
+    prisma.careRequest.count({
+      where: { ...acceptingJobWhere(), cityId: place.city.id, specialtyId: spec.id },
+    }),
+  ]);
   const nearby = exactStats.count === 0;
   const stats = nearby
     ? await directoryStats({ specialty: spec.slug, state: place.city.state.slug, city: place.city.slug })
@@ -81,6 +89,14 @@ export default async function SuburbDirectoryPage({
       current={filterCurrent(filters)}
       path={`/caregivers/${spec.slug}/${place.city.state.slug}/${place.city.slug}/${place.slug}`}
       invited={isInviteFlash(query.invited)}
+      openRequests={
+        openCount
+          ? {
+              href: jobBoardHref({ city: place.city.slug, specialty: spec.slug }),
+              label: openRequestsNotice(openCount, place.city.name, spec.name),
+            }
+          : null
+      }
       extras={
         <>
           <FaqBlock faqs={landingFaqs(seo)} />

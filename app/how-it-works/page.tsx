@@ -83,7 +83,7 @@ export default function HowItWorksPage() {
           <h2 className="text-xl font-semibold">1. Search a crawlable directory</h2>
           <p className="mt-2 text-stone-600">
             Every specialty, state and city has its own URL so you can find “nannies in Sydney” or “NDIS support workers
-            in Brisbane” without a client-side app.
+            in Brisbane” without a client-side app. City pages also link to open care requests in that city and specialty.
           </p>
         </li>
         <li>

@@ -29,6 +29,7 @@ export async function DirectoryResults({
   nearbyNote,
   extras,
   invited,
+  openRequests,
 }: {
   title: string;
   intro: string;
@@ -40,6 +41,7 @@ export async function DirectoryResults({
   nearbyNote?: string;
   extras?: React.ReactNode;
   invited?: boolean;
+  openRequests?: { href: string; label: string } | null;
 }) {
   const listFilters = nearbyNote ? { ...filters, suburb: undefined } : filters;
   const viewer = await requireUser();
@@ -126,6 +128,14 @@ export async function DirectoryResults({
       <h1 className="text-3xl font-semibold text-ink">{title}</h1>
       <p className="mt-3 max-w-3xl text-pretty text-stone-600">{intro}</p>
       {nearbyNote ? <p className="mt-3 text-sm text-teal-deep">{nearbyNote}</p> : null}
+      {openRequests ? (
+        <p className="mt-3 text-sm text-teal-deep">
+          {openRequests.label}.{" "}
+          <Link href={openRequests.href} className="font-medium text-teal hover:underline">
+            Browse requests
+          </Link>
+        </p>
+      ) : null}
       <p className="mt-2 text-sm text-stone-500">
         {stats.count} carers
         {stats.avgRateCents ? ` · average ${formatAud(stats.avgRateCents)}/hr` : ""}

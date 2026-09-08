@@ -228,7 +228,7 @@ export function landingFaqs(place: SeoPlace) {
   return [
     {
       q: `How do I hire a ${head} in ${loc}?`,
-      a: `Open a verified profile, use Instant Book, or post a care request for ${loc}. CareProof holds your payment in escrow and releases it after the booking.`,
+      a: `Open a verified profile, use Instant Book, or post a care request for ${loc}. When families have already posted, this city page links to those open requests. CareProof holds your payment in escrow and releases it after the booking.`,
     },
     {
       q: `What checks should a ${head} have in ${place.state?.name ?? "Australia"}?`,

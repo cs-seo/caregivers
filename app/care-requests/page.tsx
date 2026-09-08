@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { Badge } from "@/components/badges";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { jobBoardHref, jobBoardTitle, parseJobBoardFilters } from "@/lib/job-board";
 import { formatJobStart, jobFitsCarer, jobMissLabel, jobMissReason } from "@/lib/job-match";
 import { acceptingJobWhere } from "@/lib/job-status";
 import { formatAud } from "@/lib/money";
@@ -9,21 +10,45 @@ import { prisma } from "@/lib/prisma";
 import { jobsFitDeltaLabel, savedSearchDelta } from "@/lib/saved-search";
 import { pageMeta } from "@/lib/seo";
 
-export const metadata = pageMeta({
-  title: "Open care requests",
-  description:
-    "Browse open care requests from Australian families. Carers send proposals; families hire into escrow.",
-  path: "/care-requests",
-});
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ city?: string; specialty?: string; fit?: string }>;
+}) {
+  const query = await searchParams;
+  const board = parseJobBoardFilters(query);
+  const [city, specialty] = await Promise.all([
+    board.city ? prisma.city.findFirst({ where: { slug: board.city }, select: { name: true } }) : null,
+    board.specialty ? prisma.specialty.findUnique({ where: { slug: board.specialty }, select: { name: true } }) : null,
+  ]);
+  const title = jobBoardTitle(specialty?.name, city?.name);
+  const where = city || specialty ? ` in ${[specialty?.name.toLowerCase(), city?.name].filter(Boolean).join(" · ")}` : "";
+  return pageMeta({
+    title,
+    description: `Browse open care requests${where} from Australian families. Carers send proposals; families hire into escrow.`,
+    path: jobBoardHref({ city: board.city, specialty: board.specialty }),
+  });
+}
 
 export default async function CareRequestsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ fit?: string }>;
+  searchParams: Promise<{ fit?: string; city?: string; specialty?: string }>;
 }) {
   const [query, session] = await Promise.all([searchParams, auth()]);
+  const board = parseJobBoardFilters(query);
+  const [city, specialty] = await Promise.all([
+    board.city
+      ? prisma.city.findFirst({ where: { slug: board.city }, include: { state: true } })
+      : null,
+    board.specialty ? prisma.specialty.findUnique({ where: { slug: board.specialty } }) : null,
+  ]);
   const requests = await prisma.careRequest.findMany({
-    where: acceptingJobWhere(),
+    where: {
+      ...acceptingJobWhere(),
+      ...(city ? { cityId: city.id } : {}),
+      ...(specialty ? { specialtyId: specialty.id } : {}),
+    },
     include: {
       specialty: true,
       city: { include: { state: true } },
@@ -61,7 +86,7 @@ export default async function CareRequestsPage({
     );
     return { job, reason, fit, invited };
   });
-  const fitOnly = query.fit === "1" && Boolean(matchCarer);
+  const fitOnly = board.fit && Boolean(matchCarer);
   const visible = fitOnly ? decorated.filter((row) => row.fit) : decorated;
   const sorted = matchCarer
     ? [...visible].sort((a, b) => Number(b.invited) - Number(a.invited) || Number(b.fit) - Number(a.fit))
@@ -70,7 +95,10 @@ export default async function CareRequestsPage({
   const fitDelta = carer
     ? savedSearchDelta(fitCount, carer.jobsLastSeenCount, carer.jobsSeenAt)
     : null;
-  if (fitOnly && carer) {
+  const heading = jobBoardTitle(specialty?.name, city?.name);
+  const filtered = Boolean(city || specialty);
+  const boardBase = { city: board.city, specialty: board.specialty };
+  if (fitOnly && carer && !filtered) {
     await prisma.caregiverProfile.update({
       where: { id: carer.id },
       data: { jobsLastSeenCount: fitCount, jobsSeenAt: new Date() },
@@ -79,10 +107,16 @@ export default async function CareRequestsPage({
 
   return (
     <div>
-      <Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "Care requests" }]} />
+      <Breadcrumbs
+        items={[
+          { name: "Home", href: "/" },
+          { name: "Care requests", href: filtered ? "/care-requests" : undefined },
+          ...(filtered ? [{ name: heading }] : []),
+        ]}
+      />
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold text-ink">Open care requests</h1>
+          <h1 className="text-3xl font-semibold text-ink">{heading}</h1>
           <p className="mt-2 max-w-2xl text-stone-600">
             Families post what they need. Carers send a proposal. Hiring funds escrow the same way a profile booking does.
             {matchCarer
@@ -91,14 +125,21 @@ export default async function CareRequestsPage({
                 }`
               : ""}
           </p>
+          {filtered ? (
+            <p className="mt-2 text-sm">
+              <Link href="/care-requests" className="font-medium text-teal">
+                Show every open job
+              </Link>
+            </p>
+          ) : null}
           {matchCarer ? (
             <p className="mt-2 text-sm">
               {fitOnly ? (
-                <Link href="/care-requests" className="font-medium text-teal">
-                  Show every open job
+                <Link href={jobBoardHref(boardBase)} className="font-medium text-teal">
+                  Show every open job{filtered ? " in this filter" : ""}
                 </Link>
               ) : (
-                <Link href="/care-requests?fit=1" className="font-medium text-teal">
+                <Link href={jobBoardHref({ ...boardBase, fit: true })} className="font-medium text-teal">
                   Show jobs that fit your roster
                 </Link>
               )}
@@ -112,7 +153,11 @@ export default async function CareRequestsPage({
       <ul className="mt-8 space-y-4">
         {sorted.length === 0 ? (
           <li className="rounded-2xl border border-dashed border-line bg-card p-5 text-sm text-stone-600">
-            {fitOnly ? "No open jobs match your city, specialties and usual weekly hours." : "No open care requests right now."}
+            {fitOnly
+              ? "No open jobs match your city, specialties and usual weekly hours."
+              : filtered
+                ? "No open care requests match this city and specialty."
+                : "No open care requests right now."}
           </li>
         ) : (
           sorted.map(({ job, fit, reason, invited }) => (
