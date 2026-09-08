@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { locationBoardLink, locationBoardNotice } from "@/lib/job-board";
 import { getSpecialties, getState } from "@/lib/queries";
 import { pageMeta } from "@/lib/seo";
 
@@ -19,6 +20,7 @@ export default async function StateLocationsPage({ params }: { params: Promise<{
   const { state } = await params;
   const [record, specialties] = await Promise.all([getState(state), getSpecialties()]);
   if (!record) notFound();
+  const board = locationBoardLink({ state: record.slug, stateName: record.name });
 
   return (
     <div>
@@ -42,6 +44,13 @@ export default async function StateLocationsPage({ params }: { params: Promise<{
           </li>
         ))}
       </ul>
+      <p className="mt-6 text-sm text-stone-600">
+        {locationBoardNotice(record.name)}{" "}
+        <Link href={board.href} className="font-medium text-teal hover:underline">
+          {board.label}
+        </Link>
+        .
+      </p>
       <h2 className="mt-10 text-xl font-semibold">Cities</h2>
       <ul className="mt-3 grid gap-2 sm:grid-cols-2 md:grid-cols-3">
         {record.cities.map((city) => (

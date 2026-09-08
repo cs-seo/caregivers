@@ -124,3 +124,17 @@ export function jobBoardEmptyLinks(ctx: JobBoardEmptyContext) {
   });
   return [...new Map(links.map((link) => [link.href, link])).values()];
 }
+
+export function locationBoardLink(place: { city?: string; cityName?: string; state?: string; stateName?: string }) {
+  if (place.city && place.cityName) {
+    return { href: jobBoardHref({ city: place.city }), label: jobBoardTitle(undefined, place.cityName) };
+  }
+  if (place.state && place.stateName) {
+    return { href: jobBoardHref({ state: place.state }), label: jobBoardTitle(undefined, undefined, place.stateName) };
+  }
+  return { href: jobBoardHref(), label: jobBoardTitle() };
+}
+
+export function locationBoardNotice(placeName: string) {
+  return `Families in ${placeName} also post care requests. Browse the board to send a proposal or hire into escrow.`;
+}

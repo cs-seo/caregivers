@@ -5,6 +5,8 @@ import {
   jobBoardEmptyLinks,
   jobBoardHref,
   jobBoardTitle,
+  locationBoardLink,
+  locationBoardNotice,
   openRequestsNotice,
   parseJobBoardFilters,
 } from "./job-board";
@@ -132,4 +134,17 @@ test("jobBoardDirectoryHref needs a state slug to keep a city path", () => {
     jobBoardDirectoryHref({ filters: { city: "perth", specialty: "aged-care" } }),
     "/caregivers/aged-care",
   );
+});
+
+test("locationBoardLink points city and state hubs at the job board without a count", () => {
+  assert.deepEqual(locationBoardLink({ city: "sydney", cityName: "Sydney" }), {
+    href: "/care-requests?city=sydney",
+    label: "Open care requests in Sydney",
+  });
+  assert.deepEqual(locationBoardLink({ state: "nsw", stateName: "New South Wales" }), {
+    href: "/care-requests?state=nsw",
+    label: "Open care requests in New South Wales",
+  });
+  assert.match(locationBoardNotice("Sydney"), /Sydney/);
+  assert.doesNotMatch(locationBoardNotice("Sydney"), /\d+ open/);
 });
