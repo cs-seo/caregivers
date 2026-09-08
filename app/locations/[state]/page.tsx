@@ -6,6 +6,7 @@ import { locationBoardLink, locationBoardNotice } from "@/lib/job-board";
 import { getSpecialties, getState } from "@/lib/queries";
 import { pageMeta } from "@/lib/seo";
 import { qldNextLinks, qldNextNotice, qldNextShows } from "@/lib/qld-next";
+import { saNextLinks, saNextNotice, saNextShows } from "@/lib/sa-next";
 import { vicNextLinks, vicNextNotice, vicNextShows } from "@/lib/vic-next";
 
 export async function generateMetadata({ params }: { params: Promise<{ state: string }> }) {
@@ -27,6 +28,7 @@ export default async function StateLocationsPage({ params }: { params: Promise<{
   const isFamily = session?.user?.role === "FAMILY";
   const showVicNext = vicNextShows({ isFamily, stateSlug: record.slug });
   const showQldNext = qldNextShows({ isFamily, stateSlug: record.slug });
+  const showSaNext = saNextShows({ isFamily, stateSlug: record.slug });
 
   return (
     <div>
@@ -67,6 +69,18 @@ export default async function StateLocationsPage({ params }: { params: Promise<{
           <p>{qldNextNotice()}</p>
           <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
             {qldNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : null}
+      {showSaNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{saNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {saNextLinks().map((link) => (
               <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
                 {link.label}
               </Link>
