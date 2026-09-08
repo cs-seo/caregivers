@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { auth } from "@/auth";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { locationBoardLink, locationBoardNotice } from "@/lib/job-board";
+import { perthNextLinks, perthNextNotice, perthNextShows } from "@/lib/perth-next";
 import { getCity, getSpecialties } from "@/lib/queries";
 import { pageMeta } from "@/lib/seo";
 
@@ -26,9 +28,14 @@ export default async function CityLocationsPage({
   params: Promise<{ state: string; city: string }>;
 }) {
   const { state, city } = await params;
-  const [place, specialties] = await Promise.all([getCity(state, city), getSpecialties()]);
+  const [place, specialties, session] = await Promise.all([getCity(state, city), getSpecialties(), auth()]);
   if (!place) notFound();
   const board = locationBoardLink({ city: place.slug, cityName: place.name });
+  const showPerthNext = perthNextShows({
+    isFamily: session?.user?.role === "FAMILY",
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
 
   return (
     <div>
@@ -59,6 +66,18 @@ export default async function CityLocationsPage({
           </li>
         ))}
       </ul>
+      {showPerthNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{perthNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {perthNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : null}
       <p className="mt-6 text-sm text-stone-600">
         {locationBoardNotice(place.name)}{" "}
         <Link href={board.href} className="font-medium text-teal hover:underline">
