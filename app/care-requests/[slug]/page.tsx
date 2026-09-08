@@ -72,6 +72,7 @@ import { proposalBudgetLabel, proposalBudgetTone } from "@/lib/job-rate";
 import { jobPostingJsonLd } from "@/lib/job-seo";
 import { jobShareNotice, jobSharePath } from "@/lib/job-share";
 import { JOB_FILL_STEPS, jobFillHeading, jobFillNotice } from "@/lib/job-fill";
+import { jobViewerFamilyHeading, jobViewerFamilyLinks, jobViewerFamilyNotice } from "@/lib/job-viewer";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { directoryStats, searchCaregivers } from "@/lib/queries";
@@ -317,6 +318,26 @@ export default async function CareRequestPage({
                 </li>
               ))}
             </ol>
+          </section>
+        ) : null}
+        {accepting && !isOwner && !isCarer ? (
+          <section className="mt-6 rounded-2xl border border-line bg-card p-5">
+            <h2 className="text-lg font-semibold text-ink">{jobViewerFamilyHeading()}</h2>
+            <p className="mt-2 text-sm text-stone-600">
+              {jobViewerFamilyNotice(
+                (job.specialty.pluralName ?? `${job.specialty.name} carers`).toLowerCase(),
+                job.city.name,
+              )}
+            </p>
+            <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm">
+              {jobViewerFamilyLinks(job).map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="font-medium text-teal hover:underline">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </section>
         ) : null}
 

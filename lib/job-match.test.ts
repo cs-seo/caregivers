@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { parseSydneyDateTimeLocal } from "./format";
-import { attachJobNotice, bookHref, caregiverHref, canAttachJob, formatJobStart, isJobSlug, isUtcDateOnly, jobBookHref, jobDirectoryHref, jobFitForCarer, jobFitsCarer, jobMissLabel, jobMissReason, matchingJobs, profileJobFitNotice, shortlistCompareNotice, shortlistHref, sortByJobFit, toJobMatchCarer } from "./job-match";
+import { attachJobNotice, bookHref, caregiverHref, canAttachJob, formatJobStart, isJobSlug, isUtcDateOnly, jobBookHref, jobBrowseHref, jobDirectoryHref, jobFitForCarer, jobFitsCarer, jobMissLabel, jobMissReason, matchingJobs, profileJobFitNotice, shortlistCompareNotice, shortlistHref, sortByJobFit, toJobMatchCarer } from "./job-match";
 import { parseWeeklyHours } from "./weekly-windows";
 
 const sarah = {
@@ -103,6 +103,14 @@ test("jobDirectoryHref points at Needed on with the start clock time", () => {
       city: { slug: "sydney", state: { slug: "nsw" } },
     }),
     "/caregivers/babysitters/nsw/sydney?availableOn=2026-09-12&job=saturday-babysitter-bondi",
+  );
+  assert.equal(
+    jobBrowseHref({
+      startDate: parseSydneyDateTimeLocal("2026-09-15T08:00"),
+      specialty: { slug: "aged-care" },
+      city: { slug: "sydney", state: { slug: "nsw" } },
+    }),
+    "/caregivers/aged-care/nsw/sydney?availableOn=2026-09-15&availableAt=08:00",
   );
   assert.equal(
     caregiverHref("sarah-nguyen-aged-care-sydney", {

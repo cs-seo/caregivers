@@ -181,9 +181,18 @@ export function jobDirectoryFilters(job: {
 }
 
 export function jobDirectoryHref(job: Parameters<typeof jobDirectoryFilters>[0]) {
-  const filters = jobDirectoryFilters(job);
-  const query = [`availableOn=${filters.availableOn}`];
-  if (filters.availableAt) query.push(`availableAt=${filters.availableAt}`);
-  if (filters.job) query.push(`job=${filters.job}`);
-  return `/caregivers/${filters.specialty}/${filters.state}/${filters.city}?${query.join("&")}`;
+  const browse = jobBrowseHref(job);
+  return job.slug && isJobSlug(job.slug) ? `${browse}&job=${job.slug}` : browse;
+}
+
+export function jobBrowseHref(job: {
+  startDate: Date;
+  specialty: { slug: string };
+  city: { slug: string; state: { slug: string } };
+}) {
+  const dateKey = sydneyDateKey(job.startDate);
+  const clock = isUtcDateOnly(job.startDate) ? undefined : minutesToInput(sydneyMinutes(job.startDate));
+  const query = [`availableOn=${dateKey}`];
+  if (clock) query.push(`availableAt=${clock}`);
+  return `/caregivers/${job.specialty.slug}/${job.city.state.slug}/${job.city.slug}?${query.join("&")}`;
 }
