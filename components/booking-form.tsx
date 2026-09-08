@@ -1,4 +1,5 @@
 import { AttachJobBanner } from "@/components/attach-job-banner";
+import { Badge } from "@/components/badges";
 import { createBookingAction } from "@/lib/actions";
 import { BOOKING_OCCASIONS } from "@/lib/constants";
 import { formatAud, quoteBooking, quoteDaySit, quoteOvernightSit, quoteWeeklySeries } from "@/lib/money";
@@ -10,6 +11,7 @@ export function BookingForm({
   instantBook,
   defaultStart,
   job,
+  jobFit,
 }: {
   slug: string;
   specialties: { id: string; name: string }[];
@@ -17,6 +19,7 @@ export function BookingForm({
   instantBook: boolean;
   defaultStart?: string;
   job?: { slug: string; title: string; specialtyId: string } | null;
+  jobFit?: { fit: boolean; label: string; notice: string } | null;
 }) {
   const sample = quoteBooking(hourlyRateCents, 4);
   const day = quoteDaySit(hourlyRateCents);
@@ -37,6 +40,12 @@ export function BookingForm({
             surface="book"
             className="rounded-xl border border-teal/25 bg-sage px-3 py-2 text-sm text-ink"
           />
+          {jobFit ? (
+            <p className="text-sm text-stone-600">
+              <Badge tone={jobFit.fit ? "teal" : "stone"}>{jobFit.label}</Badge>
+              <span className="ml-2">{jobFit.notice}</span>
+            </p>
+          ) : null}
         </>
       ) : null}
       <label className="block text-sm">

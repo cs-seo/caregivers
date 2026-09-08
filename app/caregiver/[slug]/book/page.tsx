@@ -13,7 +13,14 @@ import {
 } from "@/lib/availability";
 import { credentialWatchlist, watchLabel } from "@/lib/credentials";
 import { lastActiveLabel, parseSydneyDateTimeLocal, sydneyDateTimeLocal } from "@/lib/format";
-import { bookHref, canAttachJob, isJobSlug } from "@/lib/job-match";
+import {
+  bookHref,
+  canAttachJob,
+  isJobSlug,
+  jobFitForCarer,
+  profileJobFitNotice,
+  toJobMatchCarer,
+} from "@/lib/job-match";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { getCaregiverBySlug, getUpcomingAvailability } from "@/lib/queries";
@@ -69,12 +76,28 @@ export default async function BookPage({
     session?.user.role === "FAMILY" && jobSlug
       ? await prisma.careRequest.findUnique({
           where: { slug: jobSlug },
-          select: { slug: true, title: true, specialtyId: true, familyId: true, status: true, startDate: true },
+          select: {
+            slug: true,
+            title: true,
+            specialtyId: true,
+            cityId: true,
+            familyId: true,
+            status: true,
+            startDate: true,
+          },
         })
       : null;
   const job =
     attachJob && session?.user.id && canAttachJob(attachJob, session.user.id)
       ? { slug: attachJob.slug, title: attachJob.title, specialtyId: attachJob.specialtyId }
+      : null;
+  const jobFit =
+    job && attachJob
+      ? jobFitForCarer(
+          { cityId: attachJob.cityId, specialtyId: attachJob.specialtyId, startDate: attachJob.startDate },
+          toJobMatchCarer(carer),
+          "family",
+        )
       : null;
 
   return (
@@ -174,6 +197,15 @@ export default async function BookPage({
             specialties={carer.specialties.map((s) => ({ id: s.specialty.id, name: s.specialty.name }))}
             defaultStart={defaultStart}
             job={job}
+            jobFit={
+              jobFit && attachJob
+                ? {
+                    fit: jobFit.fit,
+                    label: jobFit.label,
+                    notice: profileJobFitNotice(jobFit.fit, attachJob.startDate),
+                  }
+                : null
+            }
           />
         </div>
       )}
