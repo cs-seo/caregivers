@@ -15,6 +15,7 @@ import { ShortlistButton } from "@/components/shortlist-button";
 import { fortnightLabel, isAvailableNowLive, isInstantBookLive, noticeLabel, summariseFortnight, weeklyHourChips } from "@/lib/availability";
 import { lastActiveLabel, monthYear } from "@/lib/format";
 import { isInviteFlash } from "@/lib/job-invite";
+import { jobBoardHref, openRequestsNotice } from "@/lib/job-board";
 import { canAttachJob, bookHref, caregiverHref, isJobSlug } from "@/lib/job-match";
 import { acceptingJobWhere } from "@/lib/job-status";
 import { formatAud } from "@/lib/money";
@@ -64,7 +65,8 @@ export default async function CaregiverProfilePage({
   const startClock = /^([01]\d|2[0-3]):([0-5]\d)$/.test(query.at ?? "") ? query.at : "";
   if (!carer) notFound();
   const isOwner = viewer?.caregiverProfile?.id === carer.id;
-  const [similar, savedIds, upcoming, openJobs] = await Promise.all([
+  const primary = carer.specialties[0]?.specialty;
+  const [similar, savedIds, upcoming, openJobs, openRequestCount] = await Promise.all([
     similarCaregivers(
       carer.id,
       carer.cityId,
@@ -87,6 +89,11 @@ export default async function CaregiverProfilePage({
           orderBy: { startDate: "asc" },
         })
       : Promise.resolve([]),
+    primary
+      ? prisma.careRequest.count({
+          where: { ...acceptingJobWhere(), cityId: carer.cityId, specialtyId: primary.id },
+        })
+      : Promise.resolve(0),
   ]);
   const openInviteJobs = openJobs.map((job) => ({
     slug: job.slug,
@@ -99,8 +106,14 @@ export default async function CaregiverProfilePage({
   }));
   const attachJob = jobSlug ? openInviteJobs.find((job) => job.slug === jobSlug) : undefined;
   const jobTitle = attachJob && viewer?.id && canAttachJob(attachJob, viewer.id) ? attachJob.title : null;
-  const primary = carer.specialties[0]?.specialty;
   const canShortlist = viewer?.role === "FAMILY";
+  const openRequests =
+    primary && openRequestCount
+      ? {
+          href: jobBoardHref({ city: carer.city.slug, specialty: primary.slug }),
+          label: openRequestsNotice(openRequestCount, carer.city.name, primary.name),
+        }
+      : null;
   const fortnight = summariseFortnight(upcoming.slice(0, 14));
   const blockedKeys = upcoming.filter((day) => day.blocked).map((day) => day.key);
   const awayToday = upcoming[0]?.blocked === true;
@@ -221,6 +234,14 @@ export default async function CaregiverProfilePage({
             </div>
           </div>
           {jobTitle ? <AttachJobBanner title={jobTitle} surface="profile" /> : null}
+          {openRequests ? (
+            <p className="mt-4 text-sm text-teal-deep">
+              {openRequests.label}.{" "}
+              <Link href={openRequests.href} className="font-medium text-teal hover:underline">
+                Browse requests
+              </Link>
+            </p>
+          ) : null}
 
           <section className="mt-8">
             <h2 className="text-xl font-semibold text-ink">Verified checks</h2>
@@ -348,6 +369,14 @@ export default async function CaregiverProfilePage({
           {carer.weeklyHours ? <p className="mt-3 text-sm font-medium text-teal-deep">{carer.weeklyHours}</p> : null}
           {carer.instantBook ? <p className="mt-2 text-sm text-stone-600">{noticeLabel(carer.noticeHours)}.</p> : null}
           {carer.availabilityNote ? <p className="mt-3 text-sm text-stone-700">{carer.availabilityNote}</p> : null}
+          {openRequests ? (
+            <p className="mt-3 text-sm text-teal-deep">
+              {openRequests.label}.{" "}
+              <Link href={openRequests.href} className="font-medium text-teal hover:underline">
+                Browse requests
+              </Link>
+            </p>
+          ) : null}
           <p className="mt-2 text-xs text-stone-500">{lastActiveLabel(carer.lastActiveAt)}</p>
           {invited ? <InviteSentNotice className="mt-4 text-sm text-teal" /> : null}
           {jobTitle ? (

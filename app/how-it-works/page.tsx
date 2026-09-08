@@ -92,7 +92,8 @@ export default function HowItWorksPage() {
           <p className="mt-2 text-stone-600">
             Profiles show verified roles, screening checks, an illustrated portrait (or a photo the carer supplied over
             HTTPS) and reviews from released bookings. Carers can publish one public reply. Trust score is calculated
-            from those facts.
+            from those facts. When families in that city have already posted for the same specialty, the profile links
+            to those open requests.
           </p>
         </li>
         <li>
