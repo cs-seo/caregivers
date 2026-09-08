@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { locationBoardLink, locationBoardNotice } from "@/lib/job-board";
+import { geelongNextLinks, geelongNextNotice, geelongNextShows } from "@/lib/geelong-next";
 import { goldCoastNextLinks, goldCoastNextNotice, goldCoastNextShows } from "@/lib/gold-coast-next";
 import { perthNextLinks, perthNextNotice, perthNextShows } from "@/lib/perth-next";
 import { getCity, getSpecialties } from "@/lib/queries";
@@ -39,6 +40,11 @@ export default async function CityLocationsPage({
     citySlug: place.slug,
   });
   const showGoldCoastNext = goldCoastNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showGeelongNext = geelongNextShows({
     isFamily,
     stateSlug: place.state.slug,
     citySlug: place.slug,
@@ -90,6 +96,18 @@ export default async function CityLocationsPage({
           <p>{goldCoastNextNotice()}</p>
           <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
             {goldCoastNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : null}
+      {showGeelongNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{geelongNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {geelongNextLinks().map((link) => (
               <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
                 {link.label}
               </Link>
