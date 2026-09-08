@@ -9,6 +9,12 @@ import { SearchForm } from "@/components/search-form";
 import { saveSearchAction } from "@/lib/actions";
 import { directoryBoardLink, directoryBoardNotice, directoryJobEmptyLinks, directoryJobEmptyNotice, directoryListedPostLink, directoryListedPostNotice, filterHref } from "@/lib/directory";
 import {
+  caregiversNextLinks,
+  caregiversNextNotice,
+  caregiversNextShows,
+  directoryIsNationalPath,
+} from "@/lib/caregivers-next";
+import {
   directoryIsSuburbPath,
   suburbNextCityHref,
   suburbNextLinks,
@@ -100,6 +106,12 @@ export async function DirectoryResults({
       profileHref: suburbPlace?.href,
       jobAttached: Boolean(jobTitle),
     });
+  const showCaregiversNext = caregiversNextShows({
+    isFamily: Boolean(canShortlist),
+    nationalPath: directoryIsNationalPath(path),
+    jobAttached: Boolean(jobTitle),
+    specialtyFilter: Boolean(filters.specialty),
+  });
   const pageIds = caregivers.map((carer) => carer.id);
   const inviteRows =
     jobTitle && attachJob && pageIds.length
@@ -198,6 +210,18 @@ export async function DirectoryResults({
           : ""}
         {filters.availableNow ? " · available now in Sydney hours" : ""}
       </p>
+      {showCaregiversNext ? (
+        <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+          <p>{caregiversNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {caregiversNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : null}
       <div className="mt-6">
         <SearchForm
           specialty={filters.specialty}
