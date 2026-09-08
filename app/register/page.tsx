@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { registerAction } from "@/lib/actions";
+import { parseRegisterRole } from "@/lib/for-carers";
 import { pageMeta } from "@/lib/seo";
 
 export const metadata = pageMeta({
@@ -12,9 +13,10 @@ export const metadata = pageMeta({
 export default async function RegisterPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; role?: string }>;
 }) {
   const query = await searchParams;
+  const role = parseRegisterRole(query.role);
   return (
     <div className="mx-auto max-w-md">
       <h1 className="text-3xl font-semibold text-ink">Join CareProof</h1>
@@ -35,10 +37,10 @@ export default async function RegisterPage({
         <fieldset className="text-sm">
           <legend className="mb-2">I am</legend>
           <label className="mr-4">
-            <input type="radio" name="role" value="FAMILY" defaultChecked /> Family hiring care
+            <input type="radio" name="role" value="FAMILY" defaultChecked={role === "FAMILY"} /> Family hiring care
           </label>
           <label>
-            <input type="radio" name="role" value="CAREGIVER" /> A carer
+            <input type="radio" name="role" value="CAREGIVER" defaultChecked={role === "CAREGIVER"} /> A carer
           </label>
         </fieldset>
         <button className="w-full rounded-xl bg-teal py-2.5 font-medium text-white" type="submit">
