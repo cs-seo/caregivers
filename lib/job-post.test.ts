@@ -1,11 +1,15 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { parseSydneyDateTimeLocal } from "./format";
+import { jobBrowseHref } from "./job-match";
+import { jobViewerFamilyLinks } from "./job-viewer";
 import {
   SIMILAR_JOB_LIMIT,
   isPostedFlash,
   parsePostJobPrefill,
   postJobHref,
   postedJobHref,
+  postedJobLinks,
   postedJobNotice,
   similarJobsNotice,
   similarJobsTitle,
@@ -23,6 +27,26 @@ test("postedJobNotice tells the family what to do next", () => {
   assert.match(postedJobNotice(), /Request posted/);
   assert.match(postedJobNotice(), /Book or invite/);
   assert.match(postedJobNotice(), /Proposal alerts/);
+  assert.doesNotMatch(postedJobNotice(), /\d+ open/);
+});
+
+test("postedJobLinks attach the request so Book or invite still closes it", () => {
+  const job = {
+    slug: "weekday-aged-care-marrickville",
+    startDate: parseSydneyDateTimeLocal("2026-09-15T08:00"),
+    specialty: { slug: "aged-care", name: "Aged care", pluralName: "Aged care carers" },
+    city: { slug: "sydney", name: "Sydney", state: { slug: "nsw" } },
+  };
+  assert.deepEqual(postedJobLinks(job), [
+    {
+      href: "/caregivers/aged-care/nsw/sydney?availableOn=2026-09-15&availableAt=08:00&job=weekday-aged-care-marrickville",
+      label: "Book or invite aged care carers free at this start",
+    },
+    { href: "/dashboard/proposal-alerts", label: "Open proposal alerts" },
+  ]);
+  assert.match(postedJobLinks(job)[0].href, /job=weekday-aged-care-marrickville/);
+  assert.notEqual(postedJobLinks(job)[0].href, jobBrowseHref(job));
+  assert.notDeepEqual(postedJobLinks(job), jobViewerFamilyLinks(job));
 });
 
 test("postJobHref and parsePostJobPrefill keep safe specialty and city slugs", () => {

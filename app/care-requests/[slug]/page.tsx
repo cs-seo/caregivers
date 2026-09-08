@@ -6,6 +6,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { JsonLd } from "@/components/json-ld";
 import { InviteButton } from "@/components/invite-button";
 import { InviteSentNotice } from "@/components/invite-sent-notice";
+import { PostedJobFlash } from "@/components/posted-job-flash";
 import { ShareJobLink } from "@/components/share-job-link";
 import { JobMessageThread } from "@/components/job-message-thread";
 import {
@@ -32,7 +33,7 @@ import {
   requestStatusLabel,
 } from "@/lib/job-hire";
 import { expiredJobOwnerNotice, expiredJobRecoveryLinks } from "@/lib/job-expired";
-import { isPostedFlash, postedJobNotice } from "@/lib/job-post";
+import { isPostedFlash } from "@/lib/job-post";
 import {
   RELATED_JOB_LIMIT,
   relatedJobsBoardLink,
@@ -282,7 +283,7 @@ export default async function CareRequestPage({
           </p>
         ) : null}
         {isOwner && isPostedFlash(query.posted) ? (
-          <p className="mt-4 text-sm text-teal">{postedJobNotice()}</p>
+          <PostedJobFlash job={job} className="mt-4 text-sm text-teal" />
         ) : null}
         {isOwner && expired ? (
           <section className="mt-6 rounded-2xl border border-line bg-card p-5">
@@ -671,7 +672,7 @@ export default async function CareRequestPage({
 
       <aside className="h-fit rounded-2xl border border-line bg-card p-5">
         {isOwner && isPostedFlash(query.posted) ? (
-          <p className="mb-3 text-sm text-teal">{postedJobNotice()}</p>
+          <PostedJobFlash job={job} className="mb-3 text-sm text-teal" />
         ) : null}
         {query.invited ? <InviteSentNotice /> : null}
         {query.note ? <p className="mb-3 text-sm text-teal">{inviteNoteSavedNotice()}</p> : null}

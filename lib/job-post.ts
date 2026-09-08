@@ -1,10 +1,28 @@
-import { isJobSlug } from "./job-match";
+import { isJobSlug, jobDirectoryHref } from "./job-match";
 import { acceptingJobWhere } from "./job-status";
 
 export const SIMILAR_JOB_LIMIT = 3;
 
 export function postedJobNotice() {
   return "Request posted. Book or invite a carer who is free at this start. Proposal alerts will show when someone replies.";
+}
+
+export type PostedJobPlace = {
+  slug: string;
+  startDate: Date;
+  specialty: { slug: string; name: string; pluralName?: string };
+  city: { slug: string; name: string; state: { slug: string } };
+};
+
+export function postedJobLinks(job: PostedJobPlace) {
+  const who = (job.specialty.pluralName ?? `${job.specialty.name} carers`).toLowerCase();
+  return [
+    {
+      href: jobDirectoryHref(job),
+      label: `Book or invite ${who} free at this start`,
+    },
+    { href: "/dashboard/proposal-alerts", label: "Open proposal alerts" },
+  ];
 }
 
 export function isPostedFlash(value?: string | string[] | null) {
