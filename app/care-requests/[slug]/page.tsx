@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { Badge } from "@/components/badges";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { JsonLd } from "@/components/json-ld";
 import { InviteButton } from "@/components/invite-button";
 import { InviteSentNotice } from "@/components/invite-sent-notice";
 import { JobMessageThread } from "@/components/job-message-thread";
@@ -67,10 +68,11 @@ import {
   shortlistHref,
 } from "@/lib/job-match";
 import { proposalBudgetLabel, proposalBudgetTone } from "@/lib/job-rate";
+import { jobPostingJsonLd } from "@/lib/job-seo";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { directoryStats, searchCaregivers } from "@/lib/queries";
-import { pageMeta } from "@/lib/seo";
+import { breadcrumbJsonLd, pageMeta } from "@/lib/seo";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -231,8 +233,20 @@ export default async function CareRequestPage({
     take: RELATED_JOB_LIMIT,
   });
   const relatedBoard = relatedJobsBoardLink(job.city);
+  const posting = jobPostingJsonLd(job, accepting);
 
   return (
+    <>
+      <JsonLd
+        data={[
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Care requests", path: "/care-requests" },
+            { name: job.title, path: `/care-requests/${job.slug}` },
+          ]),
+          ...(posting ? [posting] : []),
+        ]}
+      />
     <div className="grid gap-8 md:grid-cols-[1fr_340px]">
       <div>
         <Breadcrumbs
@@ -798,5 +812,6 @@ export default async function CareRequestPage({
         )}
       </aside>
     </div>
+    </>
   );
 }
