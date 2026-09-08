@@ -3,7 +3,10 @@ import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { JsonLd } from "@/components/json-ld";
 import { HIRE_GUIDES, childCheckLabel } from "@/lib/seo-content";
+import { jobBoardHref, openRequestsNotice } from "@/lib/job-board";
+import { acceptingJobWhere } from "@/lib/job-status";
 import { getSpecialty, getStates } from "@/lib/queries";
+import { prisma } from "@/lib/prisma";
 import { pageMeta } from "@/lib/seo";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -21,8 +24,20 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
   const { slug } = await params;
   const guide = HIRE_GUIDES.find((item) => item.slug === slug);
   if (!guide) notFound();
-  const [specialty, states] = await Promise.all([getSpecialty(guide.specialty), getStates()]);
+  const [specialty, states, openCount] = await Promise.all([
+    getSpecialty(guide.specialty),
+    getStates(),
+    prisma.careRequest.count({
+      where: { ...acceptingJobWhere(), specialty: { slug: guide.specialty } },
+    }),
+  ]);
   if (!specialty) notFound();
+  const openRequests = openCount
+    ? {
+        href: jobBoardHref({ specialty: specialty.slug }),
+        label: openRequestsNotice(openCount, "", specialty.name),
+      }
+    : null;
 
   const capitals = states.flatMap((state) =>
     state.cities
@@ -107,6 +122,14 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
         Instant Book pays into escrow immediately. Request-to-book waits for the carer to accept. Job posts collect
         proposals you can hire with one click. The carer is paid only after you confirm — or automatically after 72 hours.
       </p>
+      {openRequests ? (
+        <p className="mt-6 text-sm text-teal-deep">
+          {openRequests.label}.{" "}
+          <Link href={openRequests.href} className="font-medium text-teal hover:underline">
+            Browse requests
+          </Link>
+        </p>
+      ) : null}
 
       <p className="mt-8">
         <Link
