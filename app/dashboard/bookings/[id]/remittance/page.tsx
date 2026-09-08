@@ -5,6 +5,7 @@ import { PLATFORM_ABN, PLATFORM_ENTITY, SITE_NAME } from "@/lib/constants";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { formatAud } from "@/lib/money";
 import { persistMissingInvoiceNumbers } from "@/lib/invoice-peers";
+import { remittanceNextLinks, remittanceNextNotice } from "@/lib/remittance-next";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { pageMeta } from "@/lib/seo";
@@ -141,6 +142,16 @@ export default async function BookingRemittancePage({
       <p className="print:hidden mt-4 text-sm">
         <PrintLink id="print-remittance" />
       </p>
+      <div className="print:hidden mt-4 rounded-xl bg-sage p-3 text-sm">
+        <p>{remittanceNextNotice()}</p>
+        <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+          {remittanceNextLinks({ bookingId: booking.id }).map((link) => (
+            <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+              {link.label}
+            </Link>
+          ))}
+        </p>
+      </div>
     </div>
   );
 }
