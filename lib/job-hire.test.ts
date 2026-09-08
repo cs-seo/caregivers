@@ -9,6 +9,9 @@ import {
   canCounterProposal,
   canRespondToCounter,
   counterBanner,
+  counterSinceLabel,
+  familyCounterBanner,
+  familyCounterHint,
   hasPendingCounter,
   notHiredBanner,
   passedOnBanner,
@@ -94,10 +97,60 @@ test("counterBanner names the family, rate and request", () => {
   );
   assert.equal(
     counterBanner([
+      {
+        title: "Overnight respite in Norwood this month",
+        familyName: "Alex Martin",
+        rateLabel: "$38.00",
+        sinceLabel: "Suggested 3 days ago.",
+      },
+    ]),
+    "Alex Martin suggested $38.00/hr on Overnight respite in Norwood this month. Suggested 3 days ago.",
+  );
+  assert.equal(
+    counterBanner([
       { title: "Overnight respite in Norwood this month", familyName: "Alex Martin", rateLabel: "$38.00" },
       { title: "Weekday aged care", familyName: "Alex Martin", rateLabel: "$60.00" },
     ]),
     "2 families suggested a different rate.",
+  );
+});
+
+test("familyCounterBanner names the carer, rate and request", () => {
+  assert.equal(familyCounterBanner([]), null);
+  assert.equal(
+    familyCounterBanner([
+      {
+        title: "Overnight respite in Norwood this month",
+        carerName: "Lara Schmidt",
+        rateLabel: "$38.00",
+        sinceLabel: "Suggested 3 days ago.",
+      },
+    ]),
+    "Lara Schmidt has not replied to your $38.00/hr suggestion on Overnight respite in Norwood this month. Suggested 3 days ago.",
+  );
+  assert.equal(
+    familyCounterBanner([
+      { title: "Overnight respite", carerName: "Lara Schmidt", rateLabel: "$38.00" },
+      { title: "Weekday aged care", carerName: "Sarah Nguyen", rateLabel: "$60.00" },
+    ]),
+    "2 suggested rates are waiting for a carer to reply.",
+  );
+});
+
+test("counterSinceLabel counts Sydney calendar days since the suggestion", () => {
+  const suggested = new Date("2026-09-05T10:00:00+10:00");
+  const now = new Date("2026-09-08T09:00:00+10:00");
+  assert.equal(counterSinceLabel(suggested, now), "Suggested 3 days ago.");
+  assert.equal(counterSinceLabel(suggested, new Date("2026-09-05T18:00:00+10:00")), "Suggested today.");
+  assert.equal(counterSinceLabel(suggested, new Date("2026-09-06T09:00:00+10:00")), "Suggested yesterday.");
+  assert.equal(counterSinceLabel(null), null);
+});
+
+test("familyCounterHint names the waiting rate", () => {
+  assert.equal(familyCounterHint("$38.00"), "Waiting on their reply to $38.00/hr.");
+  assert.equal(
+    familyCounterHint("$38.00", "Suggested 3 days ago."),
+    "Waiting on their reply to $38.00/hr. Suggested 3 days ago.",
   );
 });
 

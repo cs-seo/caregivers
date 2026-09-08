@@ -239,6 +239,7 @@ model Proposal {
   familyNote       String?
   counterRateCents Int?
   counterNote      String?
+  counteredAt      DateTime?
   createdAt        DateTime         @default(now())
 
   @@unique([careRequestId, caregiverId])

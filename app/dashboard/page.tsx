@@ -15,6 +15,9 @@ import {
   canRespondToCounter,
   canWithdrawProposal,
   counterBanner,
+  counterSinceLabel,
+  familyCounterBanner,
+  familyCounterHint,
   hasPendingCounter,
   notHiredBanner,
   passedOnBanner,
@@ -282,6 +285,21 @@ export default async function DashboardPage({
         orderBy: { createdAt: "desc" },
       })
     : [];
+  const familyWaitingCounters = isFamily
+    ? (
+        await prisma.proposal.findMany({
+          where: {
+            status: "pending",
+            counterRateCents: { not: null },
+            careRequest: { familyId: user.id },
+          },
+          include: {
+            caregiver: { include: { user: { select: { name: true } } } },
+            careRequest: { select: { id: true, slug: true, title: true, status: true, startDate: true } },
+          },
+        })
+      ).filter((proposal) => isJobAccepting(proposal.careRequest))
+    : [];
 
   const carerProfile =
     !isFamily && user.caregiverProfile
@@ -432,8 +450,18 @@ export default async function DashboardPage({
       familyName: proposal.careRequest.family.name,
       slug: proposal.careRequest.slug,
       rateLabel: formatAud(proposal.counterRateCents ?? 0),
+      sinceLabel: counterSinceLabel(proposal.counteredAt),
     }));
   const counterCopy = counterBanner(counterJobs);
+  const familyCounterJobs = familyWaitingCounters.map((proposal) => ({
+    title: proposal.careRequest.title,
+    carerName: proposal.caregiver.user.name,
+    slug: proposal.careRequest.slug,
+    rateLabel: formatAud(proposal.counterRateCents ?? 0),
+    sinceLabel: counterSinceLabel(proposal.counteredAt),
+  }));
+  const familyCounterCopy = familyCounterBanner(familyCounterJobs);
+  const familyCounterByJobId = new Map(familyWaitingCounters.map((proposal) => [proposal.careRequest.id, proposal]));
   const heldCents = heldEscrowCents(bookings, isFamily);
   const disputedCents = disputedHeldCents(bookings, isFamily);
   const heldCaption = heldEscrowCaption({ heldCents, disputedCents, isFamily });
@@ -563,6 +591,14 @@ export default async function DashboardPage({
           {counterCopy}{" "}
           <Link href={`/care-requests/${counterJobs[0].slug}`} className="font-medium text-teal">
             {counterJobs.length === 1 ? "Open the request" : "Open the first request"}
+          </Link>
+        </p>
+      ) : null}
+      {familyCounterCopy && familyCounterJobs[0] ? (
+        <p className="mt-4 rounded-xl bg-sage p-3 text-sm text-teal-deep">
+          {familyCounterCopy}{" "}
+          <Link href={`/care-requests/${familyCounterJobs[0].slug}`} className="font-medium text-teal">
+            {familyCounterJobs.length === 1 ? "Open the request" : "Open the first request"}
           </Link>
         </p>
       ) : null}
@@ -1131,12 +1167,21 @@ export default async function DashboardPage({
             ) : (
               familyJobs.map((job) => {
                 const match = familyJobMatchById.get(job.id);
+                const waitingCounter = familyCounterByJobId.get(job.id);
                 return (
                 <li key={job.id}>
                   <Link href={`/care-requests/${job.slug}`} className="text-teal hover:underline">
                     {job.title}
                   </Link>
                   <span className="ml-2 text-sm text-stone-500">{requestStatusLabel(requestListingStatus(job))}</span>
+                  {waitingCounter ? (
+                    <span className="mt-0.5 block text-sm text-stone-600">
+                      {familyCounterHint(
+                        formatAud(waitingCounter.counterRateCents ?? 0),
+                        counterSinceLabel(waitingCounter.counteredAt),
+                      )}
+                    </span>
+                  ) : null}
                   {job.bookings[0] ? (
                     <span className="mt-0.5 block text-sm">
                       <Link href={`/dashboard/bookings/${job.bookings[0].id}`} className="text-teal hover:underline">
@@ -1188,6 +1233,11 @@ export default async function DashboardPage({
                   {proposalStatusLabel(proposal.status, proposal.careRequest.status)}
                   {hasPendingCounter(proposal) ? ` · suggested ${formatAud(proposal.counterRateCents ?? 0)}/hr` : ""}
                 </span>
+                {hasPendingCounter(proposal) && counterSinceLabel(proposal.counteredAt) ? (
+                  <span className="mt-0.5 block text-sm text-stone-600">
+                    {counterSinceLabel(proposal.counteredAt)}
+                  </span>
+                ) : null}
                 {unreadJobByRequest.get(proposal.careRequestId) ? (
                   <span className="ml-2 text-sm font-medium text-clay">
                     {plural(unreadJobByRequest.get(proposal.careRequestId) ?? 0, "new message")}

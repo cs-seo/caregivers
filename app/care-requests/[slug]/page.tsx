@@ -22,6 +22,7 @@ import {
   canPassOnProposal,
   canRespondToCounter,
   canWithdrawProposal,
+  counterSinceLabel,
   hasPendingCounter,
   proposalStatusLabel,
   proposalStatusTone,
@@ -430,6 +431,9 @@ export default async function CareRequestPage({
                     <p className="mt-2 text-sm text-teal-deep">
                       Suggested {formatAud(proposal.counterRateCents ?? 0)}/hr
                       {proposal.counterNote ? ` — “${proposal.counterNote}”` : ""}. Waiting for their reply.
+                      {counterSinceLabel(proposal.counteredAt)
+                        ? ` ${counterSinceLabel(proposal.counteredAt)}`
+                        : ""}
                     </p>
                   ) : null}
                   {canPassOnProposal(proposal, job, session?.user?.id ?? "") ? (
@@ -617,6 +621,7 @@ export default async function CareRequestPage({
             <p>
               {job.family.name} suggested {formatAud(ownProposal.counterRateCents ?? 0)}/hr
               {ownProposal.counterNote ? `: “${ownProposal.counterNote}”` : "."}
+              {counterSinceLabel(ownProposal.counteredAt) ? ` ${counterSinceLabel(ownProposal.counteredAt)}` : ""}
             </p>
             <div className="mt-2 flex flex-wrap gap-3">
               <form action={respondToCounterAction}>

@@ -1,5 +1,6 @@
 import { INVITE_NOTE_LIMIT, INVITE_STATUS } from "./job-invite";
 import { isJobAccepting } from "./job-status";
+import { pendingSinceDays } from "./pending-acceptance";
 import { prisma } from "./prisma";
 
 type JobOpenState = { status: string; startDate?: Date | null };
@@ -107,12 +108,40 @@ export function canRespondToCounter(
   return Boolean(hasPendingCounter(proposal) && proposal?.caregiverId === caregiverId && jobStillAccepting(job, now));
 }
 
-export function counterBanner(items: { title: string; familyName: string; rateLabel: string }[]) {
+export function counterSinceLabel(counteredAt: Date | null | undefined, now = new Date()) {
+  if (!counteredAt) return null;
+  const days = pendingSinceDays(counteredAt, now);
+  if (days <= 0) return "Suggested today.";
+  if (days === 1) return "Suggested yesterday.";
+  return `Suggested ${days} days ago.`;
+}
+
+export function counterBanner(
+  items: { title: string; familyName: string; rateLabel: string; sinceLabel?: string | null }[],
+) {
   if (!items.length) return null;
   if (items.length === 1) {
-    return `${items[0].familyName} suggested ${items[0].rateLabel}/hr on ${items[0].title}.`;
+    const since = items[0].sinceLabel ? ` ${items[0].sinceLabel}` : "";
+    return `${items[0].familyName} suggested ${items[0].rateLabel}/hr on ${items[0].title}.${since}`;
   }
   return `${items.length} families suggested a different rate.`;
+}
+
+export function familyCounterBanner(
+  items: { title: string; carerName: string; rateLabel: string; sinceLabel?: string | null }[],
+) {
+  if (!items.length) return null;
+  if (items.length === 1) {
+    const since = items[0].sinceLabel ? ` ${items[0].sinceLabel}` : "";
+    return `${items[0].carerName} has not replied to your ${items[0].rateLabel}/hr suggestion on ${items[0].title}.${since}`;
+  }
+  return `${items.length} suggested rates are waiting for a carer to reply.`;
+}
+
+export function familyCounterHint(rateLabel: string, sinceLabel?: string | null) {
+  return sinceLabel
+    ? `Waiting on their reply to ${rateLabel}/hr. ${sinceLabel}`
+    : `Waiting on their reply to ${rateLabel}/hr.`;
 }
 
 export function notHiredBanner(

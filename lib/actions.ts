@@ -656,7 +656,14 @@ export async function createProposalAction(formData: FormData) {
       coverLetter,
       rateCents,
     },
-    update: { coverLetter, rateCents, status: "pending", counterRateCents: null, counterNote: null },
+    update: {
+      coverLetter,
+      rateCents,
+      status: "pending",
+      counterRateCents: null,
+      counterNote: null,
+      counteredAt: null,
+    },
   });
   await prisma.careRequestInvite.updateMany({
     where: {
@@ -822,7 +829,13 @@ export async function passOnProposalAction(formData: FormData) {
   const familyNote = sanitizeInviteNote(String(formData.get("familyNote") ?? ""));
   await prisma.proposal.update({
     where: { id: proposal.id },
-    data: { status: "declined", familyNote: familyNote || null, counterRateCents: null, counterNote: null },
+    data: {
+      status: "declined",
+      familyNote: familyNote || null,
+      counterRateCents: null,
+      counterNote: null,
+      counteredAt: null,
+    },
   });
   await prisma.careRequestInvite.updateMany({
     where: {
@@ -857,7 +870,7 @@ export async function counterProposalAction(formData: FormData) {
 
   await prisma.proposal.update({
     where: { id: proposal.id },
-    data: { counterRateCents, counterNote: counterNote || null },
+    data: { counterRateCents, counterNote: counterNote || null, counteredAt: new Date() },
   });
   revalidatePath("/dashboard");
   revalidatePath(`/care-requests/${proposal.careRequest.slug}`);
@@ -880,8 +893,13 @@ export async function respondToCounterAction(formData: FormData) {
   await prisma.proposal.update({
     where: { id: proposal.id },
     data: accept
-      ? { rateCents: proposal.counterRateCents ?? proposal.rateCents, counterRateCents: null, counterNote: null }
-      : { counterRateCents: null, counterNote: null },
+      ? {
+          rateCents: proposal.counterRateCents ?? proposal.rateCents,
+          counterRateCents: null,
+          counterNote: null,
+          counteredAt: null,
+        }
+      : { counterRateCents: null, counterNote: null, counteredAt: null },
   });
   revalidatePath("/dashboard");
   revalidatePath(`/care-requests/${proposal.careRequest.slug}`);

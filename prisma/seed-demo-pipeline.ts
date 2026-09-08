@@ -789,6 +789,7 @@ const ELENA_NORWOOD_NOTE = "Could you cover two overnight sits in Norwood this m
 const ELENA_NORWOOD_REPLY = "I only work mornings in Leichhardt that week — overnight Adelaide is too far.";
 const CHLOE_NORWOOD_NOTE = "We need someone who can stay both nights this month.";
 const LARA_COUNTER_NOTE = "Two nights is a long sit — $38 works if you can do both.";
+const LARA_COUNTERED_AT = parseSydneyDateTimeLocal("2026-09-05T10:00");
 
 const ELENA_AWAITING_NOTE =
   "DEMO_AWAITING_PAY: Wednesday companion sit in Leichhardt — Elena accepted, waiting for escrow.";
@@ -1027,15 +1028,24 @@ export async function seedDemoPassOn(prisma: PrismaClient) {
         status: "pending",
         counterRateCents: 3800,
         counterNote: LARA_COUNTER_NOTE,
+        counteredAt: LARA_COUNTERED_AT,
       },
     });
     changed += 1;
-  } else if (laraProposal.status === "pending" && laraProposal.counterRateCents == null) {
-    await prisma.proposal.update({
-      where: { id: laraProposal.id },
-      data: { counterRateCents: 3800, counterNote: laraProposal.counterNote ?? LARA_COUNTER_NOTE },
-    });
-    changed += 1;
+  } else if (laraProposal.status === "pending") {
+    const needsRate = laraProposal.counterRateCents == null;
+    const needsWhen = laraProposal.counteredAt == null;
+    if (needsRate || needsWhen) {
+      await prisma.proposal.update({
+        where: { id: laraProposal.id },
+        data: {
+          counterRateCents: laraProposal.counterRateCents ?? 3800,
+          counterNote: laraProposal.counterNote ?? LARA_COUNTER_NOTE,
+          counteredAt: laraProposal.counteredAt ?? LARA_COUNTERED_AT,
+        },
+      });
+      changed += 1;
+    }
   }
   return changed;
 }
