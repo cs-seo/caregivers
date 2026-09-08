@@ -81,6 +81,7 @@ import {
   searchAlertLabel,
 } from "@/lib/saved-search";
 import { comingUpBookings, comingUpKind } from "@/lib/coming-up";
+import { comingUpNextLinks, comingUpNextNotice } from "@/lib/coming-up-next";
 import { canFillFromHousehold, handoverGapSummary, isHandoverComplete } from "@/lib/handover";
 import { canWriteReview, reviewsDueLabel } from "@/lib/reviews";
 import { unreadCountsByBooking } from "@/lib/messages";
@@ -747,6 +748,20 @@ export default async function DashboardPage({
               </li>
             ))}
           </ul>
+          {isFamily ? (
+            <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+              <p>{comingUpNextNotice()}</p>
+              <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                {comingUpNextLinks().map((link) => (
+                  <li key={link.href}>
+                    <Link href={link.href} className="font-medium text-teal hover:underline">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </section>
       ) : null}
 
