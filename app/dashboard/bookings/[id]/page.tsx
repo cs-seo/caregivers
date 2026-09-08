@@ -35,6 +35,7 @@ import { comingUpKind, isComingUp } from "@/lib/coming-up";
 import { isHandoverComplete } from "@/lib/handover";
 import { isPaidFlash, paidBookingLinks, paidBookingNotice } from "@/lib/booking-paid";
 import { awaitingPayNextLinks, awaitingPayNextNotice } from "@/lib/awaiting-pay";
+import { declinedNextLinks, declinedNextNotice } from "@/lib/declined-next";
 import { escrowHeldNextLinks, escrowHeldNextNotice } from "@/lib/escrow-held";
 import { inProgressNextLinks, inProgressNextNotice } from "@/lib/in-progress-next";
 import { isRequestedFlash, requestedBookingLinks, requestedBookingNotice } from "@/lib/booking-requested";
@@ -272,6 +273,23 @@ export default async function BookingDetailPage({
       ) : null}
       {declineReason ? (
         <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">{declineReason}</p>
+      ) : null}
+      {isFamily && booking.status === BOOKING_STATUS.CANCELLED && declineReason ? (
+        <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+          <p>{declinedNextNotice()}</p>
+          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {declinedNextLinks({
+              specialtySlug: booking.specialty.slug,
+              specialtyPlural: booking.specialty.pluralName,
+            }).map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="font-medium text-teal hover:underline">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : null}
       {isFamily && isPaidFlash(query.paid) ? (
         <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
