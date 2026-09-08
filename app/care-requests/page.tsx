@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { Badge } from "@/components/badges";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { jobBoardEmptyLinks, jobBoardHref, jobBoardTitle, parseJobBoardFilters } from "@/lib/job-board";
+import { postJobHref } from "@/lib/job-post";
 import { formatJobStart, jobFitsCarer, jobMissLabel, jobMissReason } from "@/lib/job-match";
 import { acceptingJobWhere } from "@/lib/job-status";
 import { formatAud } from "@/lib/money";
@@ -153,7 +154,7 @@ export default async function CareRequestsPage({
             </p>
           ) : null}
         </div>
-        <Link href="/post-a-job" className="rounded-full bg-teal px-4 py-2 text-sm font-medium text-white no-underline">
+        <Link href={postJobHref(boardBase)} className="rounded-full bg-teal px-4 py-2 text-sm font-medium text-white no-underline">
           Post a request
         </Link>
       </div>

@@ -1,4 +1,5 @@
 import { isJobSlug } from "./job-match";
+import { postJobHref } from "./job-post";
 import type { DirectoryFilters } from "./queries";
 
 export function parseFilters(
@@ -142,6 +143,9 @@ export function emptyStateLinks(filters: DirectoryFilters) {
   }
   links.push({ href: "/caregivers", label: "Browse all verified carers" });
   links.push({ href: "/locations", label: "Explore cities and suburbs" });
-  links.push({ href: "/post-a-job", label: "Post a care request" });
+  links.push({
+    href: postJobHref({ specialty, city }),
+    label: "Post a care request",
+  });
   return [...new Map(links.map((link) => [link.href, link])).values()];
 }

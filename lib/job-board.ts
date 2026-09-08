@@ -1,4 +1,5 @@
 import { isJobSlug } from "./job-match";
+import { postJobHref } from "./job-post";
 
 export type JobBoardFilters = {
   city?: string;
@@ -117,6 +118,9 @@ export function jobBoardEmptyLinks(ctx: JobBoardEmptyContext) {
           ? `Browse ${who}`
           : "Browse verified carers";
   links.push({ href: directoryHref, label: directoryLabel });
-  links.push({ href: "/post-a-job", label: "Post a care request" });
+  links.push({
+    href: postJobHref({ specialty: filters.specialty, city: filters.city }),
+    label: "Post a care request",
+  });
   return [...new Map(links.map((link) => [link.href, link])).values()];
 }

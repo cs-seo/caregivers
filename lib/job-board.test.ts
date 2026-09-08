@@ -76,7 +76,7 @@ test("jobBoardEmptyLinks widens city, state and specialty filters", () => {
       ["Show aged care requests in Western Australia", "/care-requests?specialty=aged-care&state=wa"],
       ["Show aged care requests Australia-wide", "/care-requests?specialty=aged-care"],
       ["Browse aged care carers in Perth", "/caregivers/aged-care/wa/perth"],
-      ["Post a care request", "/post-a-job"],
+      ["Post a care request", "/post-a-job?specialty=aged-care&city=perth"],
     ],
   );
 
@@ -92,7 +92,7 @@ test("jobBoardEmptyLinks widens city, state and specialty filters", () => {
     [
       ["Show aged care requests Australia-wide", "/care-requests?specialty=aged-care"],
       ["Browse aged care carers in New South Wales", "/caregivers/aged-care/nsw"],
-      ["Post a care request", "/post-a-job"],
+      ["Post a care request", "/post-a-job?specialty=aged-care"],
     ],
   );
 
@@ -106,7 +106,7 @@ test("jobBoardEmptyLinks widens city, state and specialty filters", () => {
     [
       ["Show every open job", "/care-requests"],
       ["Browse aged care carers", "/caregivers/aged-care"],
-      ["Post a care request", "/post-a-job"],
+      ["Post a care request", "/post-a-job?specialty=aged-care"],
     ],
   );
 

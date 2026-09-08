@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { createCareRequestAction } from "@/lib/actions";
+import { parsePostJobPrefill } from "@/lib/job-post";
 import { getSpecialties, getStates } from "@/lib/queries";
 import { pageMeta } from "@/lib/seo";
 import Link from "next/link";
@@ -14,7 +15,7 @@ export const metadata = pageMeta({
 export default async function PostJobPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; specialty?: string; city?: string }>;
 }) {
   const [session, specialties, states, query] = await Promise.all([
     auth(),
@@ -22,6 +23,11 @@ export default async function PostJobPage({
     getStates(),
     searchParams,
   ]);
+  const prefill = parsePostJobPrefill(query);
+  const preferredSpecialtyId = specialties.find((item) => item.slug === prefill.specialty)?.id;
+  const preferredCityId = states
+    .flatMap((state) => state.cities)
+    .find((city) => city.slug === prefill.city)?.id;
 
   return (
     <div className="mx-auto max-w-xl">
@@ -51,7 +57,7 @@ export default async function PostJobPage({
           </label>
           <label className="block text-sm">
             Specialty
-            <select name="specialtyId" required className="mt-1 w-full rounded-lg border border-line px-3 py-2">
+            <select name="specialtyId" required defaultValue={preferredSpecialtyId} className="mt-1 w-full rounded-lg border border-line px-3 py-2">
               {specialties.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
@@ -61,7 +67,7 @@ export default async function PostJobPage({
           </label>
           <label className="block text-sm">
             City
-            <select name="cityId" required className="mt-1 w-full rounded-lg border border-line px-3 py-2">
+            <select name="cityId" required defaultValue={preferredCityId} className="mt-1 w-full rounded-lg border border-line px-3 py-2">
               {states.flatMap((state) =>
                 state.cities.map((city) => (
                   <option key={city.id} value={city.id}>
