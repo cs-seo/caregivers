@@ -22,6 +22,7 @@ import { handoverFromForm, handoverToDb, fillEmptyHandover, canFillFromHousehold
 import { sanitizePhotoUrl } from "./photos";
 import { isSafeReviewReturnPath, sanitizeReviewReply, hasReviewReply } from "./reviews";
 import { matchingJobs } from "./job-match";
+import { postedJobHref } from "./job-post";
 import { acceptingJobWhere, isJobAccepting } from "./job-status";
 import { directoryStats } from "./queries";
 import { filtersFromSearchHref, isSafeSearchHref, MAX_SAVED_SEARCHES } from "./saved-search";
@@ -621,7 +622,7 @@ export async function createCareRequestAction(formData: FormData) {
   });
 
   revalidatePath("/care-requests");
-  redirect(`/care-requests/${request.slug}`);
+  redirect(postedJobHref(request.slug));
 }
 
 export async function createProposalAction(formData: FormData) {

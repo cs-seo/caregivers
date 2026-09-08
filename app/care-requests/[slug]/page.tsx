@@ -30,6 +30,7 @@ import {
   requestStatusLabel,
 } from "@/lib/job-hire";
 import { expiredJobOwnerNotice, expiredJobRecoveryLinks } from "@/lib/job-expired";
+import { isPostedFlash, postedJobNotice } from "@/lib/job-post";
 import { isJobAccepting, isJobExpired, requestListingStatus } from "@/lib/job-status";
 import {
   INVITE_NOTE_LIMIT,
@@ -93,6 +94,7 @@ export default async function CareRequestPage({
     invited?: string;
     note?: string;
     withdrawn?: string;
+    posted?: string;
     error?: string;
   }>;
 }) {
@@ -243,6 +245,9 @@ export default async function CareRequestPage({
               ? "This start time is in your city, one of your specialties, and inside your usual weekly hours."
               : `${jobMissLabel(miss)}. You can still send a proposal if the family is flexible.`}
           </p>
+        ) : null}
+        {isOwner && isPostedFlash(query.posted) ? (
+          <p className="mt-4 text-sm text-teal">{postedJobNotice()}</p>
         ) : null}
         {isOwner && expired ? (
           <section className="mt-6 rounded-2xl border border-line bg-card p-5">
@@ -567,6 +572,9 @@ export default async function CareRequestPage({
       </div>
 
       <aside className="h-fit rounded-2xl border border-line bg-card p-5">
+        {isOwner && isPostedFlash(query.posted) ? (
+          <p className="mb-3 text-sm text-teal">{postedJobNotice()}</p>
+        ) : null}
         {query.invited ? <InviteSentNotice /> : null}
         {query.note ? <p className="mb-3 text-sm text-teal">{inviteNoteSavedNotice()}</p> : null}
         {query.withdrawn ? <p className="mb-3 text-sm text-teal">{inviteWithdrawnNotice()}</p> : null}
