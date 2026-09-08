@@ -36,6 +36,7 @@ import { isHandoverComplete } from "@/lib/handover";
 import { isPaidFlash, paidBookingLinks, paidBookingNotice } from "@/lib/booking-paid";
 import { awaitingPayNextLinks, awaitingPayNextNotice } from "@/lib/awaiting-pay";
 import { declinedNextLinks, declinedNextNotice } from "@/lib/declined-next";
+import { releasedNextLinks, releasedNextNotice } from "@/lib/released-next";
 import { escrowHeldNextLinks, escrowHeldNextNotice } from "@/lib/escrow-held";
 import { inProgressNextLinks, inProgressNextNotice } from "@/lib/in-progress-next";
 import { isRequestedFlash, requestedBookingLinks, requestedBookingNotice } from "@/lib/booking-requested";
@@ -384,6 +385,23 @@ export default async function BookingDetailPage({
             {awaitingPayNextLinks({
               caregiverSlug: booking.caregiver.slug,
               bookingId: booking.id,
+            }).map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="font-medium text-teal hover:underline">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {isFamily && booking.status === BOOKING_STATUS.RELEASED && !booking.review && !query.released ? (
+        <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+          <p>{releasedNextNotice()}</p>
+          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {releasedNextLinks({
+              specialtySlug: booking.specialty.slug,
+              specialtyPlural: booking.specialty.pluralName,
             }).map((link) => (
               <li key={link.href}>
                 <Link href={link.href} className="font-medium text-teal hover:underline">
