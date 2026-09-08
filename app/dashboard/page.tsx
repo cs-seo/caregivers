@@ -83,6 +83,7 @@ import {
 import { comingUpBookings, comingUpKind } from "@/lib/coming-up";
 import { comingUpNextLinks, comingUpNextNotice } from "@/lib/coming-up-next";
 import { activeCareNextLinks, activeCareNextNotice } from "@/lib/active-care";
+import { searchesNextLinks, searchesNextNotice, searchesNextPlace } from "@/lib/searches-next";
 import { rosterNextLinks, rosterNextNotice, rosterNextPlace } from "@/lib/roster-next";
 import { canFillFromHousehold, handoverGapSummary, isHandoverComplete } from "@/lib/handover";
 import { canWriteReview, reviewsDueLabel } from "@/lib/reviews";
@@ -346,6 +347,7 @@ export default async function DashboardPage({
     const row = savedSearchMatchById.get(search.id);
     return Boolean(search.alertsOn && row && row.alert.newCount > 0);
   }).length;
+  const searchesPlace = searchesNextPlace(savedSearches);
 
   const { action: needsAction, active, history } = groupDashboardBookings(groupedSource);
   const pendingAcceptanceItems = needsAction
@@ -950,6 +952,18 @@ export default async function DashboardPage({
               })}
             </ul>
           )}
+          {searchesPlace ? (
+            <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+              <p>{searchesNextNotice()}</p>
+              <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                {searchesNextLinks(searchesPlace).map((link) => (
+                  <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                    {link.label}
+                  </Link>
+                ))}
+              </p>
+            </div>
+          ) : null}
         </section>
       ) : null}
 
