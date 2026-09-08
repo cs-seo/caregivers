@@ -32,6 +32,8 @@ import { HandoverCard } from "@/components/handover-card";
 import { ReviewCard, ReviewReplyForm } from "@/components/review-card";
 import { persistMissingInvoiceNumbers } from "@/lib/invoice-peers";
 import { comingUpKind, isComingUp } from "@/lib/coming-up";
+import { isHandoverComplete } from "@/lib/handover";
+import { isPaidFlash, paidBookingLinks, paidBookingNotice } from "@/lib/booking-paid";
 import { formatDateTime } from "@/lib/format";
 import { isUnreadFor, markThreadRead } from "@/lib/messages";
 import { formatAud } from "@/lib/money";
@@ -250,8 +252,24 @@ export default async function BookingDetailPage({
       {declineReason ? (
         <p className="mt-4 rounded-xl bg-orange-50 p-3 text-sm text-clay">{declineReason}</p>
       ) : null}
-      {query.paid ? (
-        <p className="mt-4 rounded-xl bg-sage p-3 text-sm">Payment collected and held in escrow.</p>
+      {isFamily && isPaidFlash(query.paid) ? (
+        <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+          <p>{paidBookingNotice({ carerName: booking.caregiver.user.name, handoverComplete: isHandoverComplete(booking) })}</p>
+          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {paidBookingLinks({
+              bookingId: booking.id,
+              handoverComplete: isHandoverComplete(booking),
+              isSeries: series.length > 1,
+              requestSlug: booking.careRequest?.slug,
+            }).map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="font-medium text-teal hover:underline">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : null}
       {query.error === "card" ? (
         <p className="mt-4 rounded-xl bg-clay/10 p-3 text-sm text-clay">
@@ -538,7 +556,7 @@ export default async function BookingDetailPage({
         ) : null}
       </div>
 
-      <section className="mt-10">
+      <section id="messages" className="mt-10">
         <h2 className="font-semibold text-ink">Messages</h2>
         <p className="mt-1 text-xs text-stone-500">Only you and the other party on this booking can see this thread.</p>
         {query.error === "message" ? <p className="mt-2 text-sm text-clay">Write a short message before sending.</p> : null}
