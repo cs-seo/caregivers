@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GuestBrowsePanel } from "@/components/guest-browse";
 import { loginAction } from "@/lib/actions";
 import { pageMeta } from "@/lib/seo";
 
@@ -39,6 +40,7 @@ export default async function LoginPage({
       <p className="mt-4 text-sm">
         New here? <Link href="/register" className="text-teal">Create an account</Link>
       </p>
+      <GuestBrowsePanel />
     </div>
   );
 }

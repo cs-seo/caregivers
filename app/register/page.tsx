@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GuestBrowsePanel } from "@/components/guest-browse";
 import { registerAction } from "@/lib/actions";
 import { parseRegisterRole } from "@/lib/for-carers";
 import { pageMeta } from "@/lib/seo";
@@ -50,6 +51,7 @@ export default async function RegisterPage({
       <p className="mt-4 text-sm">
         Already registered? <Link href="/login" className="text-teal">Log in</Link>
       </p>
+      <GuestBrowsePanel />
     </div>
   );
 }
