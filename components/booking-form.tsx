@@ -1,3 +1,4 @@
+import { AttachJobBanner } from "@/components/attach-job-banner";
 import { createBookingAction } from "@/lib/actions";
 import { BOOKING_OCCASIONS } from "@/lib/constants";
 import { formatAud, quoteBooking, quoteDaySit, quoteOvernightSit, quoteWeeklySeries } from "@/lib/money";
@@ -31,10 +32,11 @@ export function BookingForm({
       {job ? (
         <>
           <input type="hidden" name="job" value={job.slug} />
-          <p className="rounded-xl border border-teal/25 bg-sage px-3 py-2 text-sm text-ink">
-            This booking will close your <span className="font-semibold">{job.title}</span> request
-            and attach the sit to that job.
-          </p>
+          <AttachJobBanner
+            title={job.title}
+            surface="book"
+            className="rounded-xl border border-teal/25 bg-sage px-3 py-2 text-sm text-ink"
+          />
         </>
       ) : null}
       <label className="block text-sm">

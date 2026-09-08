@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AttachJobBanner } from "@/components/attach-job-banner";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { CaregiverCardView } from "@/components/caregiver-card";
 import { DirectoryFilters } from "@/components/directory-filters";
@@ -180,12 +181,7 @@ export async function DirectoryResults({
           as a family to save this search.
         </p>
       )}
-      {jobTitle ? (
-        <p className="mt-4 rounded-xl border border-teal/25 bg-sage px-3 py-2 text-sm text-ink">
-          Booking from this list will close your <span className="font-semibold">{jobTitle}</span> request
-          and attach the sit to that job. Invite a carer to apply if you want a proposal first.
-        </p>
-      ) : null}
+      {jobTitle ? <AttachJobBanner title={jobTitle} surface="list" /> : null}
       <div className="mt-8 grid gap-6 md:grid-cols-[240px_1fr]">
         <DirectoryFilters action={filterAction} current={current} />
         <div className="space-y-4">

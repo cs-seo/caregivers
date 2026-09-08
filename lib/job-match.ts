@@ -81,6 +81,19 @@ export function canAttachJob(
   return Boolean(job && job.familyId === familyId && isJobAccepting(job, now));
 }
 
+export type AttachJobSurface = "list" | "profile" | "book";
+
+export function attachJobPrefix(surface: AttachJobSurface) {
+  if (surface === "book") return "This booking will close your";
+  if (surface === "profile") return "Booking from this profile will close your";
+  return "Booking from this list will close your";
+}
+
+export function attachJobNotice(title: string, surface: AttachJobSurface) {
+  const invite = surface === "book" ? "" : " Invite a carer to apply if you want a proposal first.";
+  return `${attachJobPrefix(surface)} ${title} request and attach the sit to that job.${invite}`;
+}
+
 export function bookQuery(query: { start?: string; at?: string; job?: string; error?: string } = {}) {
   const parts: string[] = [];
   if (query.start && /^\d{4}-\d{2}-\d{2}$/.test(query.start)) parts.push(`start=${query.start}`);

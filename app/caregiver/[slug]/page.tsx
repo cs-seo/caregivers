@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AttachJobBanner } from "@/components/attach-job-banner";
 import { Badge, CredentialDetails } from "@/components/badges";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { CaregiverCardView } from "@/components/caregiver-card";
@@ -216,6 +217,7 @@ export default async function CaregiverProfilePage({
               </div>
             </div>
           </div>
+          {jobTitle ? <AttachJobBanner title={jobTitle} surface="profile" /> : null}
 
           <section className="mt-8">
             <h2 className="text-xl font-semibold text-ink">Verified checks</h2>
@@ -344,6 +346,13 @@ export default async function CaregiverProfilePage({
           {carer.instantBook ? <p className="mt-2 text-sm text-stone-600">{noticeLabel(carer.noticeHours)}.</p> : null}
           {carer.availabilityNote ? <p className="mt-3 text-sm text-stone-700">{carer.availabilityNote}</p> : null}
           <p className="mt-2 text-xs text-stone-500">{lastActiveLabel(carer.lastActiveAt)}</p>
+          {jobTitle ? (
+            <AttachJobBanner
+              title={jobTitle}
+              surface="profile"
+              className="mt-4 rounded-xl border border-teal/25 bg-sage px-3 py-2 text-sm text-ink"
+            />
+          ) : null}
           <Link
             href={bookHref(carer.slug, {
               start: startDate || fortnight.nextFree || undefined,

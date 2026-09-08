@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { parseSydneyDateTimeLocal } from "./format";
-import { bookHref, caregiverHref, canAttachJob, formatJobStart, isJobSlug, isUtcDateOnly, jobBookHref, jobDirectoryHref, jobFitsCarer, jobMissLabel, jobMissReason, matchingJobs } from "./job-match";
+import { attachJobNotice, bookHref, caregiverHref, canAttachJob, formatJobStart, isJobSlug, isUtcDateOnly, jobBookHref, jobDirectoryHref, jobFitsCarer, jobMissLabel, jobMissReason, matchingJobs } from "./job-match";
 import { parseWeeklyHours } from "./weekly-windows";
 
 const sarah = {
@@ -172,5 +172,20 @@ test("bookHref keeps a safe job slug on error redirects", () => {
   assert.equal(
     bookHref("sarah-nguyen-aged-care-sydney", { job: "../evil", error: "overlap" }),
     "/caregiver/sarah-nguyen-aged-care-sydney/book?error=overlap",
+  );
+});
+
+test("attachJobNotice names the request on list, profile and book", () => {
+  assert.equal(
+    attachJobNotice("Weekday aged care for Mum in Marrickville", "list"),
+    "Booking from this list will close your Weekday aged care for Mum in Marrickville request and attach the sit to that job. Invite a carer to apply if you want a proposal first.",
+  );
+  assert.equal(
+    attachJobNotice("Weekday aged care for Mum in Marrickville", "profile"),
+    "Booking from this profile will close your Weekday aged care for Mum in Marrickville request and attach the sit to that job. Invite a carer to apply if you want a proposal first.",
+  );
+  assert.equal(
+    attachJobNotice("Weekday aged care for Mum in Marrickville", "book"),
+    "This booking will close your Weekday aged care for Mum in Marrickville request and attach the sit to that job.",
   );
 });
