@@ -66,6 +66,7 @@ import {
   jobMissReason,
   shortlistHref,
 } from "@/lib/job-match";
+import { proposalBudgetLabel, proposalBudgetTone } from "@/lib/job-rate";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { directoryStats, searchCaregivers } from "@/lib/queries";
@@ -479,6 +480,11 @@ export default async function CareRequestPage({
                     <Link href={`/caregiver/${proposal.caregiver.slug}`}>{proposal.caregiver.user.name}</Link>
                     <span className="ml-2 text-sm font-normal text-stone-500">
                       {formatAud(proposal.rateCents)}/hr
+                    </span>
+                    <span className="ml-2 align-middle">
+                      <Badge tone={proposalBudgetTone(proposal.rateCents, job.budgetCents)}>
+                        {proposalBudgetLabel(proposal.rateCents, job.budgetCents)}
+                      </Badge>
                     </span>
                     <span className="ml-2 align-middle">
                       <Badge tone={proposalMiss ? "stone" : "teal"}>{jobMissLabel(proposalMiss, "family")}</Badge>
