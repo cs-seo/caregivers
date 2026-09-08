@@ -1,3 +1,4 @@
+import { LegalNextPanel } from "@/components/legal-next";
 import { pageMeta } from "@/lib/seo";
 
 export const metadata = pageMeta({
@@ -38,6 +39,7 @@ export default function PrivacyPage() {
           the document. Do not upload another person’s check without their consent.
         </p>
       </section>
+      <LegalNextPanel />
     </div>
   );
 }

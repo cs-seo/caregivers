@@ -1,3 +1,4 @@
+import { LegalNextPanel } from "@/components/legal-next";
 import { pageMeta } from "@/lib/seo";
 
 export const metadata = pageMeta({
@@ -36,6 +37,7 @@ export default function TermsPage() {
           resolved as a release or refund.
         </p>
       </section>
+      <LegalNextPanel />
     </div>
   );
 }
