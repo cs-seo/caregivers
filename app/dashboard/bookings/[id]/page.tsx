@@ -36,6 +36,7 @@ import { isHandoverComplete } from "@/lib/handover";
 import { isPaidFlash, paidBookingLinks, paidBookingNotice } from "@/lib/booking-paid";
 import { escrowHeldNextLinks, escrowHeldNextNotice } from "@/lib/escrow-held";
 import { isRequestedFlash, requestedBookingLinks, requestedBookingNotice } from "@/lib/booking-requested";
+import { pendingAcceptanceNextLinks, pendingAcceptanceNextNotice } from "@/lib/pending-next";
 import { formatDateTime } from "@/lib/format";
 import { isUnreadFor, markThreadRead } from "@/lib/messages";
 import { formatAud } from "@/lib/money";
@@ -303,6 +304,22 @@ export default async function BookingDetailPage({
               handoverComplete: isHandoverComplete(booking),
               requestSlug: booking.careRequest?.slug,
             }).map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="font-medium text-teal hover:underline">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {isFamily &&
+      booking.status === BOOKING_STATUS.PENDING_ACCEPTANCE &&
+      !isRequestedFlash(query.requested) ? (
+        <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+          <p>{pendingAcceptanceNextNotice()}</p>
+          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {pendingAcceptanceNextLinks({ requestSlug: booking.careRequest?.slug }).map((link) => (
               <li key={link.href}>
                 <Link href={link.href} className="font-medium text-teal hover:underline">
                   {link.label}
