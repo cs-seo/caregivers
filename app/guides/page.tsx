@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { auth } from "@/auth";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { FamilyStartPanel } from "@/components/family-start";
 import { forCarersHomeCta, forCarersHomeHref, forCarersHomeNotice } from "@/lib/for-carers";
+import { guidesIndexNextLinks, guidesIndexNextNotice, guidesIndexNextShows } from "@/lib/guides-index-next";
 import { HIRE_GUIDES } from "@/lib/seo-content";
 import { pageMeta } from "@/lib/seo";
 
@@ -12,7 +14,9 @@ export const metadata = pageMeta({
   path: "/guides",
 });
 
-export default function GuidesIndexPage() {
+export default async function GuidesIndexPage() {
+  const session = await auth();
+  const showGuidesIndexNext = guidesIndexNextShows({ isFamily: session?.user?.role === "FAMILY" });
   return (
     <div>
       <Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "Guides" }]} />
@@ -33,7 +37,20 @@ export default function GuidesIndexPage() {
           </li>
         ))}
       </ul>
-      <FamilyStartPanel />
+      {showGuidesIndexNext ? (
+        <div className="mt-8 rounded-xl bg-sage p-3 text-sm">
+          <p>{guidesIndexNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {guidesIndexNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : (
+        <FamilyStartPanel />
+      )}
       <p className="mt-8 text-sm text-stone-600">
         Carers: {forCarersHomeNotice()}{" "}
         <Link href={forCarersHomeHref()} className="font-medium text-teal hover:underline">
