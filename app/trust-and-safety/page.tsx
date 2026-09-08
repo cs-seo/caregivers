@@ -1,4 +1,7 @@
+import Link from "next/link";
+import { auth } from "@/auth";
 import { FamilyStartPanel } from "@/components/family-start";
+import { trustNextLinks, trustNextNotice, trustNextShows } from "@/lib/trust-next";
 import { pageMeta } from "@/lib/seo";
 
 export const metadata = pageMeta({
@@ -8,7 +11,9 @@ export const metadata = pageMeta({
   path: "/trust-and-safety",
 });
 
-export default function TrustPage() {
+export default async function TrustPage() {
+  const session = await auth();
+  const showTrustNext = trustNextShows({ isFamily: session?.user?.role === "FAMILY" });
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <h1 className="text-3xl font-semibold text-ink">Trust and safety</h1>
@@ -88,7 +93,20 @@ export default function TrustPage() {
           after a released booking, so ratings stay tied to work that actually ran. Carers can publish one public reply.
         </p>
       </section>
-      <FamilyStartPanel className="rounded-xl bg-sage p-3 text-sm" />
+      {showTrustNext ? (
+        <div className="rounded-xl bg-sage p-3 text-sm">
+          <p>{trustNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {trustNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : (
+        <FamilyStartPanel className="rounded-xl bg-sage p-3 text-sm" />
+      )}
     </div>
   );
 }
