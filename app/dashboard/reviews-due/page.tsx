@@ -4,6 +4,7 @@ import { BOOKING_STATUS, ROLES } from "@/lib/constants";
 import { formatDateTime } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { composeReviewDueAlert, reviewsDueLabel } from "@/lib/reviews";
+import { reviewsDueNextLinks, reviewsDueNextNotice } from "@/lib/reviews-due";
 import { searchAlertMailto } from "@/lib/saved-search";
 import { requireUser } from "@/lib/session";
 import { pageMeta } from "@/lib/seo";
@@ -23,7 +24,7 @@ export default async function ReviewsDuePage() {
     where: { familyId: user.id, status: BOOKING_STATUS.RELEASED, review: null },
     include: {
       caregiver: { include: { user: { select: { name: true } } } },
-      specialty: { select: { name: true } },
+      specialty: { select: { name: true, slug: true, pluralName: true } },
     },
     orderBy: { startAt: "desc" },
   });
@@ -73,6 +74,23 @@ export default async function ReviewsDuePage() {
           </ul>
         ) : null}
       </section>
+      {due.length ? (
+        <div className="mt-6 rounded-xl bg-sage p-3 text-sm">
+          <p>{reviewsDueNextNotice()}</p>
+          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {reviewsDueNextLinks({
+              specialty: due[0].specialty.slug,
+              specialtyPlural: due[0].specialty.pluralName,
+            }).map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="font-medium text-teal hover:underline">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 }
