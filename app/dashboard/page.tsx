@@ -21,6 +21,7 @@ import {
   hasPendingCounter,
   notHiredBanner,
   passedOnBanner,
+  passedOnHint,
   proposalStatusLabel,
   requestStatusLabel,
 } from "@/lib/job-hire";
@@ -440,6 +441,7 @@ export default async function DashboardPage({
       title: proposal.careRequest.title,
       familyName: proposal.careRequest.family.name,
       slug: proposal.careRequest.slug,
+      familyNote: proposal.familyNote,
     }));
   const notHiredCopy = notHiredBanner(notHiredJobs);
   const passedOnCopy = passedOnBanner(passedOnJobs);
@@ -1236,6 +1238,11 @@ export default async function DashboardPage({
                 {hasPendingCounter(proposal) && counterSinceLabel(proposal.counteredAt) ? (
                   <span className="mt-0.5 block text-sm text-stone-600">
                     {counterSinceLabel(proposal.counteredAt)}
+                  </span>
+                ) : null}
+                {proposal.status === "declined" && isJobAccepting(proposal.careRequest) && passedOnHint(proposal.familyNote) ? (
+                  <span className="mt-0.5 block text-sm text-stone-600">
+                    {passedOnHint(proposal.familyNote)}
                   </span>
                 ) : null}
                 {unreadJobByRequest.get(proposal.careRequestId) ? (

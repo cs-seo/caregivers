@@ -15,6 +15,7 @@ import {
   hasPendingCounter,
   notHiredBanner,
   passedOnBanner,
+  passedOnHint,
   composeBookingNotes,
   sanitizeBookingNote,
   BOOKING_NOTE_LIMIT,
@@ -191,9 +192,33 @@ test("passedOnBanner names the family and the request", () => {
   );
   assert.equal(
     passedOnBanner([
+      {
+        title: "Overnight respite in Norwood this month",
+        familyName: "Alex Martin",
+        familyNote: "We need someone who can stay both nights this month.",
+      },
+    ]),
+    "Alex Martin passed on your proposal for Overnight respite in Norwood this month: “We need someone who can stay both nights this month.”",
+  );
+  assert.equal(
+    passedOnBanner([
       { title: "Overnight respite in Norwood this month", familyName: "Alex Martin" },
       { title: "Saturday night babysitter in Bondi", familyName: "Priya Shah" },
     ]),
     "2 families passed on a proposal.",
   );
+});
+
+test("passedOnHint quotes the family note on the proposals list", () => {
+  assert.equal(passedOnHint(null), null);
+  assert.equal(passedOnHint("  "), null);
+  assert.equal(
+    passedOnHint("We need someone who can stay both nights this month."),
+    "They wrote: “We need someone who can stay both nights this month.”",
+  );
+  const long = `${"We need someone who can stay both nights. ".repeat(6)}Thanks.`;
+  const hint = passedOnHint(long);
+  assert.ok(hint?.startsWith("They wrote: “"));
+  assert.ok(hint?.includes("…"));
+  assert.ok((hint?.length ?? 0) < 180);
 });

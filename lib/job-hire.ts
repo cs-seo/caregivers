@@ -155,13 +155,23 @@ export function notHiredBanner(
 }
 
 export function passedOnBanner(
-  items: { title: string; familyName: string }[],
+  items: { title: string; familyName: string; familyNote?: string | null }[],
 ) {
   if (!items.length) return null;
   if (items.length === 1) {
-    return `${items[0].familyName} passed on your proposal for ${items[0].title}.`;
+    const note = (items[0].familyNote ?? "").trim();
+    return note
+      ? `${items[0].familyName} passed on your proposal for ${items[0].title}: “${note}”`
+      : `${items[0].familyName} passed on your proposal for ${items[0].title}.`;
   }
   return `${items.length} families passed on a proposal.`;
+}
+
+export function passedOnHint(note?: string | null) {
+  const text = (note ?? "").trim();
+  if (!text) return null;
+  const short = text.length > 140 ? `${text.slice(0, 137).trim()}…` : text;
+  return `They wrote: “${short}”`;
 }
 
 export async function markRequestHired(careRequestId: string, hiredCaregiverId: string) {
