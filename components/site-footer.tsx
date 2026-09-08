@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { SITE_NAME } from "@/lib/constants";
+import { footerBoardLink } from "@/lib/footer-board";
 import { getSpecialties, getStates } from "@/lib/queries";
 
 export async function SiteFooter() {
   const [specialties, states] = await Promise.all([getSpecialties(), getStates()]);
+  const board = footerBoardLink();
 
   return (
     <footer className="mt-16 border-t border-line bg-teal-deep text-sage print:hidden">
@@ -69,6 +71,11 @@ export async function SiteFooter() {
             <li>
               <Link className="hover:text-white" href="/guides">
                 Hiring guides
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-white" href={board.href}>
+                {board.label}
               </Link>
             </li>
             <li>
