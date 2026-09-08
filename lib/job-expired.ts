@@ -1,3 +1,5 @@
+import { postJobHref } from "./job-post";
+
 export type ExpiredJobPlace = {
   specialty: { slug: string; name: string; pluralName?: string };
   city: { slug: string; name: string; state: { slug: string } };
@@ -14,7 +16,7 @@ export function expiredJobOwnerNotice() {
 export function expiredJobRecoveryLinks(job: ExpiredJobPlace) {
   const who = (job.specialty.pluralName ?? job.specialty.name).toLowerCase();
   return [
-    { href: "/post-a-job", label: "Post a new care request" },
+    { href: postJobHref({ specialty: job.specialty.slug, city: job.city.slug }), label: "Post a new care request" },
     {
       href: expiredJobDirectoryHref(job),
       label: `Browse ${who} in ${job.city.name}`,

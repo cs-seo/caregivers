@@ -13,7 +13,7 @@ test("expiredJobDirectoryHref stays on the specialty city path without a past da
 
 test("expiredJobRecoveryLinks offer post again and the matching directory", () => {
   assert.deepEqual(expiredJobRecoveryLinks(newtown), [
-    { href: "/post-a-job", label: "Post a new care request" },
+    { href: "/post-a-job?specialty=companion-care&city=sydney", label: "Post a new care request" },
     { href: "/caregivers/companion-care/nsw/sydney", label: "Browse companion carers in Sydney" },
   ]);
   assert.match(expiredJobOwnerNotice(), /left the open board/);

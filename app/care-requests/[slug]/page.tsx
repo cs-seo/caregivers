@@ -6,6 +6,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { JsonLd } from "@/components/json-ld";
 import { InviteButton } from "@/components/invite-button";
 import { InviteSentNotice } from "@/components/invite-sent-notice";
+import { ShareJobLink } from "@/components/share-job-link";
 import { JobMessageThread } from "@/components/job-message-thread";
 import {
   counterProposalAction,
@@ -69,6 +70,7 @@ import {
 } from "@/lib/job-match";
 import { proposalBudgetLabel, proposalBudgetTone } from "@/lib/job-rate";
 import { jobPostingJsonLd } from "@/lib/job-seo";
+import { jobShareNotice, jobSharePath } from "@/lib/job-share";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { directoryStats, searchCaregivers } from "@/lib/queries";
@@ -300,6 +302,9 @@ export default async function CareRequestPage({
           Posted by {job.family.name} · budget {formatAud(job.budgetCents)}/hr
           {job.hoursEstimate ? ` · about ${job.hoursEstimate} hours` : ""}
         </p>
+        {isOwner && accepting ? (
+          <ShareJobLink path={jobSharePath(job.slug)} notice={jobShareNotice("owner")} />
+        ) : null}
 
         {relatedJobs.length ? (
           <section className="mt-10 rounded-2xl border border-line bg-card p-5">
