@@ -22,6 +22,7 @@ import {
 } from "@/lib/disability-next";
 import { agedCareNextLinks, agedCareNextNotice, agedCareNextShows } from "@/lib/aged-care-next";
 import { nursingNextLinks, nursingNextNotice, nursingNextShows } from "@/lib/nursing-next";
+import { personalCareNextLinks, personalCareNextNotice, personalCareNextShows } from "@/lib/personal-care-next";
 import { respiteNextLinks, respiteNextNotice, respiteNextShows } from "@/lib/respite-next";
 import {
   directoryIsSuburbPath,
@@ -141,6 +142,12 @@ export async function DirectoryResults({
     jobAttached: Boolean(jobTitle),
   });
   const showAgedCareNext = agedCareNextShows({
+    isFamily: Boolean(canShortlist),
+    specialtySlug: filters.specialty,
+    specialtyPath,
+    jobAttached: Boolean(jobTitle),
+  });
+  const showPersonalCareNext = personalCareNextShows({
     isFamily: Boolean(canShortlist),
     specialtySlug: filters.specialty,
     specialtyPath,
@@ -297,6 +304,18 @@ export async function DirectoryResults({
           <p>{agedCareNextNotice()}</p>
           <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
             {agedCareNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : null}
+      {showPersonalCareNext ? (
+        <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+          <p>{personalCareNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {personalCareNextLinks().map((link) => (
               <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
                 {link.label}
               </Link>
