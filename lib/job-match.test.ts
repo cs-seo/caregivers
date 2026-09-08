@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { parseSydneyDateTimeLocal } from "./format";
-import { attachJobNotice, bookHref, caregiverHref, canAttachJob, formatJobStart, isJobSlug, isUtcDateOnly, jobBookHref, jobDirectoryHref, jobFitForCarer, jobFitsCarer, jobMissLabel, jobMissReason, matchingJobs, shortlistCompareNotice, shortlistHref, sortByJobFit, toJobMatchCarer } from "./job-match";
+import { attachJobNotice, bookHref, caregiverHref, canAttachJob, formatJobStart, isJobSlug, isUtcDateOnly, jobBookHref, jobDirectoryHref, jobFitForCarer, jobFitsCarer, jobMissLabel, jobMissReason, matchingJobs, profileJobFitNotice, shortlistCompareNotice, shortlistHref, sortByJobFit, toJobMatchCarer } from "./job-match";
 import { parseWeeklyHours } from "./weekly-windows";
 
 const sarah = {
@@ -215,6 +215,11 @@ test("toJobMatchCarer and jobFitForCarer label a shortlist against Marrickville"
     shortlistCompareNotice("Weekday aged care for Mum in Marrickville", marrickville.startDate),
     "Comparing saved carers for Weekday aged care for Mum in Marrickville · starts 15 Sept 2026, 8:00 am. Book or invite from here — booking closes the request and attaches the sit.",
   );
+  assert.equal(
+    profileJobFitNotice(true, marrickville.startDate),
+    "City, specialty and usual hours match 15 Sept 2026, 8:00 am.",
+  );
+  assert.equal(profileJobFitNotice(false, marrickville.startDate), "Checked against 15 Sept 2026, 8:00 am.");
 });
 
 test("attachJobNotice names the request on list, profile, shortlist and book", () => {

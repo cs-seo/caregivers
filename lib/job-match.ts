@@ -100,6 +100,12 @@ export function shortlistCompareNotice(title: string, startDate: Date) {
   return `Comparing saved carers for ${title} · starts ${formatJobStart(startDate)}. Book or invite from here — booking closes the request and attaches the sit.`;
 }
 
+export function profileJobFitNotice(fit: boolean, startDate: Date) {
+  return fit
+    ? `City, specialty and usual hours match ${formatJobStart(startDate)}.`
+    : `Checked against ${formatJobStart(startDate)}.`;
+}
+
 export function isJobSlug(value: string) {
   return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value) && value.length > 0 && value.length <= 80;
 }

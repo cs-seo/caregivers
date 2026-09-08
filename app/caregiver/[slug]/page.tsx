@@ -16,7 +16,15 @@ import { fortnightLabel, isAvailableNowLive, isInstantBookLive, noticeLabel, sum
 import { lastActiveLabel, monthYear } from "@/lib/format";
 import { isInviteFlash } from "@/lib/job-invite";
 import { jobBoardHref, openRequestsNotice } from "@/lib/job-board";
-import { canAttachJob, bookHref, caregiverHref, isJobSlug } from "@/lib/job-match";
+import {
+  canAttachJob,
+  bookHref,
+  caregiverHref,
+  isJobSlug,
+  jobFitForCarer,
+  profileJobFitNotice,
+  toJobMatchCarer,
+} from "@/lib/job-match";
 import { acceptingJobWhere } from "@/lib/job-status";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
@@ -83,6 +91,8 @@ export default async function CaregiverProfilePage({
             familyId: true,
             status: true,
             startDate: true,
+            cityId: true,
+            specialtyId: true,
             proposals: { where: { caregiverId: carer.id }, select: { id: true } },
             invites: { where: { caregiverId: carer.id }, select: { id: true, status: true } },
           },
@@ -110,8 +120,16 @@ export default async function CaregiverProfilePage({
     existing: job.invites[0] ?? null,
     proposed: job.proposals.length > 0,
   }));
-  const attachJob = jobSlug ? openInviteJobs.find((job) => job.slug === jobSlug) : undefined;
+  const attachJob = jobSlug ? openJobs.find((job) => job.slug === jobSlug) : undefined;
   const jobTitle = attachJob && viewer?.id && canAttachJob(attachJob, viewer.id) ? attachJob.title : null;
+  const jobFit =
+    jobTitle && attachJob
+      ? jobFitForCarer(
+          { cityId: attachJob.cityId, specialtyId: attachJob.specialtyId, startDate: attachJob.startDate },
+          toJobMatchCarer(carer),
+          "family",
+        )
+      : null;
   const canShortlist = viewer?.role === "FAMILY";
   const openMatch =
     openRequestCount.find((row) => row.specialtyId === primary?.id) ?? openRequestCount[0];
@@ -245,6 +263,12 @@ export default async function CaregiverProfilePage({
             </div>
           </div>
           {jobTitle ? <AttachJobBanner title={jobTitle} surface="profile" /> : null}
+          {jobFit && attachJob ? (
+            <p className="mt-3 text-sm text-stone-600">
+              <Badge tone={jobFit.fit ? "teal" : "stone"}>{jobFit.label}</Badge>
+              <span className="ml-2">{profileJobFitNotice(jobFit.fit, attachJob.startDate)}</span>
+            </p>
+          ) : null}
           {openRequests ? (
             <p className="mt-4 text-sm text-teal-deep">
               {openRequests.label}.{" "}
@@ -396,6 +420,12 @@ export default async function CaregiverProfilePage({
               surface="profile"
               className="mt-4 rounded-xl border border-teal/25 bg-sage px-3 py-2 text-sm text-ink"
             />
+          ) : null}
+          {jobFit && attachJob ? (
+            <p className="mt-3 text-sm text-stone-600">
+              <Badge tone={jobFit.fit ? "teal" : "stone"}>{jobFit.label}</Badge>
+              <span className="ml-2">{profileJobFitNotice(jobFit.fit, attachJob.startDate)}</span>
+            </p>
           ) : null}
           <Link
             href={bookHref(carer.slug, {
