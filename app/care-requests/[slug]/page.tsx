@@ -71,6 +71,7 @@ import {
 import { proposalBudgetLabel, proposalBudgetTone } from "@/lib/job-rate";
 import { jobPostingJsonLd } from "@/lib/job-seo";
 import { jobShareNotice, jobSharePath } from "@/lib/job-share";
+import { JOB_FILL_STEPS, jobFillHeading, jobFillNotice } from "@/lib/job-fill";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { directoryStats, searchCaregivers } from "@/lib/queries";
@@ -304,6 +305,19 @@ export default async function CareRequestPage({
         </p>
         {isOwner && accepting ? (
           <ShareJobLink path={jobSharePath(job.slug)} notice={jobShareNotice("owner")} />
+        ) : null}
+        {isOwner && accepting ? (
+          <section className="mt-6 rounded-2xl border border-line bg-card p-5">
+            <h2 className="text-lg font-semibold text-ink">{jobFillHeading()}</h2>
+            <p className="mt-2 text-sm text-stone-600">{jobFillNotice()}</p>
+            <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-stone-700">
+              {JOB_FILL_STEPS.map((step) => (
+                <li key={step.title}>
+                  <span className="font-medium text-ink">{step.title}.</span> {step.body}
+                </li>
+              ))}
+            </ol>
+          </section>
         ) : null}
 
         {relatedJobs.length ? (
