@@ -9,7 +9,17 @@ import { fortnightLabel, isInstantBookLive, summariseFortnight } from "@/lib/ava
 import { formatAud } from "@/lib/money";
 import { caregiverCardInclude, getUpcomingAvailability, withTrust } from "@/lib/queries";
 import { isInviteFlash } from "@/lib/job-invite";
-import { bookHref, canAttachJob, caregiverHref, isJobSlug, shortlistHref } from "@/lib/job-match";
+import {
+  bookHref,
+  canAttachJob,
+  caregiverHref,
+  isJobSlug,
+  jobFitForCarer,
+  shortlistCompareNotice,
+  shortlistHref,
+  sortByJobFit,
+  toJobMatchCarer,
+} from "@/lib/job-match";
 import { acceptingJobWhere } from "@/lib/job-status";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
@@ -52,6 +62,8 @@ export default async function ShortlistPage({
       familyId: true,
       status: true,
       startDate: true,
+      cityId: true,
+      specialtyId: true,
       proposals: { select: { caregiverId: true } },
       invites: { select: { caregiverId: true, status: true } },
     },
@@ -59,6 +71,11 @@ export default async function ShortlistPage({
   });
   const attachJob = jobSlug ? openJobs.find((job) => job.slug === jobSlug) : undefined;
   const jobTitle = attachJob && canAttachJob(attachJob, user.id) ? attachJob.title : null;
+  const matchJob =
+    jobTitle && attachJob
+      ? { cityId: attachJob.cityId, specialtyId: attachJob.specialtyId, startDate: attachJob.startDate }
+      : null;
+  const listed = matchJob ? sortByJobFit(carers, matchJob, toJobMatchCarer) : carers;
   const returnTo = shortlistHref(jobTitle ? jobSlug : undefined);
 
   return (
@@ -72,8 +89,8 @@ export default async function ShortlistPage({
       {isInviteFlash(query.invited) ? <InviteSentNotice className="mt-3 text-sm text-teal" /> : null}
       {jobTitle ? <AttachJobBanner title={jobTitle} surface="shortlist" /> : null}
       <p className="mt-2 max-w-2xl text-stone-600">
-        {jobTitle
-          ? `Comparing saved carers for ${jobTitle}. Book or invite from here — booking closes the request and attaches the sit.`
+        {jobTitle && attachJob
+          ? shortlistCompareNotice(jobTitle, attachJob.startDate)
           : "Save carers from the directory, compare rates, checks and who is free in the next fortnight, then Instant Book or invite them to one of your open requests. This is the family-side equivalent of an agency roster — yours to keep."}
       </p>
 
@@ -96,6 +113,7 @@ export default async function ShortlistPage({
                     <th className="px-4 py-3 font-medium">Rate</th>
                     <th className="px-4 py-3 font-medium">Experience</th>
                     <th className="px-4 py-3 font-medium">Usual hours</th>
+                    {matchJob ? <th className="px-4 py-3 font-medium">Fits start</th> : null}
                     <th className="px-4 py-3 font-medium">Next 14 days</th>
                     <th className="px-4 py-3 font-medium">Checks</th>
                     <th className="px-4 py-3 font-medium">Book</th>
@@ -103,8 +121,9 @@ export default async function ShortlistPage({
                   </tr>
                 </thead>
                 <tbody>
-                  {carers.map((carer) => {
+                  {listed.map((carer) => {
                     const fortnight = availability.get(carer.id)!;
+                    const fit = matchJob ? jobFitForCarer(matchJob, toJobMatchCarer(carer), "family") : null;
                     return (
                     <tr key={carer.id} className="border-t border-line">
                       <td className="px-4 py-3">
@@ -122,6 +141,11 @@ export default async function ShortlistPage({
                       <td className="px-4 py-3 font-medium text-teal">{formatAud(carer.hourlyRateCents)}/hr</td>
                       <td className="px-4 py-3 text-stone-600">{carer.yearsExperience} yrs</td>
                       <td className="px-4 py-3 text-stone-600">{carer.weeklyHours ?? "Ask when you book"}</td>
+                      {fit ? (
+                        <td className="px-4 py-3">
+                          <Badge tone={fit.fit ? "teal" : "stone"}>{fit.label}</Badge>
+                        </td>
+                      ) : null}
                       <td className="px-4 py-3 text-stone-600">
                         {fortnightLabel(fortnight)}
                         {fortnight.nextFree ? (
@@ -180,8 +204,11 @@ export default async function ShortlistPage({
           ) : null}
 
           <div className="mt-8 space-y-4">
-            {carers.map((carer) => (
+            {listed.map((carer) => {
+              const fit = matchJob ? jobFitForCarer(matchJob, toJobMatchCarer(carer), "family") : null;
+              return (
               <div key={carer.id} className="space-y-2">
+                {fit ? <Badge tone={fit.fit ? "teal" : "stone"}>{fit.label}</Badge> : null}
                 <CaregiverCardView
                   caregiver={carer}
                   job={jobTitle ? jobSlug : undefined}
@@ -228,7 +255,8 @@ export default async function ShortlistPage({
                   signedIn
                 />
               </div>
-            ))}
+              );
+            })}
           </div>
         </>
       )}

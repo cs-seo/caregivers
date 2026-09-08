@@ -69,6 +69,37 @@ export function jobMissLabel(reason: JobMiss | null, audience: "carer" | "family
   return JOB_MISS[reason];
 }
 
+export function toJobMatchCarer(carer: {
+  cityId: string;
+  specialties: { specialtyId: string }[];
+  weeklyWindows: WeeklyWindow[];
+  blockedDates?: { dateKey: string }[];
+}): JobMatchCarer {
+  return {
+    cityId: carer.cityId,
+    specialtyIds: carer.specialties.map((item) => item.specialtyId),
+    windows: carer.weeklyWindows,
+    blockedKeys: carer.blockedDates?.map((row) => row.dateKey),
+  };
+}
+
+export function jobFitForCarer(
+  job: JobMatchJob,
+  carer: JobMatchCarer,
+  audience: "carer" | "family" = "family",
+) {
+  const reason = jobMissReason(job, carer);
+  return { fit: reason === null, reason, label: jobMissLabel(reason, audience) };
+}
+
+export function sortByJobFit<T>(items: T[], job: JobMatchJob, toCarer: (item: T) => JobMatchCarer) {
+  return [...items].sort((a, b) => Number(jobFitsCarer(job, toCarer(b))) - Number(jobFitsCarer(job, toCarer(a))));
+}
+
+export function shortlistCompareNotice(title: string, startDate: Date) {
+  return `Comparing saved carers for ${title} · starts ${formatJobStart(startDate)}. Book or invite from here — booking closes the request and attaches the sit.`;
+}
+
 export function isJobSlug(value: string) {
   return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value) && value.length > 0 && value.length <= 80;
 }

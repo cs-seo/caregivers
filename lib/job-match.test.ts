@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { parseSydneyDateTimeLocal } from "./format";
-import { attachJobNotice, bookHref, caregiverHref, canAttachJob, formatJobStart, isJobSlug, isUtcDateOnly, jobBookHref, jobDirectoryHref, jobFitsCarer, jobMissLabel, jobMissReason, matchingJobs, shortlistHref } from "./job-match";
+import { attachJobNotice, bookHref, caregiverHref, canAttachJob, formatJobStart, isJobSlug, isUtcDateOnly, jobBookHref, jobDirectoryHref, jobFitForCarer, jobFitsCarer, jobMissLabel, jobMissReason, matchingJobs, shortlistCompareNotice, shortlistHref, sortByJobFit, toJobMatchCarer } from "./job-match";
 import { parseWeeklyHours } from "./weekly-windows";
 
 const sarah = {
@@ -172,6 +172,48 @@ test("bookHref keeps a safe job slug on error redirects", () => {
   assert.equal(
     bookHref("sarah-nguyen-aged-care-sydney", { job: "../evil", error: "overlap" }),
     "/caregiver/sarah-nguyen-aged-care-sydney/book?error=overlap",
+  );
+});
+
+test("toJobMatchCarer and jobFitForCarer label a shortlist against Marrickville", () => {
+  const marrickville = {
+    cityId: "sydney",
+    specialtyId: "aged-care",
+    startDate: parseSydneyDateTimeLocal("2026-09-15T08:00"),
+  };
+  const priya = toJobMatchCarer({
+    cityId: "sydney",
+    specialties: [{ specialtyId: "nannies" }, { specialtyId: "babysitters" }],
+    weeklyWindows: parseWeeklyHours("Mon–Fri 3pm–7pm · Sat mornings"),
+  });
+  const james = toJobMatchCarer({
+    cityId: "sydney",
+    specialties: [{ specialtyId: "disability-support" }],
+    weeklyWindows: parseWeeklyHours("Wed–Sun 9am–5pm"),
+    blockedDates: [],
+  });
+  assert.deepEqual(jobFitForCarer(marrickville, sarah, "family"), {
+    fit: true,
+    reason: null,
+    label: "Fits this start",
+  });
+  assert.equal(jobFitForCarer(marrickville, priya, "family").label, "Not one of their specialties");
+  assert.equal(jobFitForCarer(marrickville, james, "family").label, "Not one of their specialties");
+  assert.deepEqual(
+    sortByJobFit(
+      [
+        { name: "Priya", carer: priya },
+        { name: "Sarah", carer: sarah },
+        { name: "James", carer: james },
+      ],
+      marrickville,
+      (row) => row.carer,
+    ).map((row) => row.name),
+    ["Sarah", "Priya", "James"],
+  );
+  assert.equal(
+    shortlistCompareNotice("Weekday aged care for Mum in Marrickville", marrickville.startDate),
+    "Comparing saved carers for Weekday aged care for Mum in Marrickville · starts 15 Sept 2026, 8:00 am. Book or invite from here — booking closes the request and attaches the sit.",
   );
 });
 
