@@ -34,6 +34,7 @@ import { persistMissingInvoiceNumbers } from "@/lib/invoice-peers";
 import { comingUpKind, isComingUp } from "@/lib/coming-up";
 import { isHandoverComplete } from "@/lib/handover";
 import { isPaidFlash, paidBookingLinks, paidBookingNotice } from "@/lib/booking-paid";
+import { awaitingPayNextLinks, awaitingPayNextNotice } from "@/lib/awaiting-pay";
 import { escrowHeldNextLinks, escrowHeldNextNotice } from "@/lib/escrow-held";
 import { inProgressNextLinks, inProgressNextNotice } from "@/lib/in-progress-next";
 import { isRequestedFlash, requestedBookingLinks, requestedBookingNotice } from "@/lib/booking-requested";
@@ -349,6 +350,23 @@ export default async function BookingDetailPage({
           <p>{inProgressNextNotice()}</p>
           <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
             {inProgressNextLinks({ bookingId: booking.id }).map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="font-medium text-teal hover:underline">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {isFamily && booking.status === BOOKING_STATUS.AWAITING_PAYMENT ? (
+        <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+          <p>{awaitingPayNextNotice()}</p>
+          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {awaitingPayNextLinks({
+              caregiverSlug: booking.caregiver.slug,
+              bookingId: booking.id,
+            }).map((link) => (
               <li key={link.href}>
                 <Link href={link.href} className="font-medium text-teal hover:underline">
                   {link.label}
