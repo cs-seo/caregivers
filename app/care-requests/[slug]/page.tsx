@@ -29,6 +29,7 @@ import {
   proposalStatusTone,
   requestStatusLabel,
 } from "@/lib/job-hire";
+import { expiredJobOwnerNotice, expiredJobRecoveryLinks } from "@/lib/job-expired";
 import { isJobAccepting, isJobExpired, requestListingStatus } from "@/lib/job-status";
 import {
   INVITE_NOTE_LIMIT,
@@ -242,6 +243,21 @@ export default async function CareRequestPage({
               ? "This start time is in your city, one of your specialties, and inside your usual weekly hours."
               : `${jobMissLabel(miss)}. You can still send a proposal if the family is flexible.`}
           </p>
+        ) : null}
+        {isOwner && expired ? (
+          <section className="mt-6 rounded-2xl border border-line bg-card p-5">
+            <h2 className="text-lg font-semibold">Still need cover?</h2>
+            <p className="mt-2 text-sm text-stone-600">{expiredJobOwnerNotice()}</p>
+            <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm">
+              {expiredJobRecoveryLinks(job).map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="font-medium text-teal hover:underline">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
         ) : null}
         <p className="mt-4 whitespace-pre-line text-stone-700">{job.description}</p>
         <p className="mt-4 text-sm text-stone-500">
@@ -696,6 +712,19 @@ export default async function CareRequestPage({
             </Link>{" "}
             to send a proposal.
           </p>
+        ) : expired && isOwner ? (
+          <div className="text-sm text-stone-600">
+            <p>This request is expired.</p>
+            <ul className="mt-2 space-y-1">
+              {expiredJobRecoveryLinks(job).map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="font-medium text-teal hover:underline">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
         ) : expired && !isOwner ? (
           <p className="text-sm text-stone-600">This request expired when the sit started.</p>
         ) : (

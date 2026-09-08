@@ -1186,6 +1186,13 @@ export default async function DashboardPage({
                     {job.title}
                   </Link>
                   <span className="ml-2 text-sm text-stone-500">{requestStatusLabel(requestListingStatus(job))}</span>
+                  {requestListingStatus(job) === "expired" && !job.bookings[0] ? (
+                    <span className="mt-0.5 block text-sm">
+                      <Link href="/post-a-job" className="text-teal hover:underline">
+                        Post again
+                      </Link>
+                    </span>
+                  ) : null}
                   {waitingCounter ? (
                     <span className="mt-0.5 block text-sm text-stone-600">
                       {familyCounterHint(
