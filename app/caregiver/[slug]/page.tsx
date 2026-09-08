@@ -16,6 +16,7 @@ import { fortnightLabel, isAvailableNowLive, isInstantBookLive, noticeLabel, sum
 import { lastActiveLabel, monthYear } from "@/lib/format";
 import { isInviteFlash } from "@/lib/job-invite";
 import { jobBoardHref, openRequestsNotice } from "@/lib/job-board";
+import { profileMoreLink, profileMoreNotice } from "@/lib/profile-more";
 import {
   canAttachJob,
   bookHref,
@@ -143,6 +144,15 @@ export default async function CaregiverProfilePage({
           label: openRequestsNotice(openMatch._count._all, carer.city.name, openSpecialty.name),
         }
       : null;
+  const moreLink = primary
+    ? profileMoreLink({
+        specialty: primary.slug,
+        state: carer.city.state.slug,
+        city: carer.city.slug,
+        specialtyPlural: primary.pluralName,
+        cityName: carer.city.name,
+      })
+    : null;
   const fortnight = summariseFortnight(upcoming.slice(0, 14));
   const blockedKeys = upcoming.filter((day) => day.blocked).map((day) => day.key);
   const awayToday = upcoming[0]?.blocked === true;
@@ -486,6 +496,15 @@ export default async function CaregiverProfilePage({
             ))}
           </div>
         </section>
+      ) : null}
+      {primary && moreLink ? (
+        <p className="mt-8 text-sm text-stone-600">
+          {profileMoreNotice(primary.pluralName, carer.city.name)}{" "}
+          <Link href={moreLink.href} className="font-medium text-teal hover:underline">
+            {moreLink.label}
+          </Link>
+          .
+        </p>
       ) : null}
       <MobileBookBar
         slug={carer.slug}
