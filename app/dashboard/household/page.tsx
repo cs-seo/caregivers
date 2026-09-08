@@ -4,6 +4,7 @@ import { HandoverFields } from "@/components/handover-card";
 import { applyHouseholdToUpcomingAction, updateFamilyProfileAction } from "@/lib/actions";
 import { BOOKING_STATUS } from "@/lib/constants";
 import { canFillFromHousehold, hasHandover } from "@/lib/handover";
+import { householdSavedLinks, householdSavedNotice, isHouseholdSavedFlash } from "@/lib/household-saved";
 import { plural } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { getStates } from "@/lib/queries";
@@ -51,7 +52,18 @@ export default async function HouseholdPage({
         allergies each week. Empty upcoming sits can pull the same defaults without overwriting notes already on a
         booking.
       </p>
-      {query.saved ? <p className="mt-4 rounded-xl bg-sage p-3 text-sm">Household saved.</p> : null}
+      {isHouseholdSavedFlash(query.saved) ? (
+        <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+          <p>{householdSavedNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {householdSavedLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : null}
       {query.copied ? (
         <p className="mt-4 rounded-xl bg-sage p-3 text-sm">
           Copied household defaults onto {plural(Number(query.copied), "upcoming sit")}. Sit-specific notes were left

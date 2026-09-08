@@ -708,7 +708,7 @@ export default async function DashboardPage({
 
       {comingUp.length ? (
         <section className="mt-6 rounded-2xl border border-line bg-card p-5">
-          <h2 className="font-semibold text-ink">Coming up</h2>
+          <h2 id="coming-up" className="font-semibold text-ink">Coming up</h2>
           <p className="mt-1 text-sm text-stone-600">
             {isFamily
               ? "Sits in progress or starting in the next 7 days. Open Handover for keys, parking and care notes, or copy household defaults onto an empty sit."
