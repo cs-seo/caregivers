@@ -1,5 +1,8 @@
-export function pendingAcceptanceNextNotice() {
-  return "They still need to accept before you pay. Open the attached request, or compare someone already on your shortlist.";
+export function pendingAcceptanceNextNotice(args?: { requestSlug?: string | null }) {
+  if (args?.requestSlug) {
+    return "They still need to accept before you pay. Open the attached request, or compare someone already on your shortlist.";
+  }
+  return "They still need to accept before you pay. Compare someone already on your shortlist while you wait.";
 }
 
 export function pendingAcceptanceNextLinks(args: { requestSlug?: string | null }) {

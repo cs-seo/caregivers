@@ -317,7 +317,7 @@ export default async function BookingDetailPage({
       booking.status === BOOKING_STATUS.PENDING_ACCEPTANCE &&
       !isRequestedFlash(query.requested) ? (
         <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
-          <p>{pendingAcceptanceNextNotice()}</p>
+          <p>{pendingAcceptanceNextNotice({ requestSlug: booking.careRequest?.slug })}</p>
           <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
             {pendingAcceptanceNextLinks({ requestSlug: booking.careRequest?.slug }).map((link) => (
               <li key={link.href}>

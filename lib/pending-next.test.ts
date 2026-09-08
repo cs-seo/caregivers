@@ -8,8 +8,12 @@ import { rosterNextLinks, rosterNextNotice } from "./roster-next";
 
 test("pendingAcceptanceNextNotice names accept-then-pay without a count or accept CTA", () => {
   assert.match(pendingAcceptanceNextNotice(), /accept before you pay/);
-  assert.match(pendingAcceptanceNextNotice(), /attached request/);
   assert.match(pendingAcceptanceNextNotice(), /shortlist/);
+  assert.doesNotMatch(pendingAcceptanceNextNotice(), /attached request/);
+  assert.match(
+    pendingAcceptanceNextNotice({ requestSlug: "ndis-weekend-community-access-brisbane" }),
+    /attached request/,
+  );
   assert.doesNotMatch(pendingAcceptanceNextNotice(), /\d+ open/);
   assert.doesNotMatch(pendingAcceptanceNextNotice(), /Accept/);
   assert.doesNotMatch(pendingAcceptanceNextNotice(), /Confirm complete/);
@@ -17,6 +21,10 @@ test("pendingAcceptanceNextNotice names accept-then-pay without a count or accep
   assert.doesNotMatch(pendingAcceptanceNextNotice(), /job=/);
   assert.notEqual(
     pendingAcceptanceNextNotice(),
+    requestedBookingNotice({ carerName: "James Okafor", handoverComplete: false }),
+  );
+  assert.notEqual(
+    pendingAcceptanceNextNotice({ requestSlug: "ndis-weekend-community-access-brisbane" }),
     requestedBookingNotice({ carerName: "James Okafor", handoverComplete: false }),
   );
   assert.notEqual(pendingAcceptanceNextNotice(), proposalAlertsNextNotice());
