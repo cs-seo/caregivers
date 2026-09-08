@@ -74,6 +74,7 @@ import { jobPostingJsonLd } from "@/lib/job-seo";
 import { jobShareNotice, jobSharePath } from "@/lib/job-share";
 import { JOB_FILL_STEPS, jobFillHeading, jobFillNotice } from "@/lib/job-fill";
 import { counterWaitLinks, counterWaitNotice, counterWaitShowsNext } from "@/lib/counter-wait";
+import { jobThreadNextLinks, jobThreadNextNotice, jobThreadShowsNext } from "@/lib/job-thread-next";
 import { jobViewerFamilyHeading, jobViewerFamilyLinks, jobViewerFamilyNotice } from "@/lib/job-viewer";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
@@ -188,6 +189,12 @@ export default async function CareRequestPage({
   const waitingCounter = counterWaitShowsNext(
     isOwner && accepting && job.proposals.some((proposal) => hasPendingCounter(proposal)),
   );
+  const showJobThreadNext = jobThreadShowsNext({
+    isOwner,
+    accepting,
+    involved: job.invites.length + job.proposals.length,
+    waitingCounter,
+  });
   const expired = isJobExpired(job);
   const listingStatus = requestListingStatus(job);
   const matchHref = accepting ? jobDirectoryHref(job) : null;
@@ -452,7 +459,7 @@ export default async function CareRequestPage({
         ) : null}
 
         {isOwner && job.invites.length ? (
-          <section className="mt-10">
+          <section id="messages" className="mt-10">
             <h2 className="text-xl font-semibold">Invited carers</h2>
             <ul className="mt-4 space-y-3">
               {job.invites.map((invite) => (
@@ -521,9 +528,21 @@ export default async function CareRequestPage({
             </ul>
           </section>
         ) : null}
+        {showJobThreadNext && job.invites.length ? (
+          <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+            <p>{jobThreadNextNotice()}</p>
+            <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+              {jobThreadNextLinks().map((link) => (
+                <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                  {link.label}
+                </Link>
+              ))}
+            </p>
+          </div>
+        ) : null}
 
         {isOwner ? (
-          <section className="mt-10">
+          <section id={job.invites.length ? undefined : "messages"} className="mt-10">
             <h2 className="text-xl font-semibold">Proposals</h2>
             <ul className="mt-4 space-y-4">
               {job.proposals.map((proposal) => {
@@ -683,6 +702,17 @@ export default async function CareRequestPage({
                 cityName: job.city.name,
                 stateSlug: job.city.state.slug,
               }).map((link) => (
+                <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                  {link.label}
+                </Link>
+              ))}
+            </p>
+          </div>
+        ) : showJobThreadNext && !job.invites.length ? (
+          <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+            <p>{jobThreadNextNotice()}</p>
+            <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+              {jobThreadNextLinks().map((link) => (
                 <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
                   {link.label}
                 </Link>
