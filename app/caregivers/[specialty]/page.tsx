@@ -3,8 +3,11 @@ import { DirectoryResults } from "@/components/directory-page";
 import { FaqBlock, LinkGrid, RelatedSpecialties } from "@/components/seo-landing";
 import { filterCurrent, parseFilters } from "@/lib/directory";
 import { isInviteFlash } from "@/lib/job-invite";
+import { jobBoardHref, openRequestsNotice } from "@/lib/job-board";
+import { acceptingJobWhere } from "@/lib/job-status";
 import { HIRE_GUIDES, landingDescription, landingFaqs, landingH1, landingIntro, landingTitle } from "@/lib/seo-content";
 import { directoryStats, getSpecialties, getSpecialty, getStates } from "@/lib/queries";
+import { prisma } from "@/lib/prisma";
 import { pageMeta } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -38,7 +41,12 @@ export default async function SpecialtyPage({
   ]);
   if (!record) notFound();
   const filters = { ...parseFilters(query), specialty: record.slug };
-  const stats = await directoryStats(filters);
+  const [stats, openCount] = await Promise.all([
+    directoryStats(filters),
+    prisma.careRequest.count({
+      where: { ...acceptingJobWhere(), specialtyId: record.id },
+    }),
+  ]);
   const place = { specialty: record };
   const guide = HIRE_GUIDES.find((item) => item.specialty === record.slug);
 
@@ -56,6 +64,14 @@ export default async function SpecialtyPage({
       current={filterCurrent(filters)}
       path={`/caregivers/${record.slug}`}
       invited={isInviteFlash(query.invited)}
+      openRequests={
+        openCount
+          ? {
+              href: jobBoardHref({ specialty: record.slug }),
+              label: openRequestsNotice(openCount, "", record.name),
+            }
+          : null
+      }
       extras={
         <>
           <FaqBlock faqs={landingFaqs(place)} />

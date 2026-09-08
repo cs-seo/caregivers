@@ -13,40 +13,47 @@ import { pageMeta } from "@/lib/seo";
 export async function generateMetadata({
   searchParams,
 }: {
-  searchParams: Promise<{ city?: string; specialty?: string; fit?: string }>;
+  searchParams: Promise<{ city?: string; state?: string; specialty?: string; fit?: string }>;
 }) {
   const query = await searchParams;
   const board = parseJobBoardFilters(query);
-  const [city, specialty] = await Promise.all([
+  const [city, state, specialty] = await Promise.all([
     board.city ? prisma.city.findFirst({ where: { slug: board.city }, select: { name: true } }) : null,
+    board.state && !board.city
+      ? prisma.state.findUnique({ where: { slug: board.state }, select: { name: true } })
+      : null,
     board.specialty ? prisma.specialty.findUnique({ where: { slug: board.specialty }, select: { name: true } }) : null,
   ]);
-  const title = jobBoardTitle(specialty?.name, city?.name);
-  const where = city || specialty ? ` in ${[specialty?.name.toLowerCase(), city?.name].filter(Boolean).join(" · ")}` : "";
+  const title = jobBoardTitle(specialty?.name, city?.name, state?.name);
+  const place = city?.name ?? state?.name;
+  const where = city || state || specialty ? ` in ${[specialty?.name.toLowerCase(), place].filter(Boolean).join(" · ")}` : "";
   return pageMeta({
     title,
     description: `Browse open care requests${where} from Australian families. Carers send proposals; families hire into escrow.`,
-    path: jobBoardHref({ city: board.city, specialty: board.specialty }),
+    path: jobBoardHref({ city: board.city, state: board.state, specialty: board.specialty }),
   });
 }
 
 export default async function CareRequestsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ fit?: string; city?: string; specialty?: string }>;
+  searchParams: Promise<{ fit?: string; city?: string; state?: string; specialty?: string }>;
 }) {
   const [query, session] = await Promise.all([searchParams, auth()]);
   const board = parseJobBoardFilters(query);
-  const [city, specialty] = await Promise.all([
+  const [city, state, specialty] = await Promise.all([
     board.city
       ? prisma.city.findFirst({ where: { slug: board.city }, include: { state: true } })
+      : null,
+    board.state && !board.city
+      ? prisma.state.findUnique({ where: { slug: board.state } })
       : null,
     board.specialty ? prisma.specialty.findUnique({ where: { slug: board.specialty } }) : null,
   ]);
   const requests = await prisma.careRequest.findMany({
     where: {
       ...acceptingJobWhere(),
-      ...(city ? { cityId: city.id } : {}),
+      ...(city ? { cityId: city.id } : state ? { city: { stateId: state.id } } : {}),
       ...(specialty ? { specialtyId: specialty.id } : {}),
     },
     include: {
@@ -95,9 +102,9 @@ export default async function CareRequestsPage({
   const fitDelta = carer
     ? savedSearchDelta(fitCount, carer.jobsLastSeenCount, carer.jobsSeenAt)
     : null;
-  const heading = jobBoardTitle(specialty?.name, city?.name);
-  const filtered = Boolean(city || specialty);
-  const boardBase = { city: board.city, specialty: board.specialty };
+  const heading = jobBoardTitle(specialty?.name, city?.name, state?.name);
+  const filtered = Boolean(city || state || specialty);
+  const boardBase = { city: board.city, state: board.state, specialty: board.specialty };
   if (fitOnly && carer && !filtered) {
     await prisma.caregiverProfile.update({
       where: { id: carer.id },
@@ -156,7 +163,7 @@ export default async function CareRequestsPage({
             {fitOnly
               ? "No open jobs match your city, specialties and usual weekly hours."
               : filtered
-                ? "No open care requests match this city and specialty."
+                ? "No open care requests match this place and specialty."
                 : "No open care requests right now."}
           </li>
         ) : (
