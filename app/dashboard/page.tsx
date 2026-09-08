@@ -41,6 +41,7 @@ import {
   heldEscrowCents,
   isAutoReleasePaused,
 } from "@/lib/escrow";
+import { dashboardProposalBudgetHint } from "@/lib/job-rate";
 import { formatAud } from "@/lib/money";
 import { disputeReasonHint, disputeReplyHint, firstDisputeNote, firstDisputeReply } from "@/lib/dispute";
 import {
@@ -246,6 +247,10 @@ export default async function DashboardPage({
           specialty: true,
           city: { include: { state: true } },
           bookings: { select: { id: true }, orderBy: { startAt: "asc" }, take: 1 },
+          proposals: {
+            where: { status: "pending" },
+            select: { rateCents: true },
+          },
           _count: {
             select: {
               invites: { where: { status: "pending" } },
@@ -1180,6 +1185,7 @@ export default async function DashboardPage({
               familyJobs.map((job) => {
                 const match = familyJobMatchById.get(job.id);
                 const waitingCounter = familyCounterByJobId.get(job.id);
+                const budgetHint = dashboardProposalBudgetHint(job.proposals, job.budgetCents);
                 return (
                 <li key={job.id}>
                   <Link href={`/care-requests/${job.slug}`} className="text-teal hover:underline">
@@ -1226,7 +1232,9 @@ export default async function DashboardPage({
                       ) : null}
                       {job._count.invites ? ` · ${job._count.invites} invited` : ""}
                       {job._count.proposals
-                        ? ` · ${job._count.proposals} pending ${job._count.proposals === 1 ? "proposal" : "proposals"}`
+                        ? ` · ${job._count.proposals} pending ${job._count.proposals === 1 ? "proposal" : "proposals"}${
+                            budgetHint ? ` · ${budgetHint}` : ""
+                          }`
                         : ""}
                     </span>
                   ) : job._count.invites ? (
