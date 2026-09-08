@@ -34,6 +34,7 @@ import { persistMissingInvoiceNumbers } from "@/lib/invoice-peers";
 import { comingUpKind, isComingUp } from "@/lib/coming-up";
 import { isHandoverComplete } from "@/lib/handover";
 import { isPaidFlash, paidBookingLinks, paidBookingNotice } from "@/lib/booking-paid";
+import { isRequestedFlash, requestedBookingLinks, requestedBookingNotice } from "@/lib/booking-requested";
 import { formatDateTime } from "@/lib/format";
 import { isUnreadFor, markThreadRead } from "@/lib/messages";
 import { formatAud } from "@/lib/money";
@@ -73,6 +74,7 @@ export default async function BookingDetailPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{
     paid?: string;
+    requested?: string;
     released?: string;
     cancelled?: string;
     handover?: string;
@@ -260,6 +262,29 @@ export default async function BookingDetailPage({
               bookingId: booking.id,
               handoverComplete: isHandoverComplete(booking),
               isSeries: series.length > 1,
+              requestSlug: booking.careRequest?.slug,
+            }).map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="font-medium text-teal hover:underline">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {isFamily && isRequestedFlash(query.requested) ? (
+        <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+          <p>
+            {requestedBookingNotice({
+              carerName: booking.caregiver.user.name,
+              handoverComplete: isHandoverComplete(booking),
+            })}
+          </p>
+          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {requestedBookingLinks({
+              caregiverSlug: booking.caregiver.slug,
+              handoverComplete: isHandoverComplete(booking),
               requestSlug: booking.careRequest?.slug,
             }).map((link) => (
               <li key={link.href}>

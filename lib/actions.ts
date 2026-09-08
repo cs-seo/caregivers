@@ -270,7 +270,7 @@ export async function createBookingAction(formData: FormData) {
   }
 
   revalidatePath("/dashboard");
-  redirect(`/dashboard/bookings/${created[0].id}`);
+  redirect(`/dashboard/bookings/${created[0].id}?requested=1`);
 }
 
 export async function payBookingAction(formData: FormData) {
