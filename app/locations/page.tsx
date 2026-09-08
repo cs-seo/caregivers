@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { getStates } from "@/lib/queries";
+import { LinkGrid } from "@/components/seo-landing";
+import { locationSpecialtyLinks, locationSpecialtyNotice, locationSpecialtyTitle } from "@/lib/location-hub";
+import { getSpecialties, getStates } from "@/lib/queries";
 import { pageMeta } from "@/lib/seo";
 
 export const metadata = pageMeta({
@@ -11,7 +13,7 @@ export const metadata = pageMeta({
 });
 
 export default async function LocationsPage() {
-  const states = await getStates();
+  const [states, specialties] = await Promise.all([getStates(), getSpecialties()]);
   return (
     <div>
       <Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "Locations" }]} />
@@ -20,6 +22,8 @@ export default async function LocationsPage() {
         Every capital and regional centre has specialty pages. Capitals also have suburb pages for searches like
         “nanny Bondi” or “NDIS support worker Chermside”.
       </p>
+      <p className="mt-4 max-w-2xl text-sm text-stone-600">{locationSpecialtyNotice()}</p>
+      <LinkGrid title={locationSpecialtyTitle()} links={locationSpecialtyLinks(specialties)} />
       <div className="mt-8 space-y-8">
         {states.map((state) => (
           <section key={state.id}>
