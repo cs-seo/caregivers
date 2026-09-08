@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { AttachJobBanner } from "@/components/attach-job-banner";
 import { Badge } from "@/components/badges";
 import { createBookingAction } from "@/lib/actions";
+import { bookingSubmitLinks, bookingSubmitNotice } from "@/lib/booking-submit";
 import { BOOKING_OCCASIONS } from "@/lib/constants";
 import { formatAud, quoteBooking, quoteDaySit, quoteOvernightSit, quoteWeeklySeries } from "@/lib/money";
 
@@ -160,6 +162,18 @@ export function BookingForm({
           Rate includes GST. CareProof adds 10% on top and holds the total until you confirm. Sits that run after
           midnight should be agreed in the notes — some sitters add an after-midnight rate.
         </p>
+      </div>
+      <div className="rounded-xl bg-sage p-3 text-sm">
+        <p>{bookingSubmitNotice({ instantBook })}</p>
+        <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+          {bookingSubmitLinks({ caregiverSlug: slug }).map((link) => (
+            <li key={link.href}>
+              <Link href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
       </div>
       <button type="submit" className="w-full rounded-xl bg-teal py-3 font-semibold text-white hover:bg-teal-deep">
         {instantBook ? "Book and pay into escrow" : "Request to book"}
