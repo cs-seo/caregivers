@@ -86,6 +86,7 @@ import { activeCareNextLinks, activeCareNextNotice } from "@/lib/active-care";
 import { searchesNextLinks, searchesNextNotice, searchesNextPlace } from "@/lib/searches-next";
 import { requestsNextLinks, requestsNextNotice, requestsNextPlace } from "@/lib/requests-next";
 import { historyNextLinks, historyNextNotice, historyNextPlace } from "@/lib/history-next";
+import { shortlistNextLinks, shortlistNextNotice } from "@/lib/shortlist-next";
 import { rosterNextLinks, rosterNextNotice, rosterNextPlace } from "@/lib/roster-next";
 import { canFillFromHousehold, handoverGapSummary, isHandoverComplete } from "@/lib/handover";
 import { canWriteReview, reviewsDueLabel } from "@/lib/reviews";
@@ -888,6 +889,18 @@ export default async function DashboardPage({
           >
             {shortlistCount ? "Open shortlist" : "Browse carers to save"}
           </Link>
+          {shortlistCount ? (
+            <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+              <p>{shortlistNextNotice()}</p>
+              <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                {shortlistNextLinks().map((link) => (
+                  <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                    {link.label}
+                  </Link>
+                ))}
+              </p>
+            </div>
+          ) : null}
         </section>
       ) : null}
 
