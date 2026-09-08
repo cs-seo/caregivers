@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { FamilyStartPanel } from "@/components/family-start";
 import { forCarersHomeCta, forCarersHomeHref, forCarersHomeNotice } from "@/lib/for-carers";
 import { HIRE_GUIDES } from "@/lib/seo-content";
 import { pageMeta } from "@/lib/seo";
@@ -32,6 +33,7 @@ export default function GuidesIndexPage() {
           </li>
         ))}
       </ul>
+      <FamilyStartPanel />
       <p className="mt-8 text-sm text-stone-600">
         Carers: {forCarersHomeNotice()}{" "}
         <Link href={forCarersHomeHref()} className="font-medium text-teal hover:underline">

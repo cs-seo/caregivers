@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { JsonLd } from "@/components/json-ld";
+import { FamilyStartPanel } from "@/components/family-start";
 import { forCarersHomeCta, forCarersHomeHref, forCarersHomeNotice } from "@/lib/for-carers";
 import { pageMeta } from "@/lib/seo";
 
@@ -124,6 +125,7 @@ export default function HowItWorksPage() {
           </p>
         </li>
       </ol>
+      <FamilyStartPanel />
       <p className="mt-8 rounded-2xl bg-sage px-4 py-3 text-sm text-stone-700">
         Carers: {forCarersHomeNotice()}{" "}
         <Link href={forCarersHomeHref()} className="font-medium text-teal hover:underline">

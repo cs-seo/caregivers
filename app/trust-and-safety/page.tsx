@@ -1,3 +1,4 @@
+import { FamilyStartPanel } from "@/components/family-start";
 import { pageMeta } from "@/lib/seo";
 
 export const metadata = pageMeta({
@@ -87,6 +88,7 @@ export default function TrustPage() {
           after a released booking, so ratings stay tied to work that actually ran. Carers can publish one public reply.
         </p>
       </section>
+      <FamilyStartPanel className="rounded-xl bg-sage p-3 text-sm" />
     </div>
   );
 }
