@@ -9,6 +9,7 @@ import { ntNextLinks, ntNextNotice, ntNextShows } from "@/lib/nt-next";
 import { qldNextLinks, qldNextNotice, qldNextShows } from "@/lib/qld-next";
 import { saNextLinks, saNextNotice, saNextShows } from "@/lib/sa-next";
 import { vicNextLinks, vicNextNotice, vicNextShows } from "@/lib/vic-next";
+import { actNextLinks, actNextNotice, actNextShows } from "@/lib/act-next";
 import { waNextLinks, waNextNotice, waNextShows } from "@/lib/wa-next";
 
 export async function generateMetadata({ params }: { params: Promise<{ state: string }> }) {
@@ -33,6 +34,7 @@ export default async function StateLocationsPage({ params }: { params: Promise<{
   const showSaNext = saNextShows({ isFamily, stateSlug: record.slug });
   const showNtNext = ntNextShows({ isFamily, stateSlug: record.slug });
   const showWaNext = waNextShows({ isFamily, stateSlug: record.slug });
+  const showActNext = actNextShows({ isFamily, stateSlug: record.slug });
 
   return (
     <div>
@@ -109,6 +111,18 @@ export default async function StateLocationsPage({ params }: { params: Promise<{
           <p>{waNextNotice()}</p>
           <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
             {waNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : null}
+      {showActNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{actNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {actNextLinks().map((link) => (
               <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
                 {link.label}
               </Link>
