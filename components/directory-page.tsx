@@ -7,7 +7,7 @@ import { InviteSentNotice } from "@/components/invite-sent-notice";
 import { JsonLd } from "@/components/json-ld";
 import { SearchForm } from "@/components/search-form";
 import { saveSearchAction } from "@/lib/actions";
-import { emptyStateLinks, filterHref } from "@/lib/directory";
+import { directoryJobEmptyLinks, directoryJobEmptyNotice, filterHref } from "@/lib/directory";
 import { canAttachJob } from "@/lib/job-match";
 import { defaultSearchName, savedSearchHref } from "@/lib/saved-search";
 import { prisma } from "@/lib/prisma";
@@ -201,9 +201,18 @@ export async function DirectoryResults({
         <div className="space-y-4">
           {caregivers.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-line p-8">
-              <p className="text-stone-600">No carers match these filters yet. Widen the search or post a request.</p>
+              <p className="text-stone-600">
+                {jobTitle
+                  ? directoryJobEmptyNotice(jobTitle)
+                  : "No carers match these filters yet. Widen the search or post a request."}
+              </p>
               <ul className="mt-4 space-y-2 text-sm">
-                {emptyStateLinks(filters).map((link) => (
+                {directoryJobEmptyLinks(
+                  filters,
+                  jobTitle && attachJob && filters.job
+                    ? { jobSlug: filters.job, jobTitle, shortlistCount: savedIds.size }
+                    : null,
+                ).map((link) => (
                   <li key={link.href}>
                     <Link href={link.href} className="text-teal hover:underline">
                       {link.label}

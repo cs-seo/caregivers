@@ -1,4 +1,4 @@
-import { isJobSlug } from "./job-match";
+import { isJobSlug, shortlistHref } from "./job-match";
 import { postJobHref } from "./job-post";
 import type { DirectoryFilters } from "./queries";
 
@@ -148,4 +148,35 @@ export function emptyStateLinks(filters: DirectoryFilters) {
     label: "Post a care request",
   });
   return [...new Map(links.map((link) => [link.href, link])).values()];
+}
+
+export type DirectoryJobEmpty = {
+  jobSlug: string;
+  jobTitle: string;
+  shortlistCount: number;
+};
+
+export function directoryJobEmptyNotice(jobTitle: string) {
+  return `No carers match these filters for ${jobTitle} yet. Open your shortlist, return to the request, or widen the search.`;
+}
+
+export function directoryJobEmptyLinks(filters: DirectoryFilters, job?: DirectoryJobEmpty | null) {
+  const links: { href: string; label: string }[] = [];
+  if (job?.jobSlug && isJobSlug(job.jobSlug)) {
+    if (job.shortlistCount > 0) {
+      links.push({
+        href: shortlistHref(job.jobSlug),
+        label: "Compare carers on your shortlist for this request",
+      });
+    }
+    links.push({
+      href: `/care-requests/${job.jobSlug}`,
+      label: "Back to your request",
+    });
+    links.push({
+      href: emptyStateHref(filters, { job: undefined }),
+      label: "Browse without attaching to this request",
+    });
+  }
+  return [...new Map([...links, ...emptyStateLinks(filters)].map((link) => [link.href, link])).values()];
 }
