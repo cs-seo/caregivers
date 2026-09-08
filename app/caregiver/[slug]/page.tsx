@@ -89,11 +89,17 @@ export default async function CaregiverProfilePage({
           orderBy: { startDate: "asc" },
         })
       : Promise.resolve([]),
-    primary
-      ? prisma.careRequest.count({
-          where: { ...acceptingJobWhere(), cityId: carer.cityId, specialtyId: primary.id },
+    carer.specialties.length
+      ? prisma.careRequest.groupBy({
+          by: ["specialtyId"],
+          where: {
+            ...acceptingJobWhere(),
+            cityId: carer.cityId,
+            specialtyId: { in: carer.specialties.map((row) => row.specialtyId) },
+          },
+          _count: { _all: true },
         })
-      : Promise.resolve(0),
+      : Promise.resolve([]),
   ]);
   const openInviteJobs = openJobs.map((job) => ({
     slug: job.slug,
@@ -107,11 +113,16 @@ export default async function CaregiverProfilePage({
   const attachJob = jobSlug ? openInviteJobs.find((job) => job.slug === jobSlug) : undefined;
   const jobTitle = attachJob && viewer?.id && canAttachJob(attachJob, viewer.id) ? attachJob.title : null;
   const canShortlist = viewer?.role === "FAMILY";
+  const openMatch =
+    openRequestCount.find((row) => row.specialtyId === primary?.id) ?? openRequestCount[0];
+  const openSpecialty = openMatch
+    ? carer.specialties.find((row) => row.specialtyId === openMatch.specialtyId)?.specialty
+    : null;
   const openRequests =
-    primary && openRequestCount
+    openSpecialty && openMatch
       ? {
-          href: jobBoardHref({ city: carer.city.slug, specialty: primary.slug }),
-          label: openRequestsNotice(openRequestCount, carer.city.name, primary.name),
+          href: jobBoardHref({ city: carer.city.slug, specialty: openSpecialty.slug }),
+          label: openRequestsNotice(openMatch._count._all, carer.city.name, openSpecialty.name),
         }
       : null;
   const fortnight = summariseFortnight(upcoming.slice(0, 14));
