@@ -20,6 +20,7 @@ import {
   disabilityNextNotice,
   disabilityNextShows,
 } from "@/lib/disability-next";
+import { nursingNextLinks, nursingNextNotice, nursingNextShows } from "@/lib/nursing-next";
 import {
   directoryIsSuburbPath,
   suburbNextCityHref,
@@ -118,10 +119,17 @@ export async function DirectoryResults({
     jobAttached: Boolean(jobTitle),
     specialtyFilter: Boolean(filters.specialty),
   });
+  const specialtyPath = directoryIsSpecialtyPath(path);
   const showDisabilityNext = disabilityNextShows({
     isFamily: Boolean(canShortlist),
     specialtySlug: filters.specialty,
-    specialtyPath: directoryIsSpecialtyPath(path),
+    specialtyPath,
+    jobAttached: Boolean(jobTitle),
+  });
+  const showNursingNext = nursingNextShows({
+    isFamily: Boolean(canShortlist),
+    specialtySlug: filters.specialty,
+    specialtyPath,
     jobAttached: Boolean(jobTitle),
   });
   const pageIds = caregivers.map((carer) => carer.id);
@@ -239,6 +247,18 @@ export async function DirectoryResults({
           <p>{disabilityNextNotice()}</p>
           <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
             {disabilityNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : null}
+      {showNursingNext ? (
+        <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+          <p>{nursingNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {nursingNextLinks().map((link) => (
               <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
                 {link.label}
               </Link>
