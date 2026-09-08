@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { auth } from "@/auth";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { JsonLd } from "@/components/json-ld";
 import { HIRE_GUIDES, childCheckLabel } from "@/lib/seo-content";
+import { invoiceGuideLinks, invoiceGuideNotice } from "@/lib/invoice-guide";
 import { guideBoardLink, guideBoardNotice } from "@/lib/job-board";
+import { BOOKING_STATUS } from "@/lib/constants";
+import { prisma } from "@/lib/prisma";
 import { getSpecialty, getStates } from "@/lib/queries";
 import { pageMeta } from "@/lib/seo";
 
@@ -22,9 +26,33 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
   const { slug } = await params;
   const guide = HIRE_GUIDES.find((item) => item.slug === slug);
   if (!guide) notFound();
-  const [specialty, states] = await Promise.all([getSpecialty(guide.specialty), getStates()]);
+  const [specialty, states, session] = await Promise.all([
+    getSpecialty(guide.specialty),
+    getStates(),
+    auth(),
+  ]);
   if (!specialty) notFound();
   const board = guideBoardLink(specialty);
+  const isInvoiceGuide = guide.slug === "gst-invoices-for-hcp-and-ndis";
+  const invoiceBooking =
+    isInvoiceGuide && session?.user?.role === "FAMILY"
+      ? await prisma.booking.findFirst({
+          where: {
+            familyId: session.user.id,
+            payment: { isNot: null },
+            status: {
+              in: [
+                BOOKING_STATUS.ESCROW_HELD,
+                BOOKING_STATUS.IN_PROGRESS,
+                BOOKING_STATUS.RELEASED,
+                BOOKING_STATUS.DISPUTED,
+              ],
+            },
+          },
+          orderBy: { startAt: "desc" },
+          select: { id: true },
+        })
+      : null;
 
   const capitals = states.flatMap((state) =>
     state.cities
@@ -91,6 +119,18 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
             </p>
           ))}
         </>
+      ) : null}
+      {isInvoiceGuide && session?.user?.role === "FAMILY" ? (
+        <div className="mt-6 rounded-xl bg-sage p-3 text-sm">
+          <p>{invoiceGuideNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {invoiceGuideLinks({ bookingId: invoiceBooking?.id }).map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
       ) : null}
 
       {guide.slug === "hire-a-babysitter" ? (
