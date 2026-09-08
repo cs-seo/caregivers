@@ -15,6 +15,12 @@ import { ShortlistButton } from "@/components/shortlist-button";
 import { fortnightLabel, isAvailableNowLive, isInstantBookLive, noticeLabel, summariseFortnight, weeklyHourChips } from "@/lib/availability";
 import { credentialWatchlist } from "@/lib/credentials";
 import {
+  photosNextHasPhoto,
+  photosNextLinks,
+  photosNextNotice,
+  photosNextShows,
+} from "@/lib/photos-next";
+import {
   profileCheckExpiringSoon,
   profileCheckNextLinks,
   profileCheckNextNotice,
@@ -139,9 +145,15 @@ export default async function CaregiverProfilePage({
         )
       : null;
   const canShortlist = viewer?.role === "FAMILY";
+  const expiringSoon = profileCheckExpiringSoon(credentialWatchlist(carer.credentials));
   const showProfileCheckNext = profileCheckNextShows({
     isFamily: Boolean(canShortlist),
-    expiringSoon: profileCheckExpiringSoon(credentialWatchlist(carer.credentials)),
+    expiringSoon,
+  });
+  const showPhotosNext = photosNextShows({
+    isFamily: Boolean(canShortlist),
+    hasPhoto: photosNextHasPhoto(carer.photoUrl),
+    expiringSoon,
   });
   const openMatch =
     openRequestCount.find((row) => row.specialtyId === primary?.id) ?? openRequestCount[0];
@@ -311,6 +323,17 @@ export default async function CaregiverProfilePage({
                 <p>{profileCheckNextNotice()}</p>
                 <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
                   {profileCheckNextLinks().map((link) => (
+                    <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                      {link.label}
+                    </Link>
+                  ))}
+                </p>
+              </div>
+            ) : showPhotosNext ? (
+              <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+                <p>{photosNextNotice()}</p>
+                <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                  {photosNextLinks().map((link) => (
                     <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
                       {link.label}
                     </Link>
