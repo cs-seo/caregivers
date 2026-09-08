@@ -12,6 +12,7 @@ import {
   searchAlertLabel,
   searchAlertMailto,
 } from "@/lib/saved-search";
+import { searchAlertsNextLinks, searchAlertsNextNotice, searchAlertsNextPlace } from "@/lib/search-alerts";
 import { prisma } from "@/lib/prisma";
 
 export const metadata = pageMeta({
@@ -52,6 +53,15 @@ export default async function SavedSearchAlertsPage({
       newCount: row.delta.newCount,
     })),
   );
+  const nextPlace = searchAlertsNextPlace(
+    rows.map((row) => ({
+      href: row.search.href,
+      name: row.search.name,
+      alertsOn: row.search.alertsOn,
+      newCount: row.delta.newCount,
+    })),
+  );
+  const nextLinks = nextPlace ? searchAlertsNextLinks(nextPlace) : [];
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -117,6 +127,20 @@ export default async function SavedSearchAlertsPage({
           </li>
         ))}
       </ul>
+      {nextPlace ? (
+        <div className="mt-6 rounded-xl bg-sage p-3 text-sm">
+          <p>{searchAlertsNextNotice()}</p>
+          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {nextLinks.map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="font-medium text-teal hover:underline">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 }
