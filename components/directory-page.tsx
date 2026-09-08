@@ -21,6 +21,7 @@ import {
   disabilityNextShows,
 } from "@/lib/disability-next";
 import { nursingNextLinks, nursingNextNotice, nursingNextShows } from "@/lib/nursing-next";
+import { respiteNextLinks, respiteNextNotice, respiteNextShows } from "@/lib/respite-next";
 import {
   directoryIsSuburbPath,
   suburbNextCityHref,
@@ -127,6 +128,12 @@ export async function DirectoryResults({
     jobAttached: Boolean(jobTitle),
   });
   const showNursingNext = nursingNextShows({
+    isFamily: Boolean(canShortlist),
+    specialtySlug: filters.specialty,
+    specialtyPath,
+    jobAttached: Boolean(jobTitle),
+  });
+  const showRespiteNext = respiteNextShows({
     isFamily: Boolean(canShortlist),
     specialtySlug: filters.specialty,
     specialtyPath,
@@ -259,6 +266,18 @@ export async function DirectoryResults({
           <p>{nursingNextNotice()}</p>
           <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
             {nursingNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : null}
+      {showRespiteNext ? (
+        <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+          <p>{respiteNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {respiteNextLinks().map((link) => (
               <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
                 {link.label}
               </Link>
