@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { rotateCalendarFeedAction } from "@/lib/actions";
 import { newCalendarToken, subscribeUrls } from "@/lib/calendar-feed";
+import { calendarNextLinks, calendarNextNotice } from "@/lib/calendar-next";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { pageMeta } from "@/lib/seo";
@@ -59,6 +60,18 @@ export default async function CalendarSubscribePage() {
             Download a snapshot
           </a>
         </p>
+      </div>
+      <div className="mt-6 rounded-xl bg-sage p-3 text-sm">
+        <p>{calendarNextNotice()}</p>
+        <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+          {calendarNextLinks().map((link) => (
+            <li key={link.href}>
+              <Link href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
       </div>
       <form action={rotateCalendarFeedAction} className="mt-6">
         <button className="rounded-lg border border-line px-4 py-2 text-sm" type="submit">
