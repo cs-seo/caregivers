@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { auth } from "@/auth";
 import { JsonLd } from "@/components/json-ld";
 import {
   FOR_CARERS_FAQS,
@@ -9,6 +10,7 @@ import {
   forCarersFaqJsonLd,
   forCarersRegisterHref,
 } from "@/lib/for-carers";
+import { forCarersNextLinks, forCarersNextNotice, forCarersNextShows } from "@/lib/for-carers-next";
 import { pageMeta } from "@/lib/seo";
 
 export const metadata = pageMeta({
@@ -18,13 +20,27 @@ export const metadata = pageMeta({
   path: "/for-carers",
 });
 
-export default function ForCarersPage() {
+export default async function ForCarersPage() {
+  const session = await auth();
+  const showForCarersNext = forCarersNextShows({ isFamily: session?.user?.role === "FAMILY" });
   return (
     <div className="mx-auto max-w-3xl">
       <JsonLd data={forCarersFaqJsonLd()} />
       <h1 className="text-3xl font-semibold text-ink">For carers</h1>
       <p className="mt-3 text-lg text-stone-600">{FOR_CARERS_INTRO}</p>
       <p className="mt-4 rounded-2xl bg-sage px-4 py-3 text-sm text-ink">{FOR_CARERS_KEEP_RATE}</p>
+      {showForCarersNext ? (
+        <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+          <p>{forCarersNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {forCarersNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : null}
       <ol className="mt-10 space-y-6">
         {FOR_CARERS_STEPS.map((step, index) => (
           <li key={step.title}>
