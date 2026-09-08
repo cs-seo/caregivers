@@ -11,9 +11,13 @@ export function jobThreadShowsNext(args: {
   return Boolean(args.isOwner && args.accepting && args.involved > 0 && !args.waitingCounter);
 }
 
-export function jobThreadNextLinks() {
+export function jobThreadNextLinks(args: { requestSlug: string }) {
   return [
-    { href: "#messages", label: "Open messages on this request" },
+    { href: `/care-requests/${args.requestSlug}#messages`, label: "Open messages on this request" },
     { href: "/dashboard/shortlist", label: "Open your shortlist" },
   ];
+}
+
+export function jobThreadIsHashLink(href: string) {
+  return href.includes("#");
 }

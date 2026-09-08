@@ -74,7 +74,7 @@ import { jobPostingJsonLd } from "@/lib/job-seo";
 import { jobShareNotice, jobSharePath } from "@/lib/job-share";
 import { JOB_FILL_STEPS, jobFillHeading, jobFillNotice } from "@/lib/job-fill";
 import { counterWaitLinks, counterWaitNotice, counterWaitShowsNext } from "@/lib/counter-wait";
-import { jobThreadNextLinks, jobThreadNextNotice, jobThreadShowsNext } from "@/lib/job-thread-next";
+import { jobThreadIsHashLink, jobThreadNextLinks, jobThreadNextNotice, jobThreadShowsNext } from "@/lib/job-thread-next";
 import { jobViewerFamilyHeading, jobViewerFamilyLinks, jobViewerFamilyNotice } from "@/lib/job-viewer";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
@@ -532,11 +532,17 @@ export default async function CareRequestPage({
           <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
             <p>{jobThreadNextNotice()}</p>
             <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
-              {jobThreadNextLinks().map((link) => (
-                <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
-                  {link.label}
-                </Link>
-              ))}
+              {jobThreadNextLinks({ requestSlug: job.slug }).map((link) =>
+                jobThreadIsHashLink(link.href) ? (
+                  <a key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                    {link.label}
+                  </a>
+                ) : (
+                  <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                    {link.label}
+                  </Link>
+                ),
+              )}
             </p>
           </div>
         ) : null}
@@ -712,11 +718,17 @@ export default async function CareRequestPage({
           <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
             <p>{jobThreadNextNotice()}</p>
             <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
-              {jobThreadNextLinks().map((link) => (
-                <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
-                  {link.label}
-                </Link>
-              ))}
+              {jobThreadNextLinks({ requestSlug: job.slug }).map((link) =>
+                jobThreadIsHashLink(link.href) ? (
+                  <a key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                    {link.label}
+                  </a>
+                ) : (
+                  <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                    {link.label}
+                  </Link>
+                ),
+              )}
             </p>
           </div>
         ) : null}
