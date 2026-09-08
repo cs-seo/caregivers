@@ -73,6 +73,7 @@ import { proposalBudgetLabel, proposalBudgetTone } from "@/lib/job-rate";
 import { jobPostingJsonLd } from "@/lib/job-seo";
 import { jobShareNotice, jobSharePath } from "@/lib/job-share";
 import { JOB_FILL_STEPS, jobFillHeading, jobFillNotice } from "@/lib/job-fill";
+import { counterWaitLinks, counterWaitNotice, counterWaitShowsNext } from "@/lib/counter-wait";
 import { jobViewerFamilyHeading, jobViewerFamilyLinks, jobViewerFamilyNotice } from "@/lib/job-viewer";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
@@ -184,6 +185,9 @@ export default async function CareRequestPage({
   const ownInvite = carer ? job.invites.find((invite) => invite.caregiverId === carer.id) : null;
   const directoryFilters = jobDirectoryFilters(job);
   const accepting = isJobAccepting(job);
+  const waitingCounter = counterWaitShowsNext(
+    isOwner && accepting && job.proposals.some((proposal) => hasPendingCounter(proposal)),
+  );
   const expired = isJobExpired(job);
   const listingStatus = requestListingStatus(job);
   const matchHref = accepting ? jobDirectoryHref(job) : null;
@@ -668,6 +672,24 @@ export default async function CareRequestPage({
             <p className="mt-2 text-sm text-stone-500">Proposal details are visible to the family who posted this request.</p>
           </section>
         )}
+        {waitingCounter ? (
+          <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+            <p>{counterWaitNotice()}</p>
+            <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+              {counterWaitLinks({
+                specialtySlug: job.specialty.slug,
+                specialtyPlural: job.specialty.pluralName,
+                citySlug: job.city.slug,
+                cityName: job.city.name,
+                stateSlug: job.city.state.slug,
+              }).map((link) => (
+                <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                  {link.label}
+                </Link>
+              ))}
+            </p>
+          </div>
+        ) : null}
       </div>
 
       <aside className="h-fit rounded-2xl border border-line bg-card p-5">
