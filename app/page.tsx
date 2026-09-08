@@ -11,6 +11,7 @@ import {
   forCarersHomeNotice,
   forCarersRegisterHref,
 } from "@/lib/for-carers";
+import { homeFamilyLinks, homeFamilyNotice } from "@/lib/home-family";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { caregiverCardInclude, getCityHubs, getRecentReviews, getShortlistedIds, getSpecialties, withTrust } from "@/lib/queries";
@@ -113,6 +114,20 @@ export default async function HomePage() {
               ),
             )}
           </ul>
+          {viewer?.role === "FAMILY" ? (
+            <div className="mt-6 rounded-xl bg-sage p-3 text-sm">
+              <p>{homeFamilyNotice()}</p>
+              <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                {homeFamilyLinks().map((link) => (
+                  <li key={link.href}>
+                    <Link href={link.href} className="font-medium text-teal hover:underline">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </div>
         <SearchForm />
       </section>
