@@ -54,3 +54,69 @@ export function openRequestsNotice(count: number, placeName: string, specialtyNa
   if (!placeName) return `${count} ${noun} for ${specialty}`;
   return `${count} ${noun} in ${placeName} for ${specialty}`;
 }
+
+export type JobBoardEmptyContext = {
+  filters: JobBoardFilters;
+  specialtyName?: string;
+  specialtyPlural?: string;
+  cityName?: string;
+  stateName?: string;
+  stateSlug?: string;
+};
+
+export function jobBoardDirectoryHref(ctx: Pick<JobBoardEmptyContext, "filters" | "stateSlug">) {
+  const specialty = ctx.filters.specialty;
+  const state = ctx.filters.city ? ctx.stateSlug : ctx.filters.state || ctx.stateSlug;
+  const city = ctx.filters.city;
+  if (specialty && state && city) return `/caregivers/${specialty}/${state}/${city}`;
+  if (specialty && state) return `/caregivers/${specialty}/${state}`;
+  if (specialty) return `/caregivers/${specialty}`;
+  return "/caregivers";
+}
+
+export function jobBoardEmptyLinks(ctx: JobBoardEmptyContext) {
+  const { filters } = ctx;
+  const spec = ctx.specialtyName?.toLowerCase();
+  const who = ctx.specialtyPlural?.toLowerCase() ?? (spec ? `${spec} carers` : "verified carers");
+  const stateSlug = filters.city ? ctx.stateSlug : filters.state || ctx.stateSlug;
+  const links: { href: string; label: string }[] = [];
+
+  if (filters.fit) {
+    links.push({
+      href: jobBoardHref({ ...filters, fit: false }),
+      label: filters.city || filters.state || filters.specialty
+        ? "Show every open job in this filter"
+        : "Show every open job",
+    });
+  }
+  if (filters.city && spec && stateSlug) {
+    links.push({
+      href: jobBoardHref({ specialty: filters.specialty, state: stateSlug, fit: filters.fit }),
+      label: `Show ${spec} requests in ${ctx.stateName ?? "this state"}`,
+    });
+  }
+  if (filters.city || filters.state) {
+    links.push({
+      href: jobBoardHref({ specialty: filters.specialty, fit: filters.fit }),
+      label: spec ? `Show ${spec} requests Australia-wide` : "Show every open job Australia-wide",
+    });
+  } else if (filters.specialty && !filters.fit) {
+    links.push({
+      href: jobBoardHref({ fit: filters.fit }),
+      label: "Show every open job",
+    });
+  }
+
+  const directoryHref = jobBoardDirectoryHref(ctx);
+  const directoryLabel =
+    filters.city && ctx.cityName
+      ? `Browse ${who} in ${ctx.cityName}`
+      : filters.state && ctx.stateName
+        ? `Browse ${who} in ${ctx.stateName}`
+        : filters.specialty
+          ? `Browse ${who}`
+          : "Browse verified carers";
+  links.push({ href: directoryHref, label: directoryLabel });
+  links.push({ href: "/post-a-job", label: "Post a care request" });
+  return [...new Map(links.map((link) => [link.href, link])).values()];
+}

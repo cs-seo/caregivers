@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { jobBoardHref, jobBoardTitle, openRequestsNotice, parseJobBoardFilters } from "./job-board";
+import {
+  jobBoardDirectoryHref,
+  jobBoardEmptyLinks,
+  jobBoardHref,
+  jobBoardTitle,
+  openRequestsNotice,
+  parseJobBoardFilters,
+} from "./job-board";
 
 test("parseJobBoardFilters keeps safe city, state and specialty slugs", () => {
   assert.deepEqual(
@@ -52,4 +59,77 @@ test("jobBoardTitle and openRequestsNotice name the place and specialty", () => 
     "1 open care request in New South Wales for aged care",
   );
   assert.equal(openRequestsNotice(2, "", "Aged care"), "2 open care requests for aged care");
+});
+
+test("jobBoardEmptyLinks widens city, state and specialty filters", () => {
+  const perth = jobBoardEmptyLinks({
+    filters: { city: "perth", specialty: "aged-care" },
+    specialtyName: "Aged care",
+    specialtyPlural: "Aged care carers",
+    cityName: "Perth",
+    stateName: "Western Australia",
+    stateSlug: "wa",
+  });
+  assert.deepEqual(
+    perth.map((link) => [link.label, link.href]),
+    [
+      ["Show aged care requests in Western Australia", "/care-requests?specialty=aged-care&state=wa"],
+      ["Show aged care requests Australia-wide", "/care-requests?specialty=aged-care"],
+      ["Browse aged care carers in Perth", "/caregivers/aged-care/wa/perth"],
+      ["Post a care request", "/post-a-job"],
+    ],
+  );
+
+  const nsw = jobBoardEmptyLinks({
+    filters: { state: "nsw", specialty: "aged-care" },
+    specialtyName: "Aged care",
+    specialtyPlural: "Aged care carers",
+    stateName: "New South Wales",
+    stateSlug: "nsw",
+  });
+  assert.deepEqual(
+    nsw.map((link) => [link.label, link.href]),
+    [
+      ["Show aged care requests Australia-wide", "/care-requests?specialty=aged-care"],
+      ["Browse aged care carers in New South Wales", "/caregivers/aged-care/nsw"],
+      ["Post a care request", "/post-a-job"],
+    ],
+  );
+
+  const specialty = jobBoardEmptyLinks({
+    filters: { specialty: "aged-care" },
+    specialtyName: "Aged care",
+    specialtyPlural: "Aged care carers",
+  });
+  assert.deepEqual(
+    specialty.map((link) => [link.label, link.href]),
+    [
+      ["Show every open job", "/care-requests"],
+      ["Browse aged care carers", "/caregivers/aged-care"],
+      ["Post a care request", "/post-a-job"],
+    ],
+  );
+
+  const fit = jobBoardEmptyLinks({
+    filters: { fit: true },
+  });
+  assert.deepEqual(
+    fit.map((link) => [link.label, link.href]),
+    [
+      ["Show every open job", "/care-requests"],
+      ["Browse verified carers", "/caregivers"],
+      ["Post a care request", "/post-a-job"],
+    ],
+  );
+});
+
+test("jobBoardDirectoryHref needs a state slug to keep a city path", () => {
+  assert.equal(
+    jobBoardDirectoryHref({ filters: { city: "perth", specialty: "aged-care" }, stateSlug: "wa" }),
+    "/caregivers/aged-care/wa/perth",
+  );
+  assert.equal(
+    jobBoardDirectoryHref({ filters: { city: "perth", specialty: "aged-care" } }),
+    "/caregivers/aged-care",
+  );
 });

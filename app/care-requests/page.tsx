@@ -2,7 +2,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { Badge } from "@/components/badges";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { jobBoardHref, jobBoardTitle, parseJobBoardFilters } from "@/lib/job-board";
+import { jobBoardEmptyLinks, jobBoardHref, jobBoardTitle, parseJobBoardFilters } from "@/lib/job-board";
 import { formatJobStart, jobFitsCarer, jobMissLabel, jobMissReason } from "@/lib/job-match";
 import { acceptingJobWhere } from "@/lib/job-status";
 import { formatAud } from "@/lib/money";
@@ -160,11 +160,29 @@ export default async function CareRequestsPage({
       <ul className="mt-8 space-y-4">
         {sorted.length === 0 ? (
           <li className="rounded-2xl border border-dashed border-line bg-card p-5 text-sm text-stone-600">
-            {fitOnly
-              ? "No open jobs match your city, specialties and usual weekly hours."
-              : filtered
-                ? "No open care requests match this place and specialty."
-                : "No open care requests right now."}
+            <p>
+              {fitOnly
+                ? "No open jobs match your city, specialties and usual weekly hours."
+                : filtered
+                  ? "No open care requests match this place and specialty."
+                  : "No open care requests right now."}
+            </p>
+            <ul className="mt-3 space-y-2">
+              {jobBoardEmptyLinks({
+                filters: board,
+                specialtyName: specialty?.name,
+                specialtyPlural: specialty?.pluralName,
+                cityName: city?.name,
+                stateName: city?.state.name ?? state?.name,
+                stateSlug: city?.state.slug ?? state?.slug,
+              }).map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="font-medium text-teal hover:underline">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </li>
         ) : (
           sorted.map(({ job, fit, reason, invited }) => (
