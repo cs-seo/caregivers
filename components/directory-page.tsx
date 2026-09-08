@@ -7,7 +7,7 @@ import { InviteSentNotice } from "@/components/invite-sent-notice";
 import { JsonLd } from "@/components/json-ld";
 import { SearchForm } from "@/components/search-form";
 import { saveSearchAction } from "@/lib/actions";
-import { directoryJobEmptyLinks, directoryJobEmptyNotice, filterHref } from "@/lib/directory";
+import { directoryJobEmptyLinks, directoryJobEmptyNotice, directoryListedPostLink, directoryListedPostNotice, filterHref } from "@/lib/directory";
 import { canAttachJob } from "@/lib/job-match";
 import { defaultSearchName, savedSearchHref } from "@/lib/saved-search";
 import { prisma } from "@/lib/prisma";
@@ -73,6 +73,7 @@ export async function DirectoryResults({
       : null;
   const jobTitle =
     attachJob && viewer?.id && canAttachJob(attachJob, viewer.id) ? attachJob.title : null;
+  const listedPost = caregivers.length && !jobTitle ? directoryListedPostLink(filters) : null;
   const pageIds = caregivers.map((carer) => carer.id);
   const inviteRows =
     jobTitle && attachJob && pageIds.length
@@ -270,6 +271,15 @@ export async function DirectoryResults({
                 <span className="text-stone-400">Next</span>
               )}
             </nav>
+          ) : null}
+          {listedPost ? (
+            <p className="pt-2 text-sm text-stone-600">
+              {directoryListedPostNotice()}{" "}
+              <Link href={listedPost.href} className="font-medium text-teal hover:underline">
+                {listedPost.label}
+              </Link>
+              .
+            </p>
           ) : null}
         </div>
       </div>

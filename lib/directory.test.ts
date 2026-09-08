@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { directoryBasePath, directoryJobEmptyLinks, directoryJobEmptyNotice, emptyStateLinks, filterCurrent, parseFilters } from "./directory";
+import { directoryBasePath, directoryJobEmptyLinks, directoryJobEmptyNotice, directoryListedPostLink, directoryListedPostNotice, emptyStateLinks, filterCurrent, parseFilters } from "./directory";
 
 test("parseFilters keeps a safe job slug and drops junk", () => {
   const filters = parseFilters({
@@ -75,4 +75,18 @@ test("directoryJobEmptyLinks add shortlist and request recovery when a job is at
   assert.equal(directoryJobEmptyLinks(filters)[0]?.href, emptyStateLinks(filters)[0]?.href);
   assert.match(directoryJobEmptyNotice(job.jobTitle), /Marrickville/);
   assert.doesNotMatch(directoryJobEmptyNotice(job.jobTitle), /\d+ open/);
+});
+
+test("directoryListedPostLink prefills post-a-job from listed specialty and city", () => {
+  assert.deepEqual(directoryListedPostLink({ specialty: "aged-care", city: "sydney" }), {
+    href: "/post-a-job?specialty=aged-care&city=sydney",
+    label: "Post a care request",
+  });
+  assert.deepEqual(directoryListedPostLink({ specialty: "nannies" }), {
+    href: "/post-a-job?specialty=nannies",
+    label: "Post a care request",
+  });
+  assert.equal(directoryListedPostLink({}), null);
+  assert.match(directoryListedPostNotice(), /Post a request/);
+  assert.doesNotMatch(directoryListedPostNotice(), /\d+ open/);
 });

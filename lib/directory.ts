@@ -180,3 +180,15 @@ export function directoryJobEmptyLinks(filters: DirectoryFilters, job?: Director
   }
   return [...new Map([...links, ...emptyStateLinks(filters)].map((link) => [link.href, link])).values()];
 }
+
+export function directoryListedPostLink(filters: Pick<DirectoryFilters, "specialty" | "city">) {
+  if (!filters.specialty) return null;
+  return {
+    href: postJobHref({ specialty: filters.specialty, city: filters.city }),
+    label: "Post a care request",
+  };
+}
+
+export function directoryListedPostNotice() {
+  return "Need a sit these profiles don’t cover? Post a request and compare proposals.";
+}
