@@ -192,3 +192,28 @@ export function directoryListedPostLink(filters: Pick<DirectoryFilters, "special
 export function directoryListedPostNotice() {
   return "Need a sit these profiles don’t cover? Post a request and compare proposals.";
 }
+
+export function directoryNearbyNotice(pluralName: string, suburbName: string, cityName: string) {
+  return `No ${pluralName.toLowerCase()} are listed in ${suburbName} yet. Showing verified carers who cover greater ${cityName}, including ${suburbName}.`;
+}
+
+export function directoryNearbyLinks(args: {
+  specialty: string;
+  state: string;
+  city: string;
+  specialtyPlural: string;
+  cityName: string;
+  stateName: string;
+}) {
+  const who = args.specialtyPlural.toLowerCase();
+  return [
+    {
+      href: `/caregivers/${args.specialty}/${args.state}/${args.city}`,
+      label: `See ${who} across ${args.cityName}`,
+    },
+    {
+      href: `/caregivers/${args.specialty}/${args.state}`,
+      label: `See ${who} across ${args.stateName}`,
+    },
+  ];
+}

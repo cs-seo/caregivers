@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { DirectoryResults } from "@/components/directory-page";
 import { FaqBlock, LinkGrid, RelatedSpecialties } from "@/components/seo-landing";
-import { filterCurrent, parseFilters } from "@/lib/directory";
+import { directoryNearbyLinks, directoryNearbyNotice, filterCurrent, parseFilters } from "@/lib/directory";
 import { isInviteFlash } from "@/lib/job-invite";
 import { jobBoardHref, openRequestsNotice } from "@/lib/job-board";
 import { acceptingJobWhere } from "@/lib/job-status";
@@ -72,8 +72,18 @@ export default async function SuburbDirectoryPage({
       title={landingH1(seo)}
       intro={landingIntro(seo, stats)}
       nearbyNote={
+        nearby ? directoryNearbyNotice(spec.pluralName, place.name, place.city.name) : undefined
+      }
+      nearbyLinks={
         nearby
-          ? `No ${spec.pluralName.toLowerCase()} are listed in ${place.name} yet. Showing verified carers who cover greater ${place.city.name}, including ${place.name}.`
+          ? directoryNearbyLinks({
+              specialty: spec.slug,
+              state: place.city.state.slug,
+              city: place.city.slug,
+              specialtyPlural: spec.pluralName,
+              cityName: place.city.name,
+              stateName: place.city.state.name,
+            })
           : undefined
       }
       breadcrumbs={[

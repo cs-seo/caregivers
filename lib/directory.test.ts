@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { directoryBasePath, directoryJobEmptyLinks, directoryJobEmptyNotice, directoryListedPostLink, directoryListedPostNotice, emptyStateLinks, filterCurrent, parseFilters } from "./directory";
+import { directoryBasePath, directoryJobEmptyLinks, directoryJobEmptyNotice, directoryListedPostLink, directoryListedPostNotice, directoryNearbyLinks, directoryNearbyNotice, emptyStateLinks, filterCurrent, parseFilters } from "./directory";
 
 test("parseFilters keeps a safe job slug and drops junk", () => {
   const filters = parseFilters({
@@ -89,4 +89,26 @@ test("directoryListedPostLink prefills post-a-job from listed specialty and city
   assert.equal(directoryListedPostLink({}), null);
   assert.match(directoryListedPostNotice(), /Post a request/);
   assert.doesNotMatch(directoryListedPostNotice(), /\d+ open/);
+});
+
+test("directoryNearbyLinks widen a suburb with no local carers", () => {
+  assert.match(
+    directoryNearbyNotice("Aged care carers", "Bondi", "Sydney"),
+    /No aged care carers are listed in Bondi yet/,
+  );
+  assert.doesNotMatch(directoryNearbyNotice("Aged care carers", "Bondi", "Sydney"), /\d+ open/);
+  assert.deepEqual(
+    directoryNearbyLinks({
+      specialty: "aged-care",
+      state: "nsw",
+      city: "sydney",
+      specialtyPlural: "Aged care carers",
+      cityName: "Sydney",
+      stateName: "New South Wales",
+    }),
+    [
+      { href: "/caregivers/aged-care/nsw/sydney", label: "See aged care carers across Sydney" },
+      { href: "/caregivers/aged-care/nsw", label: "See aged care carers across New South Wales" },
+    ],
+  );
 });

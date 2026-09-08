@@ -27,6 +27,7 @@ export async function DirectoryResults({
   current,
   path,
   nearbyNote,
+  nearbyLinks,
   extras,
   invited,
   openRequests,
@@ -39,6 +40,7 @@ export async function DirectoryResults({
   current: Record<string, string | undefined>;
   path: string;
   nearbyNote?: string;
+  nearbyLinks?: { href: string; label: string }[];
   extras?: React.ReactNode;
   invited?: boolean;
   openRequests?: { href: string; label: string } | null;
@@ -128,7 +130,22 @@ export async function DirectoryResults({
       <Breadcrumbs items={breadcrumbs} />
       <h1 className="text-3xl font-semibold text-ink">{title}</h1>
       <p className="mt-3 max-w-3xl text-pretty text-stone-600">{intro}</p>
-      {nearbyNote ? <p className="mt-3 text-sm text-teal-deep">{nearbyNote}</p> : null}
+      {nearbyNote ? (
+        <div className="mt-3 text-sm text-teal-deep">
+          <p>{nearbyNote}</p>
+          {nearbyLinks?.length ? (
+            <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+              {nearbyLinks.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="font-medium text-teal hover:underline">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
       {openRequests ? (
         <p className="mt-3 text-sm text-teal-deep">
           {openRequests.label}.{" "}
