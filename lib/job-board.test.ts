@@ -4,6 +4,8 @@ import {
   jobBoardDirectoryHref,
   jobBoardEmptyLinks,
   jobBoardHref,
+  jobBoardListedLink,
+  jobBoardListedNotice,
   jobBoardTitle,
   guideBoardLink,
   guideBoardNotice,
@@ -125,6 +127,36 @@ test("jobBoardEmptyLinks widens city, state and specialty filters", () => {
       ["Post a care request", "/post-a-job"],
     ],
   );
+});
+
+test("jobBoardListedLink points a filled board at the matching directory without a count", () => {
+  assert.deepEqual(
+    jobBoardListedLink({
+      filters: { city: "sydney", specialty: "aged-care" },
+      specialtyName: "Aged care",
+      specialtyPlural: "Aged care carers",
+      cityName: "Sydney",
+      stateName: "New South Wales",
+      stateSlug: "nsw",
+    }),
+    {
+      href: "/caregivers/aged-care/nsw/sydney",
+      label: "Browse aged care carers in Sydney",
+    },
+  );
+  assert.deepEqual(
+    jobBoardListedLink({
+      filters: { specialty: "nannies" },
+      specialtyName: "Nanny",
+      specialtyPlural: "Nannies",
+    }),
+    {
+      href: "/caregivers/nannies",
+      label: "Browse nannies",
+    },
+  );
+  assert.match(jobBoardListedNotice(), /listed carer/);
+  assert.doesNotMatch(jobBoardListedNotice(), /\d+ open/);
 });
 
 test("jobBoardDirectoryHref needs a state slug to keep a city path", () => {

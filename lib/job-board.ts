@@ -75,10 +75,30 @@ export function jobBoardDirectoryHref(ctx: Pick<JobBoardEmptyContext, "filters" 
   return "/caregivers";
 }
 
+export function jobBoardDirectoryLabel(ctx: JobBoardEmptyContext) {
+  const spec = ctx.specialtyName?.toLowerCase();
+  const who = ctx.specialtyPlural?.toLowerCase() ?? (spec ? `${spec} carers` : "verified carers");
+  const { filters } = ctx;
+  if (filters.city && ctx.cityName) return `Browse ${who} in ${ctx.cityName}`;
+  if (filters.state && ctx.stateName) return `Browse ${who} in ${ctx.stateName}`;
+  if (filters.specialty) return `Browse ${who}`;
+  return "Browse verified carers";
+}
+
+export function jobBoardListedLink(ctx: JobBoardEmptyContext) {
+  return {
+    href: jobBoardDirectoryHref(ctx),
+    label: jobBoardDirectoryLabel(ctx),
+  };
+}
+
+export function jobBoardListedNotice() {
+  return "Prefer to hire a listed carer instead? Browse verified profiles and book into escrow.";
+}
+
 export function jobBoardEmptyLinks(ctx: JobBoardEmptyContext) {
   const { filters } = ctx;
   const spec = ctx.specialtyName?.toLowerCase();
-  const who = ctx.specialtyPlural?.toLowerCase() ?? (spec ? `${spec} carers` : "verified carers");
   const stateSlug = filters.city ? ctx.stateSlug : filters.state || ctx.stateSlug;
   const links: { href: string; label: string }[] = [];
 
@@ -108,16 +128,7 @@ export function jobBoardEmptyLinks(ctx: JobBoardEmptyContext) {
     });
   }
 
-  const directoryHref = jobBoardDirectoryHref(ctx);
-  const directoryLabel =
-    filters.city && ctx.cityName
-      ? `Browse ${who} in ${ctx.cityName}`
-      : filters.state && ctx.stateName
-        ? `Browse ${who} in ${ctx.stateName}`
-        : filters.specialty
-          ? `Browse ${who}`
-          : "Browse verified carers";
-  links.push({ href: directoryHref, label: directoryLabel });
+  links.push(jobBoardListedLink(ctx));
   links.push({
     href: postJobHref({ specialty: filters.specialty, city: filters.city }),
     label: "Post a care request",

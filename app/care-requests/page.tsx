@@ -2,7 +2,14 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { Badge } from "@/components/badges";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { jobBoardEmptyLinks, jobBoardHref, jobBoardTitle, parseJobBoardFilters } from "@/lib/job-board";
+import {
+  jobBoardEmptyLinks,
+  jobBoardHref,
+  jobBoardListedLink,
+  jobBoardListedNotice,
+  jobBoardTitle,
+  parseJobBoardFilters,
+} from "@/lib/job-board";
 import { postJobHref } from "@/lib/job-post";
 import { formatJobStart, jobFitsCarer, jobMissLabel, jobMissReason } from "@/lib/job-match";
 import { acceptingJobWhere } from "@/lib/job-status";
@@ -106,6 +113,15 @@ export default async function CareRequestsPage({
   const heading = jobBoardTitle(specialty?.name, city?.name, state?.name);
   const filtered = Boolean(city || state || specialty);
   const boardBase = { city: board.city, state: board.state, specialty: board.specialty };
+  const boardContext = {
+    filters: board,
+    specialtyName: specialty?.name,
+    specialtyPlural: specialty?.pluralName,
+    cityName: city?.name,
+    stateName: city?.state.name ?? state?.name,
+    stateSlug: city?.state.slug ?? state?.slug,
+  };
+  const listedDirectory = jobBoardListedLink(boardContext);
   if (fitOnly && carer && !filtered) {
     await prisma.caregiverProfile.update({
       where: { id: carer.id },
@@ -169,14 +185,7 @@ export default async function CareRequestsPage({
                   : "No open care requests right now."}
             </p>
             <ul className="mt-3 space-y-2">
-              {jobBoardEmptyLinks({
-                filters: board,
-                specialtyName: specialty?.name,
-                specialtyPlural: specialty?.pluralName,
-                cityName: city?.name,
-                stateName: city?.state.name ?? state?.name,
-                stateSlug: city?.state.slug ?? state?.slug,
-              }).map((link) => (
+              {jobBoardEmptyLinks(boardContext).map((link) => (
                 <li key={link.href}>
                   <Link href={link.href} className="font-medium text-teal hover:underline">
                     {link.label}
@@ -212,6 +221,15 @@ export default async function CareRequestsPage({
           ))
         )}
       </ul>
+      {sorted.length ? (
+        <p className="mt-6 text-sm text-stone-600">
+          {jobBoardListedNotice()}{" "}
+          <Link href={listedDirectory.href} className="font-medium text-teal hover:underline">
+            {listedDirectory.label}
+          </Link>
+          .
+        </p>
+      ) : null}
     </div>
   );
 }
