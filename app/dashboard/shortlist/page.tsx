@@ -20,6 +20,7 @@ import {
   sortByJobFit,
   toJobMatchCarer,
 } from "@/lib/job-match";
+import { shortlistHireLinks, shortlistHireNotice } from "@/lib/shortlist-hire";
 import { acceptingJobWhere } from "@/lib/job-status";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
@@ -93,6 +94,20 @@ export default async function ShortlistPage({
           ? shortlistCompareNotice(jobTitle, attachJob.startDate)
           : "Save carers from the directory, compare rates, checks and who is free in the next fortnight, then Instant Book or invite them to one of your open requests. This is the family-side equivalent of an agency roster — yours to keep."}
       </p>
+      {carers.length && !jobTitle ? (
+        <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+          <p>{shortlistHireNotice()}</p>
+          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {shortlistHireLinks().map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="font-medium text-teal hover:underline">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       {carers.length === 0 ? (
         <p className="mt-8 rounded-2xl border border-dashed border-line p-8 text-sm text-stone-600">
