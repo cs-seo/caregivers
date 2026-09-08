@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { DirectoryResults } from "@/components/directory-page";
 import { FaqBlock, LinkGrid, RelatedSpecialties } from "@/components/seo-landing";
 import { filterCurrent, parseFilters } from "@/lib/directory";
+import { isInviteFlash } from "@/lib/job-invite";
 import { landingDescription, landingFaqs, landingH1, landingIntro, landingTitle } from "@/lib/seo-content";
 import { directoryStats, getCity, getSpecialties, getSpecialty, getState } from "@/lib/queries";
 import { pageMeta } from "@/lib/seo";
@@ -62,6 +63,7 @@ export default async function CityDirectoryPage({
       filters={filters}
       filterAction={`/caregivers/${spec.slug}/${place.state.slug}/${place.slug}`}
       current={filterCurrent(filters)}
+      invited={isInviteFlash(query.invited)}
       path={`/caregivers/${spec.slug}/${place.state.slug}/${place.slug}`}
       extras={
         <>

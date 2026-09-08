@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AttachJobBanner } from "@/components/attach-job-banner";
 import { Badge, CredentialDetails } from "@/components/badges";
+import { InviteSentNotice } from "@/components/invite-sent-notice";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { CaregiverCardView } from "@/components/caregiver-card";
 import { JsonLd } from "@/components/json-ld";
@@ -13,6 +14,7 @@ import { ReviewCard, ReviewReplyForm } from "@/components/review-card";
 import { ShortlistButton } from "@/components/shortlist-button";
 import { fortnightLabel, isAvailableNowLive, isInstantBookLive, noticeLabel, summariseFortnight, weeklyHourChips } from "@/lib/availability";
 import { lastActiveLabel, monthYear } from "@/lib/format";
+import { isInviteFlash } from "@/lib/job-invite";
 import { canAttachJob, bookHref, caregiverHref, isJobSlug } from "@/lib/job-match";
 import { acceptingJobWhere } from "@/lib/job-status";
 import { formatAud } from "@/lib/money";
@@ -47,7 +49,7 @@ export default async function CaregiverProfilePage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ error?: string; start?: string; at?: string; job?: string }>;
+  searchParams: Promise<{ error?: string; start?: string; at?: string; job?: string; invited?: string }>;
 }) {
   const { slug } = await params;
   const [carer, viewer, query] = await Promise.all([
@@ -56,6 +58,7 @@ export default async function CaregiverProfilePage({
     searchParams,
   ]);
   const error = query.error;
+  const invited = isInviteFlash(query.invited);
   const jobSlug = query.job && isJobSlug(query.job) ? query.job : "";
   const startDate = query.start && /^\d{4}-\d{2}-\d{2}$/.test(query.start) ? query.start : "";
   const startClock = /^([01]\d|2[0-3]):([0-5]\d)$/.test(query.at ?? "") ? query.at : "";
@@ -346,6 +349,7 @@ export default async function CaregiverProfilePage({
           {carer.instantBook ? <p className="mt-2 text-sm text-stone-600">{noticeLabel(carer.noticeHours)}.</p> : null}
           {carer.availabilityNote ? <p className="mt-3 text-sm text-stone-700">{carer.availabilityNote}</p> : null}
           <p className="mt-2 text-xs text-stone-500">{lastActiveLabel(carer.lastActiveAt)}</p>
+          {invited ? <InviteSentNotice className="mt-4 text-sm text-teal" /> : null}
           {jobTitle ? (
             <AttachJobBanner
               title={jobTitle}

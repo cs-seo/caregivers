@@ -92,6 +92,21 @@ export function isSafeInviteReturnPath(path: string) {
   );
 }
 
+export function inviteSentNotice() {
+  return "Invite sent.";
+}
+
+export function isInviteFlash(value?: string | string[] | null) {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return raw === "1";
+}
+
+export function inviteReturnHref(path: string) {
+  const next = isSafeInviteReturnPath(path) ? path : "/dashboard";
+  if (/(?:[?&])invited=1(?:&|$)/.test(next)) return next;
+  return next.includes("?") ? `${next}&invited=1` : `${next}?invited=1`;
+}
+
 export type InviteJobOption = {
   slug: string;
   title: string;

@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { Badge } from "@/components/badges";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { InviteButton } from "@/components/invite-button";
+import { InviteSentNotice } from "@/components/invite-sent-notice";
 import { JobMessageThread } from "@/components/job-message-thread";
 import {
   counterProposalAction,
@@ -85,6 +86,7 @@ export default async function CareRequestPage({
     countered?: string;
     accepted?: string;
     kept?: string;
+    invited?: string;
     error?: string;
   }>;
 }) {
@@ -532,6 +534,7 @@ export default async function CareRequestPage({
       </div>
 
       <aside className="h-fit rounded-2xl border border-line bg-card p-5">
+        {query.invited ? <InviteSentNotice /> : null}
         {query.proposed ? <p className="mb-3 text-sm text-teal">Proposal sent.</p> : null}
         {query.updated ? <p className="mb-3 text-sm text-teal">Proposal updated.</p> : null}
         {query.sent ? <p className="mb-3 text-sm text-teal">Message sent.</p> : null}

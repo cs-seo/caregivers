@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { DirectoryResults } from "@/components/directory-page";
 import { FaqBlock, LinkGrid, RelatedSpecialties } from "@/components/seo-landing";
 import { filterCurrent, parseFilters } from "@/lib/directory";
+import { isInviteFlash } from "@/lib/job-invite";
 import { landingDescription, landingFaqs, landingH1, landingIntro, landingTitle } from "@/lib/seo-content";
 import { directoryStats, getSpecialties, getSpecialty, getSuburb } from "@/lib/queries";
 import { pageMeta } from "@/lib/seo";
@@ -79,6 +80,7 @@ export default async function SuburbDirectoryPage({
       filterAction={`/caregivers/${spec.slug}/${place.city.state.slug}/${place.city.slug}/${place.slug}`}
       current={filterCurrent(filters)}
       path={`/caregivers/${spec.slug}/${place.city.state.slug}/${place.city.slug}/${place.slug}`}
+      invited={isInviteFlash(query.invited)}
       extras={
         <>
           <FaqBlock faqs={landingFaqs(seo)} />

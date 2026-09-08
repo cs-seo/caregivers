@@ -12,6 +12,9 @@ import {
   isSafeInviteReturnPath,
   defaultInviteJobSlug,
   invitableOpenJobs,
+  inviteReturnHref,
+  inviteSentNotice,
+  isInviteFlash,
   sanitizeInviteNote,
 } from "./job-invite";
 
@@ -90,6 +93,24 @@ test("isSafeInviteReturnPath stays on local marketplace pages", () => {
   assert.equal(isSafeInviteReturnPath("/dashboard/shortlist"), true);
   assert.equal(isSafeInviteReturnPath("https://evil.example/caregiver/x"), false);
   assert.equal(isSafeInviteReturnPath("//evil"), false);
+});
+
+test("inviteReturnHref appends invited=1 on a safe return path", () => {
+  assert.equal(inviteSentNotice(), "Invite sent.");
+  assert.equal(
+    inviteReturnHref("/caregiver/james-okafor-disability-support-sydney?job=weekday-aged-care-marrickville"),
+    "/caregiver/james-okafor-disability-support-sydney?job=weekday-aged-care-marrickville&invited=1",
+  );
+  assert.equal(
+    inviteReturnHref("/care-requests/overnight-respite-adelaide"),
+    "/care-requests/overnight-respite-adelaide?invited=1",
+  );
+  assert.equal(inviteReturnHref("/dashboard/shortlist"), "/dashboard/shortlist?invited=1");
+  assert.equal(inviteReturnHref("/dashboard?invited=1"), "/dashboard?invited=1");
+  assert.equal(inviteReturnHref("https://evil.example/caregiver/x"), "/dashboard?invited=1");
+  assert.equal(isInviteFlash("1"), true);
+  assert.equal(isInviteFlash(["1"]), true);
+  assert.equal(isInviteFlash("true"), false);
 });
 
 test("invitableOpenJobs skips hired, proposed and already-invited requests", () => {

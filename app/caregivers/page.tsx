@@ -1,6 +1,7 @@
 import { DirectoryResults } from "@/components/directory-page";
 import { FaqBlock, LinkGrid } from "@/components/seo-landing";
 import { filterCurrent, parseFilters } from "@/lib/directory";
+import { isInviteFlash } from "@/lib/job-invite";
 import { getSpecialties, getStates } from "@/lib/queries";
 import { pageMeta } from "@/lib/seo";
 
@@ -36,6 +37,7 @@ export default async function CaregiversPage({
       filterAction="/caregivers"
       current={current}
       path="/caregivers"
+      invited={isInviteFlash(params.invited)}
       extras={
         <>
           <FaqBlock

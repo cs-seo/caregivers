@@ -39,6 +39,7 @@ import {
   canCreateInvite,
   canUpdateInviteNote,
   canWithdrawInvite,
+  inviteReturnHref,
   isSafeInviteReturnPath,
   sanitizeInviteNote,
 } from "./job-invite";
@@ -715,6 +716,7 @@ export async function inviteToJobAction(formData: FormData) {
   revalidatePath(`/caregiver/${caregiver.slug}`);
   revalidatePath("/care-requests");
   revalidatePath("/dashboard");
+  redirect(inviteReturnHref(next));
 }
 
 export async function declineInviteAction(formData: FormData) {

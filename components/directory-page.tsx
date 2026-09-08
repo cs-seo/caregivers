@@ -3,6 +3,7 @@ import { AttachJobBanner } from "@/components/attach-job-banner";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { CaregiverCardView } from "@/components/caregiver-card";
 import { DirectoryFilters } from "@/components/directory-filters";
+import { InviteSentNotice } from "@/components/invite-sent-notice";
 import { JsonLd } from "@/components/json-ld";
 import { SearchForm } from "@/components/search-form";
 import { saveSearchAction } from "@/lib/actions";
@@ -27,6 +28,7 @@ export async function DirectoryResults({
   path,
   nearbyNote,
   extras,
+  invited,
 }: {
   title: string;
   intro: string;
@@ -37,6 +39,7 @@ export async function DirectoryResults({
   path: string;
   nearbyNote?: string;
   extras?: React.ReactNode;
+  invited?: boolean;
 }) {
   const listFilters = nearbyNote ? { ...filters, suburb: undefined } : filters;
   const viewer = await requireUser();
@@ -181,6 +184,7 @@ export async function DirectoryResults({
           as a family to save this search.
         </p>
       )}
+      {invited ? <InviteSentNotice className="mt-4 text-sm text-teal" /> : null}
       {jobTitle ? <AttachJobBanner title={jobTitle} surface="list" /> : null}
       <div className="mt-8 grid gap-6 md:grid-cols-[240px_1fr]">
         <DirectoryFilters action={filterAction} current={current} />

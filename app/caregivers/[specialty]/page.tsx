@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { DirectoryResults } from "@/components/directory-page";
 import { FaqBlock, LinkGrid, RelatedSpecialties } from "@/components/seo-landing";
 import { filterCurrent, parseFilters } from "@/lib/directory";
+import { isInviteFlash } from "@/lib/job-invite";
 import { HIRE_GUIDES, landingDescription, landingFaqs, landingH1, landingIntro, landingTitle } from "@/lib/seo-content";
 import { directoryStats, getSpecialties, getSpecialty, getStates } from "@/lib/queries";
 import { pageMeta } from "@/lib/seo";
@@ -54,6 +55,7 @@ export default async function SpecialtyPage({
       filterAction={`/caregivers/${record.slug}`}
       current={filterCurrent(filters)}
       path={`/caregivers/${record.slug}`}
+      invited={isInviteFlash(query.invited)}
       extras={
         <>
           <FaqBlock faqs={landingFaqs(place)} />

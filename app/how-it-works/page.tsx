@@ -11,7 +11,7 @@ export const metadata = pageMeta({
 const faqs = [
   {
     q: "How do I book a carer?",
-    a: "Open a profile and use Instant Book, or post a care request and hire a proposal. From a posted job you can also invite a carer to apply — they see it on their dashboard and can send a proposal or decline. Invite alerts preview the email CareProof would send when that invite lands — this demo has no mail server, so you can send the digest to yourself or mark it sent. Opening a matching profile from a request, or booking from the match list, closes that request and attaches the sit to it — same as hiring a proposal. Invite a carer to apply if you want a written proposal first. Either path creates one escrow-backed booking, declines the other pending proposals, and closes leftover invites. When you hire, add an optional welcome note — gate, parking, or how the first morning should go — and it lands on the booking with their proposal. Instant Book already has a notes field. The hired request and your dashboard both link to that booking. Instant Book needs the carer’s notice window — 2 hours for many babysitters, 12 for aged care — and falls back to a request if you need someone sooner.",
+    a: "Open a profile and use Instant Book, or post a care request and hire a proposal. From a posted job you can also invite a carer to apply — they see it on their dashboard and can send a proposal or decline. The page confirms Invite sent so you know it landed. Invite alerts preview the email CareProof would send when that invite lands — this demo has no mail server, so you can send the digest to yourself or mark it sent. Opening a matching profile from a request, or booking from the match list, closes that request and attaches the sit to it — same as hiring a proposal. Invite a carer to apply if you want a written proposal first. Either path creates one escrow-backed booking, declines the other pending proposals, and closes leftover invites. When you hire, add an optional welcome note — gate, parking, or how the first morning should go — and it lands on the booking with their proposal. Instant Book already has a notes field. The hired request and your dashboard both link to that booking. Instant Book needs the carer’s notice window — 2 hours for many babysitters, 12 for aged care — and falls back to a request if you need someone sooner.",
   },
   {
     q: "When is the carer paid?",
@@ -103,7 +103,7 @@ export default function HowItWorksPage() {
             inside a window. Job posts collect proposals you can hire with one click — add a welcome note so the carer
             sees gate, parking or the first-morning plan on the booking. Open a matching profile from a request, or
             book from the match list — that closes the request and attaches the sit to it. Invite a carer to apply if
-            you want a written proposal before you book. Message an invited or proposing
+            you want a written proposal before you book — the page confirms Invite sent. Message an invited or proposing
             carer on the request before you hire, suggest a different rate, or pass on a proposal and keep the request open.
             Once the start time passes, an open request expires — it leaves the board so carers are not applying for a sit
             that already began. Carers see which open jobs

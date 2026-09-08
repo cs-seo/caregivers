@@ -26,8 +26,8 @@ import {
   requestStatusLabel,
 } from "@/lib/job-hire";
 import { acceptingJobWhere, isJobAccepting, requestListingStatus } from "@/lib/job-status";
-import { INVITE_NOTE_LIMIT } from "@/lib/job-invite";
-import { inviteStatusLabel } from "@/lib/job-invite";
+import { InviteSentNotice } from "@/components/invite-sent-notice";
+import { INVITE_NOTE_LIMIT, inviteStatusLabel, isInviteFlash } from "@/lib/job-invite";
 import { unreadJobCountsByRequest } from "@/lib/job-messages";
 import { formatJobStart, jobDirectoryFilters, jobDirectoryHref, matchingJobs } from "@/lib/job-match";
 import { buildRoster, canToggleRosterAway } from "@/lib/roster";
@@ -196,7 +196,7 @@ function BookingList({
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ cancelled?: string }>;
+  searchParams: Promise<{ cancelled?: string; invited?: string }>;
 }) {
   const user = await requireUser();
   if (!user) redirect("/login?callbackUrl=/dashboard");
@@ -507,6 +507,7 @@ export default async function DashboardPage({
           )}
         </div>
       </div>
+      {isInviteFlash(query.invited) ? <InviteSentNotice className="mt-4 text-sm text-teal" /> : null}
       {query.cancelled ? (
         <p className="mt-4 rounded-xl bg-sage p-3 text-sm">Unpaid weeks were cancelled. Funded escrow holds are unchanged.</p>
       ) : null}

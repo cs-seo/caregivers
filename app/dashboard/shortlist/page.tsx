@@ -3,9 +3,11 @@ import { redirect } from "next/navigation";
 import { Badge, CredentialBadges } from "@/components/badges";
 import { CaregiverCardView } from "@/components/caregiver-card";
 import { InviteJobPicker } from "@/components/invite-job-picker";
+import { InviteSentNotice } from "@/components/invite-sent-notice";
 import { fortnightLabel, isInstantBookLive, summariseFortnight } from "@/lib/availability";
 import { formatAud } from "@/lib/money";
 import { caregiverCardInclude, getUpcomingAvailability, withTrust } from "@/lib/queries";
+import { isInviteFlash } from "@/lib/job-invite";
 import { acceptingJobWhere } from "@/lib/job-status";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
@@ -19,8 +21,12 @@ export const metadata = pageMeta({
   noIndex: true,
 });
 
-export default async function ShortlistPage() {
-  const user = await requireRole("FAMILY");
+export default async function ShortlistPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ invited?: string }>;
+}) {
+  const [user, query] = await Promise.all([requireRole("FAMILY"), searchParams]);
   if (!user) redirect("/login?callbackUrl=/dashboard/shortlist");
 
   const saved = await prisma.shortlist.findMany({
@@ -57,6 +63,7 @@ export default async function ShortlistPage() {
         </Link>
       </p>
       <h1 className="mt-3 text-3xl font-semibold text-ink">Your shortlist</h1>
+      {isInviteFlash(query.invited) ? <InviteSentNotice className="mt-3 text-sm text-teal" /> : null}
       <p className="mt-2 max-w-2xl text-stone-600">
         Save carers from the directory, compare rates, checks and who is free in the next fortnight, then Instant Book
         or invite them to one of your open requests. This is the family-side equivalent of an agency roster — yours to
