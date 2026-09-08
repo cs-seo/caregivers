@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { JsonLd } from "@/components/json-ld";
 import { HIRE_GUIDES, childCheckLabel } from "@/lib/seo-content";
+import { guideNextLinks, guideNextNotice, guideNextShows, guideNextState } from "@/lib/guide-next";
 import { invoiceGuideLinks, invoiceGuideNotice } from "@/lib/invoice-guide";
 import { guideBoardLink, guideBoardNotice } from "@/lib/job-board";
 import { BOOKING_STATUS } from "@/lib/constants";
@@ -34,6 +35,13 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
   if (!specialty) notFound();
   const board = guideBoardLink(specialty);
   const isInvoiceGuide = guide.slug === "gst-invoices-for-hcp-and-ndis";
+  const isFamily = session?.user?.role === "FAMILY";
+  const nextState = guideNextState(states);
+  const showGuideNext = guideNextShows({
+    isFamily: Boolean(isFamily),
+    invoiceGuide: isInvoiceGuide,
+    stateSlug: nextState?.slug,
+  });
   const invoiceBooking =
     isInvoiceGuide && session?.user?.role === "FAMILY"
       ? await prisma.booking.findFirst({
@@ -120,11 +128,27 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
           ))}
         </>
       ) : null}
-      {isInvoiceGuide && session?.user?.role === "FAMILY" ? (
+      {isInvoiceGuide && isFamily ? (
         <div className="mt-6 rounded-xl bg-sage p-3 text-sm">
           <p>{invoiceGuideNotice()}</p>
           <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
             {invoiceGuideLinks({ bookingId: invoiceBooking?.id }).map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showGuideNext && nextState ? (
+        <div className="mt-6 rounded-xl bg-sage p-3 text-sm">
+          <p>{guideNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {guideNextLinks({
+              specialtySlug: specialty.slug,
+              specialtyPlural: specialty.pluralName,
+              stateSlug: nextState.slug,
+              stateName: nextState.name,
+            }).map((link) => (
               <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
                 {link.label}
               </Link>
