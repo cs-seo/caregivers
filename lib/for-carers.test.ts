@@ -6,6 +6,10 @@ import {
   FOR_CARERS_STEPS,
   forCarersBoardHref,
   forCarersFaqJsonLd,
+  forCarersHomeCta,
+  forCarersHomeHeading,
+  forCarersHomeHref,
+  forCarersHomeNotice,
   forCarersRegisterHref,
   parseRegisterRole,
 } from "./for-carers";
@@ -27,6 +31,15 @@ test("for-carers copy keeps the advertised rate and names escrow", () => {
 test("for-carers links send carers to register and the open board", () => {
   assert.equal(forCarersRegisterHref(), "/register?role=carer");
   assert.equal(forCarersBoardHref(), "/care-requests");
+  assert.equal(forCarersHomeHref(), "/for-carers");
+});
+
+test("homepage for-carers teaser names the rate split and escrow", () => {
+  assert.equal(forCarersHomeHeading(), "For carers");
+  assert.equal(forCarersHomeCta(), "See how you get booked");
+  assert.match(forCarersHomeNotice(), /100%/);
+  assert.match(forCarersHomeNotice(), /10%/);
+  assert.match(forCarersHomeNotice(), /escrow/i);
 });
 
 test("parseRegisterRole preselects a carer from the for-carers CTA", () => {

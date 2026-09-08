@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { JsonLd } from "@/components/json-ld";
+import { forCarersHomeCta, forCarersHomeHref, forCarersHomeNotice } from "@/lib/for-carers";
 import { pageMeta } from "@/lib/seo";
 
 export const metadata = pageMeta({
@@ -122,6 +124,13 @@ export default function HowItWorksPage() {
           </p>
         </li>
       </ol>
+      <p className="mt-8 rounded-2xl bg-sage px-4 py-3 text-sm text-stone-700">
+        Carers: {forCarersHomeNotice()}{" "}
+        <Link href={forCarersHomeHref()} className="font-medium text-teal hover:underline">
+          {forCarersHomeCta()}
+        </Link>
+        .
+      </p>
       <h2 className="mt-12 text-2xl font-semibold">Questions</h2>
       <dl className="mt-4 space-y-4">
         {faqs.map((faq) => (

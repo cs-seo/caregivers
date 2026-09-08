@@ -50,6 +50,22 @@ export const FOR_CARERS_FAQS = [
   },
 ] as const;
 
+export function forCarersHomeHref() {
+  return "/for-carers";
+}
+
+export function forCarersHomeHeading() {
+  return "For carers";
+}
+
+export function forCarersHomeNotice() {
+  return "Keep 100% of your advertised rate. Families pay a 10% fee on top. Instant Book, proposals on open requests, and escrow payout.";
+}
+
+export function forCarersHomeCta() {
+  return "See how you get booked";
+}
+
 export function forCarersRegisterHref() {
   return "/register?role=carer";
 }

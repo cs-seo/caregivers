@@ -4,6 +4,13 @@ import { JsonLd } from "@/components/json-ld";
 import { ReviewCard } from "@/components/review-card";
 import { SearchForm } from "@/components/search-form";
 import { SITE_NAME, siteUrl } from "@/lib/constants";
+import {
+  forCarersHomeCta,
+  forCarersHomeHeading,
+  forCarersHomeHref,
+  forCarersHomeNotice,
+  forCarersRegisterHref,
+} from "@/lib/for-carers";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { caregiverCardInclude, getCityHubs, getRecentReviews, getShortlistedIds, getSpecialties, withTrust } from "@/lib/queries";
@@ -87,6 +94,12 @@ export default async function HomePage() {
               Post a care request
             </Link>
           </div>
+          <p className="mt-3 text-sm text-stone-500">
+            Carers:{" "}
+            <Link href={forCarersHomeHref()} className="font-medium text-teal hover:underline">
+              {forCarersHomeCta()}
+            </Link>
+          </p>
           <p className="mt-4 text-sm text-stone-500">
             {stats._count} verified profiles · typical rate{" "}
             {formatAud(Math.round(stats._avg.hourlyRateCents ?? 0))}/hr
@@ -205,6 +218,25 @@ export default async function HomePage() {
               profile with expiry dates.
             </p>
           </div>
+        </div>
+      </section>
+
+      <section className="rounded-3xl border border-line bg-card px-6 py-8">
+        <h2 className="text-2xl font-semibold text-ink">{forCarersHomeHeading()}</h2>
+        <p className="mt-2 max-w-3xl text-stone-600">{forCarersHomeNotice()}</p>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Link
+            href={forCarersHomeHref()}
+            className="rounded-full bg-teal px-5 py-2.5 text-sm font-medium text-white no-underline"
+          >
+            {forCarersHomeCta()}
+          </Link>
+          <Link
+            href={forCarersRegisterHref()}
+            className="rounded-full border border-teal px-5 py-2.5 text-sm font-medium text-teal no-underline"
+          >
+            Create a carer profile
+          </Link>
         </div>
       </section>
 
