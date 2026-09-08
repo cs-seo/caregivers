@@ -11,6 +11,7 @@ import {
   searchAlertDelta,
   searchAlertMailto,
 } from "@/lib/saved-search";
+import { proposalAlertsNextLinks, proposalAlertsNextNotice } from "@/lib/proposal-alerts";
 import { requireUser } from "@/lib/session";
 import { pageMeta } from "@/lib/seo";
 
@@ -107,6 +108,20 @@ export default async function ProposalAlertsPage({
           ) : null}
         </div>
       </section>
+      {pending.length ? (
+        <div className="mt-6 rounded-xl bg-sage p-3 text-sm">
+          <p>{proposalAlertsNextNotice()}</p>
+          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {proposalAlertsNextLinks().map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="font-medium text-teal hover:underline">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 }
