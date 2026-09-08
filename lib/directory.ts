@@ -1,3 +1,4 @@
+import { footerBoardLink } from "./footer-board";
 import { isJobSlug, shortlistHref } from "./job-match";
 import { postJobHref } from "./job-post";
 import type { DirectoryFilters } from "./queries";
@@ -191,6 +192,14 @@ export function directoryListedPostLink(filters: Pick<DirectoryFilters, "special
 
 export function directoryListedPostNotice() {
   return "Need a sit these profiles don’t cover? Post a request and compare proposals.";
+}
+
+export function directoryBoardNotice() {
+  return "Prefer to compare proposals instead? Open care requests already on the board.";
+}
+
+export function directoryBoardLink() {
+  return footerBoardLink();
 }
 
 export function directoryNearbyNotice(pluralName: string, suburbName: string, cityName: string) {

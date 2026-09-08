@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { directoryBasePath, directoryJobEmptyLinks, directoryJobEmptyNotice, directoryListedPostLink, directoryListedPostNotice, directoryNearbyLinks, directoryNearbyNotice, emptyStateLinks, filterCurrent, parseFilters } from "./directory";
+import { directoryBasePath, directoryBoardLink, directoryBoardNotice, directoryJobEmptyLinks, directoryJobEmptyNotice, directoryListedPostLink, directoryListedPostNotice, directoryNearbyLinks, directoryNearbyNotice, emptyStateLinks, filterCurrent, parseFilters } from "./directory";
+import { jobBoardListedNotice } from "./job-board";
+import { legalNextLinks, legalNextNotice } from "./legal-next";
 
 test("parseFilters keeps a safe job slug and drops junk", () => {
   const filters = parseFilters({
@@ -89,6 +91,20 @@ test("directoryListedPostLink prefills post-a-job from listed specialty and city
   assert.equal(directoryListedPostLink({}), null);
   assert.match(directoryListedPostNotice(), /Post a request/);
   assert.doesNotMatch(directoryListedPostNotice(), /\d+ open/);
+});
+
+test("directoryBoardLink points the Australia hub at the open board without a count", () => {
+  assert.deepEqual(directoryBoardLink(), {
+    href: "/care-requests",
+    label: "Open care requests",
+  });
+  assert.match(directoryBoardNotice(), /compare proposals/);
+  assert.doesNotMatch(directoryBoardNotice(), /\d+ open/);
+  assert.doesNotMatch(directoryBoardNotice(), /job=/);
+  assert.notEqual(directoryBoardNotice(), directoryListedPostNotice());
+  assert.notEqual(directoryBoardNotice(), jobBoardListedNotice());
+  assert.notEqual(directoryBoardNotice(), legalNextNotice());
+  assert.notDeepEqual(directoryBoardLink(), legalNextLinks());
 });
 
 test("directoryNearbyLinks widen a suburb with no local carers", () => {

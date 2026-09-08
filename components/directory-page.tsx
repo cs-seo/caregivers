@@ -7,7 +7,7 @@ import { InviteSentNotice } from "@/components/invite-sent-notice";
 import { JsonLd } from "@/components/json-ld";
 import { SearchForm } from "@/components/search-form";
 import { saveSearchAction } from "@/lib/actions";
-import { directoryJobEmptyLinks, directoryJobEmptyNotice, directoryListedPostLink, directoryListedPostNotice, filterHref } from "@/lib/directory";
+import { directoryBoardLink, directoryBoardNotice, directoryJobEmptyLinks, directoryJobEmptyNotice, directoryListedPostLink, directoryListedPostNotice, filterHref } from "@/lib/directory";
 import { canAttachJob } from "@/lib/job-match";
 import { defaultSearchName, savedSearchHref } from "@/lib/saved-search";
 import { prisma } from "@/lib/prisma";
@@ -76,6 +76,8 @@ export async function DirectoryResults({
   const jobTitle =
     attachJob && viewer?.id && canAttachJob(attachJob, viewer.id) ? attachJob.title : null;
   const listedPost = caregivers.length && !jobTitle ? directoryListedPostLink(filters) : null;
+  const listedBoard =
+    caregivers.length && !jobTitle && !openRequests && !filters.specialty ? directoryBoardLink() : null;
   const pageIds = caregivers.map((carer) => carer.id);
   const inviteRows =
     jobTitle && attachJob && pageIds.length
@@ -152,6 +154,14 @@ export async function DirectoryResults({
           <Link href={openRequests.href} className="font-medium text-teal hover:underline">
             Browse requests
           </Link>
+        </p>
+      ) : listedBoard ? (
+        <p className="mt-3 text-sm text-stone-600">
+          {directoryBoardNotice()}{" "}
+          <Link href={listedBoard.href} className="font-medium text-teal hover:underline">
+            {listedBoard.label}
+          </Link>
+          .
         </p>
       ) : null}
       <p className="mt-2 text-sm text-stone-500">
