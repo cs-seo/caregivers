@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { Badge } from "@/components/badges";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { boardNextLinks, boardNextNotice, boardNextShows } from "@/lib/board-next";
 import {
   jobBoardEmptyLinks,
   jobBoardHref,
@@ -122,6 +123,10 @@ export default async function CareRequestsPage({
     stateSlug: city?.state.slug ?? state?.slug,
   };
   const listedDirectory = jobBoardListedLink(boardContext);
+  const showBoardNext = boardNextShows({
+    isFamily: session?.user?.role === "FAMILY",
+    filtered,
+  });
   if (fitOnly && carer && !filtered) {
     await prisma.caregiverProfile.update({
       where: { id: carer.id },
@@ -174,6 +179,18 @@ export default async function CareRequestsPage({
           Post a request
         </Link>
       </div>
+      {showBoardNext ? (
+        <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+          <p>{boardNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {boardNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : null}
       <ul className="mt-8 space-y-4">
         {sorted.length === 0 ? (
           <li className="rounded-2xl border border-dashed border-line bg-card p-5 text-sm text-stone-600">
