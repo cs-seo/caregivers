@@ -218,17 +218,46 @@ export function landingIntro(
   ].join(" ");
 }
 
+export function landingPageScope(place: SeoPlace) {
+  if (place.suburb) return "this suburb page";
+  if (place.city) return "this city page";
+  if (place.state) return "this state page";
+  return "this specialty page";
+}
+
+export function landingNearbyQuestion(place: SeoPlace) {
+  const who = place.specialty.pluralName.toLowerCase();
+  if (place.suburb) return `Can I book ${who} near ${place.suburb.name}?`;
+  if (place.city) return `Can I book ${who} near ${place.city.name}?`;
+  if (place.state) return `Can I book ${who} in ${place.state.name}?`;
+  return `Can I book ${who} across Australia?`;
+}
+
+export function landingNearbyAnswer(place: SeoPlace) {
+  if (place.suburb) {
+    return "Yes. Filter for Instant Book and Available now, or browse neighbouring suburbs from the links below. Carers often cover a whole city, not a single postcode.";
+  }
+  if (place.city) {
+    return `Yes. Filter for Instant Book and Available now, or browse suburbs across ${place.city.name} from the links below. Carers often cover a whole city, not a single postcode.`;
+  }
+  if (place.state) {
+    return `Yes. Filter for Instant Book and Available now, or browse cities in ${place.state.name} from the links below.`;
+  }
+  return "Yes. Filter for Instant Book and Available now, or browse states and cities from the links below.";
+}
+
 export function landingFaqs(place: SeoPlace) {
   const spec = place.specialty;
   const loc = placeLabel(place);
   const guide = SPECIALTY_GUIDE[spec.slug];
   const check = childCheckLabel(place.state?.slug);
   const head = GENERIC_KEYWORDS[spec.slug]?.[0] ?? spec.name.toLowerCase();
+  const scope = landingPageScope(place);
 
   return [
     {
       q: `How do I hire a ${head} in ${loc}?`,
-      a: `Open a verified profile, use Instant Book, or post a care request for ${loc}. When families have already posted, this city page links to those open requests. CareProof holds your payment in escrow and releases it after the booking.`,
+      a: `Open a verified profile, use Instant Book, or post a care request for ${loc}. When families have already posted, ${scope} links to those open requests. CareProof holds your payment in escrow and releases it after the booking.`,
     },
     {
       q: `What checks should a ${head} have in ${place.state?.name ?? "Australia"}?`,
@@ -239,8 +268,8 @@ export function landingFaqs(place: SeoPlace) {
       a: `Rates are set by each carer and shown inc GST. The directory on this page lists live hourly prices so you can compare before you book.`,
     },
     {
-      q: `Can I book ${spec.pluralName.toLowerCase()} near ${place.suburb?.name ?? place.city?.name ?? loc}?`,
-      a: `Yes. Filter for Instant Book and Available now, or browse neighbouring suburbs from the links below. Carers often cover a whole city, not a single postcode.`,
+      q: landingNearbyQuestion(place),
+      a: landingNearbyAnswer(place),
     },
     {
       q: `When is the ${head} paid?`,
