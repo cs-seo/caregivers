@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { auth } from "@/auth";
 import { GuestBrowsePanel } from "@/components/guest-browse";
 import { registerAction } from "@/lib/actions";
 import { parseRegisterRole } from "@/lib/for-carers";
+import { registerNextLinks, registerNextNotice, registerNextShows } from "@/lib/register-next";
 import { pageMeta } from "@/lib/seo";
 
 export const metadata = pageMeta({
@@ -18,6 +20,8 @@ export default async function RegisterPage({
 }) {
   const query = await searchParams;
   const role = parseRegisterRole(query.role);
+  const session = await auth();
+  const showRegisterNext = registerNextShows({ isFamily: session?.user?.role === "FAMILY" });
   return (
     <div className="mx-auto max-w-md">
       <h1 className="text-3xl font-semibold text-ink">Join CareProof</h1>
@@ -51,7 +55,22 @@ export default async function RegisterPage({
       <p className="mt-4 text-sm">
         Already registered? <Link href="/login" className="text-teal">Log in</Link>
       </p>
-      <GuestBrowsePanel />
+      {showRegisterNext ? (
+        <div className="mt-6 rounded-xl bg-sage p-3 text-sm">
+          <p>{registerNextNotice()}</p>
+          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {registerNextLinks().map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="font-medium text-teal hover:underline">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <GuestBrowsePanel />
+      )}
     </div>
   );
 }
