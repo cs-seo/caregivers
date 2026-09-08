@@ -85,6 +85,7 @@ import { comingUpNextLinks, comingUpNextNotice } from "@/lib/coming-up-next";
 import { activeCareNextLinks, activeCareNextNotice } from "@/lib/active-care";
 import { searchesNextLinks, searchesNextNotice, searchesNextPlace } from "@/lib/searches-next";
 import { requestsNextLinks, requestsNextNotice, requestsNextPlace } from "@/lib/requests-next";
+import { historyNextLinks, historyNextNotice, historyNextPlace } from "@/lib/history-next";
 import { rosterNextLinks, rosterNextNotice, rosterNextPlace } from "@/lib/roster-next";
 import { canFillFromHousehold, handoverGapSummary, isHandoverComplete } from "@/lib/handover";
 import { canWriteReview, reviewsDueLabel } from "@/lib/reviews";
@@ -352,6 +353,7 @@ export default async function DashboardPage({
   const requestsPlace = isFamily ? requestsNextPlace(familyJobs) : null;
 
   const { action: needsAction, active, history } = groupDashboardBookings(groupedSource);
+  const historyPlace = isFamily ? historyNextPlace(history) : null;
   const pendingAcceptanceItems = needsAction
     .map((group) => ({
       carerName: group.caregiverName,
@@ -1150,6 +1152,18 @@ export default async function DashboardPage({
           )
         }
       />
+      {isFamily && historyPlace ? (
+        <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+          <p>{historyNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {historyNextLinks(historyPlace).map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : null}
 
       {!isFamily && carerInvites.length ? (
         <section className="mt-10">
