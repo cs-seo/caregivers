@@ -31,6 +31,13 @@ import {
 } from "@/lib/job-hire";
 import { expiredJobOwnerNotice, expiredJobRecoveryLinks } from "@/lib/job-expired";
 import { isPostedFlash, postedJobNotice } from "@/lib/job-post";
+import {
+  RELATED_JOB_LIMIT,
+  relatedJobsBoardLink,
+  relatedJobsNotice,
+  relatedJobsTitle,
+  relatedJobsWhere,
+} from "@/lib/job-related";
 import { isJobAccepting, isJobExpired, requestListingStatus } from "@/lib/job-status";
 import {
   INVITE_NOTE_LIMIT,
@@ -214,6 +221,15 @@ export default async function CareRequestPage({
     threadCaregiverId: carer?.id ?? "",
     involved: carerInvolved,
   });
+  const relatedJobs = await prisma.careRequest.findMany({
+    where: relatedJobsWhere(job),
+    include: {
+      specialty: { select: { name: true } },
+    },
+    orderBy: { startDate: "asc" },
+    take: RELATED_JOB_LIMIT,
+  });
+  const relatedBoard = relatedJobsBoardLink(job.city);
 
   return (
     <div className="grid gap-8 md:grid-cols-[1fr_340px]">
@@ -269,6 +285,28 @@ export default async function CareRequestPage({
           Posted by {job.family.name} · budget {formatAud(job.budgetCents)}/hr
           {job.hoursEstimate ? ` · about ${job.hoursEstimate} hours` : ""}
         </p>
+
+        {relatedJobs.length ? (
+          <section className="mt-10 rounded-2xl border border-line bg-card p-5">
+            <h2 className="text-xl font-semibold">{relatedJobsTitle(job.city.name)}</h2>
+            <p className="mt-2 text-sm text-stone-600">{relatedJobsNotice(job.city.name)}</p>
+            <ul className="mt-3 space-y-2 text-sm">
+              {relatedJobs.map((related) => (
+                <li key={related.id} className="flex flex-wrap items-center justify-between gap-2">
+                  <Link href={`/care-requests/${related.slug}`} className="font-medium text-teal hover:underline">
+                    {related.title}
+                  </Link>
+                  <span className="text-stone-500">
+                    {related.specialty.name} · starts {formatJobStart(related.startDate)} · {formatAud(related.budgetCents)}/hr
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <Link href={relatedBoard.href} className="mt-3 inline-block text-sm font-medium text-teal">
+              {relatedBoard.label}
+            </Link>
+          </section>
+        ) : null}
 
         {isOwner && matchStats && matchHref ? (
           <section className="mt-10 rounded-2xl border border-line bg-card p-5">
