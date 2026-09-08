@@ -81,12 +81,17 @@ export function canAttachJob(
   return Boolean(job && job.familyId === familyId && isJobAccepting(job, now));
 }
 
-export type AttachJobSurface = "list" | "profile" | "book";
+export type AttachJobSurface = "list" | "profile" | "book" | "shortlist";
 
 export function attachJobPrefix(surface: AttachJobSurface) {
   if (surface === "book") return "This booking will close your";
   if (surface === "profile") return "Booking from this profile will close your";
+  if (surface === "shortlist") return "Booking from your shortlist will close your";
   return "Booking from this list will close your";
+}
+
+export function shortlistHref(jobSlug?: string) {
+  return jobSlug && isJobSlug(jobSlug) ? `/dashboard/shortlist?job=${jobSlug}` : "/dashboard/shortlist";
 }
 
 export function attachJobNotice(title: string, surface: AttachJobSurface) {

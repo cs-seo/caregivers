@@ -29,7 +29,7 @@ import { acceptingJobWhere, isJobAccepting, requestListingStatus } from "@/lib/j
 import { InviteSentNotice } from "@/components/invite-sent-notice";
 import { INVITE_NOTE_LIMIT, inviteStatusLabel, isInviteFlash } from "@/lib/job-invite";
 import { unreadJobCountsByRequest } from "@/lib/job-messages";
-import { formatJobStart, jobDirectoryFilters, jobDirectoryHref, matchingJobs } from "@/lib/job-match";
+import { formatJobStart, jobDirectoryFilters, jobDirectoryHref, matchingJobs, shortlistHref } from "@/lib/job-match";
 import { buildRoster, canToggleRosterAway } from "@/lib/roster";
 import {
   carerDisputePauseBanner,
@@ -832,7 +832,14 @@ export default async function DashboardPage({
               ? "Save carers from the directory, then compare rates and checks before you book."
               : `${shortlistCount} saved ${shortlistCount === 1 ? "carer" : "carers"} ready to compare.`}
           </p>
-          <Link href={shortlistCount ? "/dashboard/shortlist" : "/caregivers"} className="mt-3 inline-block text-sm font-medium text-teal">
+          <Link
+            href={
+              shortlistCount
+                ? shortlistHref(familyJobs.find((job) => isJobAccepting(job))?.slug)
+                : "/caregivers"
+            }
+            className="mt-3 inline-block text-sm font-medium text-teal"
+          >
             {shortlistCount ? "Open shortlist" : "Browse carers to save"}
           </Link>
         </section>
@@ -1200,6 +1207,14 @@ export default async function DashboardPage({
                       <Link href={match.href} className="text-teal hover:underline">
                         Browse
                       </Link>
+                      {shortlistCount ? (
+                        <>
+                          {" · "}
+                          <Link href={shortlistHref(job.slug)} className="text-teal hover:underline">
+                            Shortlist
+                          </Link>
+                        </>
+                      ) : null}
                       {job._count.invites ? ` · ${job._count.invites} invited` : ""}
                       {job._count.proposals
                         ? ` · ${job._count.proposals} pending ${job._count.proposals === 1 ? "proposal" : "proposals"}`

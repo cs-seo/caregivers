@@ -53,6 +53,7 @@ import {
   jobFitsCarer,
   jobMissLabel,
   jobMissReason,
+  shortlistHref,
 } from "@/lib/job-match";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
@@ -164,10 +165,14 @@ export default async function CareRequestPage({
   const expired = isJobExpired(job);
   const listingStatus = requestListingStatus(job);
   const matchHref = accepting ? jobDirectoryHref(job) : null;
-  const [matchStats, matchCarers] =
+  const [matchStats, matchCarers, shortlistCount] =
     isOwner && matchHref
-      ? await Promise.all([directoryStats(directoryFilters), searchCaregivers(directoryFilters, 3)])
-      : [null, []];
+      ? await Promise.all([
+          directoryStats(directoryFilters),
+          searchCaregivers(directoryFilters, 3),
+          prisma.shortlist.count({ where: { familyId: job.family.id } }),
+        ])
+      : [null, [], 0];
   const attachedBookings = job.bookings.filter((booking) => isOwner || booking.caregiverId === carer?.id);
   const hiredCaregiverId = job.status === "hired" ? attachedBookings[0]?.caregiverId ?? null : null;
   const messagesByCarer = groupJobMessages(job.jobMessages);
@@ -290,6 +295,14 @@ export default async function CareRequestPage({
             >
               {matchStats.count ? "See every match — booking still closes this request" : "Search any time that day"}
             </Link>
+            {shortlistCount > 0 ? (
+              <p className="mt-3 text-sm text-stone-600">
+                <Link href={shortlistHref(job.slug)} className="font-medium text-teal hover:underline">
+                  {shortlistCount === 1 ? "1 carer on your shortlist" : `${shortlistCount} carers on your shortlist`}
+                </Link>
+                {" — compare rates and invite without leaving this request."}
+              </p>
+            ) : null}
           </section>
         ) : null}
 
