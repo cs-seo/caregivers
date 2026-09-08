@@ -25,6 +25,7 @@ import {
   proposalStatusLabel,
   requestStatusLabel,
 } from "@/lib/job-hire";
+import { expiredJobRepostHref } from "@/lib/job-expired";
 import { acceptingJobWhere, isJobAccepting, requestListingStatus } from "@/lib/job-status";
 import { InviteSentNotice } from "@/components/invite-sent-notice";
 import { INVITE_NOTE_LIMIT, inviteNoteSavedNotice, inviteStatusLabel, inviteWithdrawnNotice, isInviteFlash } from "@/lib/job-invite";
@@ -1194,7 +1195,7 @@ export default async function DashboardPage({
                   <span className="ml-2 text-sm text-stone-500">{requestStatusLabel(requestListingStatus(job))}</span>
                   {requestListingStatus(job) === "expired" && !job.bookings[0] ? (
                     <span className="mt-0.5 block text-sm">
-                      <Link href="/post-a-job" className="text-teal hover:underline">
+                      <Link href={expiredJobRepostHref(job)} className="text-teal hover:underline">
                         Post again
                       </Link>
                     </span>

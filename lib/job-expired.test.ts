@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { expiredJobDirectoryHref, expiredJobOwnerNotice, expiredJobRecoveryLinks } from "./job-expired";
+import { expiredJobDirectoryHref, expiredJobOwnerNotice, expiredJobRecoveryLinks, expiredJobRepostHref } from "./job-expired";
 
 const newtown = {
   specialty: { slug: "companion-care", name: "Companion care", pluralName: "Companion carers" },
@@ -18,4 +18,8 @@ test("expiredJobRecoveryLinks offer post again and the matching directory", () =
   ]);
   assert.match(expiredJobOwnerNotice(), /left the open board/);
   assert.doesNotMatch(expiredJobDirectoryHref(newtown), /availableOn/);
+});
+
+test("expiredJobRepostHref prefills post-a-job from the expired specialty and city", () => {
+  assert.equal(expiredJobRepostHref(newtown), "/post-a-job?specialty=companion-care&city=sydney");
 });
