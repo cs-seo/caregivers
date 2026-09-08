@@ -1,6 +1,16 @@
 import { auth } from "@/auth";
 import { createCareRequestAction } from "@/lib/actions";
-import { parsePostJobPrefill } from "@/lib/job-post";
+import { jobBoardHref } from "@/lib/job-board";
+import { formatJobStart } from "@/lib/job-match";
+import {
+  SIMILAR_JOB_LIMIT,
+  parsePostJobPrefill,
+  similarJobsNotice,
+  similarJobsTitle,
+  similarJobsWhere,
+} from "@/lib/job-post";
+import { formatAud } from "@/lib/money";
+import { prisma } from "@/lib/prisma";
 import { getSpecialties, getStates } from "@/lib/queries";
 import { pageMeta } from "@/lib/seo";
 import Link from "next/link";
@@ -24,10 +34,27 @@ export default async function PostJobPage({
     searchParams,
   ]);
   const prefill = parsePostJobPrefill(query);
-  const preferredSpecialtyId = specialties.find((item) => item.slug === prefill.specialty)?.id;
-  const preferredCityId = states
-    .flatMap((state) => state.cities)
-    .find((city) => city.slug === prefill.city)?.id;
+  const preferredSpecialty = specialties.find((item) => item.slug === prefill.specialty);
+  const preferredCity = states.flatMap((state) => state.cities).find((city) => city.slug === prefill.city);
+  const similarPlace =
+    preferredSpecialty && preferredCity
+      ? { cityId: preferredCity.id, specialtyId: preferredSpecialty.id }
+      : null;
+  const similarWhere = similarPlace ? similarJobsWhere(similarPlace) : null;
+  const [similarJobs, similarCount, ownSimilarCount] = similarWhere
+    ? await Promise.all([
+        prisma.careRequest.findMany({
+          where: similarWhere,
+          select: { slug: true, title: true, startDate: true, budgetCents: true },
+          orderBy: { startDate: "asc" },
+          take: SIMILAR_JOB_LIMIT,
+        }),
+        prisma.careRequest.count({ where: similarWhere }),
+        session?.user.role === "FAMILY"
+          ? prisma.careRequest.count({ where: { ...similarWhere, familyId: session.user.id } })
+          : Promise.resolve(0),
+      ])
+    : [[], 0, 0];
 
   return (
     <div className="mx-auto max-w-xl">
@@ -35,6 +62,41 @@ export default async function PostJobPage({
       <p className="mt-2 text-stone-600">
         Like posting a job on Upwork: describe the care, set a budget, and hire the best proposal into escrow.
       </p>
+      {preferredSpecialty && preferredCity ? (
+        <section className="mt-6 rounded-2xl border border-line bg-card p-5">
+          <h2 className="text-lg font-semibold text-ink">
+            {similarJobsTitle(preferredSpecialty.name, preferredCity.name)}
+          </h2>
+          <p className="mt-2 text-sm text-stone-600">
+            {similarJobsNotice({
+              count: similarCount,
+              ownCount: ownSimilarCount,
+              specialtyName: preferredSpecialty.name,
+              cityName: preferredCity.name,
+            })}
+          </p>
+          {similarJobs.length ? (
+            <ul className="mt-3 space-y-2 text-sm">
+              {similarJobs.map((job) => (
+                <li key={job.slug} className="flex flex-wrap items-center justify-between gap-2">
+                  <Link href={`/care-requests/${job.slug}`} className="font-medium text-teal hover:underline">
+                    {job.title}
+                  </Link>
+                  <span className="text-stone-500">
+                    starts {formatJobStart(job.startDate)} · {formatAud(job.budgetCents)}/hr
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <Link
+            href={jobBoardHref({ specialty: preferredSpecialty.slug, city: preferredCity.slug })}
+            className="mt-3 inline-block text-sm font-medium text-teal hover:underline"
+          >
+            Browse {preferredSpecialty.name.toLowerCase()} requests in {preferredCity.name}
+          </Link>
+        </section>
+      ) : null}
       {!session ? (
         <p className="mt-6 rounded-xl bg-sage p-4 text-sm">
           <Link href="/login?callbackUrl=/post-a-job" className="font-medium text-teal">
@@ -57,7 +119,12 @@ export default async function PostJobPage({
           </label>
           <label className="block text-sm">
             Specialty
-            <select name="specialtyId" required defaultValue={preferredSpecialtyId} className="mt-1 w-full rounded-lg border border-line px-3 py-2">
+            <select
+              name="specialtyId"
+              required
+              defaultValue={preferredSpecialty?.id}
+              className="mt-1 w-full rounded-lg border border-line px-3 py-2"
+            >
               {specialties.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
@@ -67,7 +134,12 @@ export default async function PostJobPage({
           </label>
           <label className="block text-sm">
             City
-            <select name="cityId" required defaultValue={preferredCityId} className="mt-1 w-full rounded-lg border border-line px-3 py-2">
+            <select
+              name="cityId"
+              required
+              defaultValue={preferredCity?.id}
+              className="mt-1 w-full rounded-lg border border-line px-3 py-2"
+            >
               {states.flatMap((state) =>
                 state.cities.map((city) => (
                   <option key={city.id} value={city.id}>
