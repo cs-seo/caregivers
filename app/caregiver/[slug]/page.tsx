@@ -13,6 +13,13 @@ import { Portrait } from "@/components/portrait";
 import { ReviewCard, ReviewReplyForm } from "@/components/review-card";
 import { ShortlistButton } from "@/components/shortlist-button";
 import { fortnightLabel, isAvailableNowLive, isInstantBookLive, noticeLabel, summariseFortnight, weeklyHourChips } from "@/lib/availability";
+import { credentialWatchlist } from "@/lib/credentials";
+import {
+  profileCheckExpiringSoon,
+  profileCheckNextLinks,
+  profileCheckNextNotice,
+  profileCheckNextShows,
+} from "@/lib/profile-check";
 import { lastActiveLabel, monthYear } from "@/lib/format";
 import { isInviteFlash } from "@/lib/job-invite";
 import { jobBoardHref, openRequestsNotice } from "@/lib/job-board";
@@ -132,6 +139,10 @@ export default async function CaregiverProfilePage({
         )
       : null;
   const canShortlist = viewer?.role === "FAMILY";
+  const showProfileCheckNext = profileCheckNextShows({
+    isFamily: Boolean(canShortlist),
+    expiringSoon: profileCheckExpiringSoon(credentialWatchlist(carer.credentials)),
+  });
   const openMatch =
     openRequestCount.find((row) => row.specialtyId === primary?.id) ?? openRequestCount[0];
   const openSpecialty = openMatch
@@ -295,6 +306,18 @@ export default async function CaregiverProfilePage({
               a released escrow booking. Carers can publish one public reply.
             </p>
             <CredentialDetails credentials={carer.credentials} abn={carer.abn} />
+            {showProfileCheckNext ? (
+              <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+                <p>{profileCheckNextNotice()}</p>
+                <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                  {profileCheckNextLinks().map((link) => (
+                    <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                      {link.label}
+                    </Link>
+                  ))}
+                </p>
+              </div>
+            ) : null}
           </section>
 
           <section className="mt-8">
