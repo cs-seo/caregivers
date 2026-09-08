@@ -4,6 +4,7 @@ import { HandoverFields } from "@/components/handover-card";
 import { applyHouseholdToUpcomingAction, updateFamilyProfileAction } from "@/lib/actions";
 import { BOOKING_STATUS } from "@/lib/constants";
 import { canFillFromHousehold, hasHandover } from "@/lib/handover";
+import { householdNextLinks, householdNextNotice } from "@/lib/household-next";
 import { householdSavedLinks, householdSavedNotice, isHouseholdSavedFlash } from "@/lib/household-saved";
 import { plural } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -57,6 +58,17 @@ export default async function HouseholdPage({
           <p>{householdSavedNotice()}</p>
           <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
             {householdSavedLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : !query.copied ? (
+        <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+          <p>{householdNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {householdNextLinks().map((link) => (
               <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
                 {link.label}
               </Link>
