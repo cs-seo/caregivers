@@ -82,6 +82,7 @@ import {
 } from "@/lib/saved-search";
 import { comingUpBookings, comingUpKind } from "@/lib/coming-up";
 import { comingUpNextLinks, comingUpNextNotice } from "@/lib/coming-up-next";
+import { activeCareNextLinks, activeCareNextNotice } from "@/lib/active-care";
 import { rosterNextLinks, rosterNextNotice, rosterNextPlace } from "@/lib/roster-next";
 import { canFillFromHousehold, handoverGapSummary, isHandoverComplete } from "@/lib/handover";
 import { canWriteReview, reviewsDueLabel } from "@/lib/reviews";
@@ -1101,6 +1102,18 @@ export default async function DashboardPage({
           )
         }
       />
+      {isFamily && active[0] ? (
+        <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+          <p>{activeCareNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {activeCareNextLinks({ sitHref: active[0].href }).map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : null}
       <BookingList
         title="History"
         groups={history}
