@@ -8,6 +8,14 @@ import { JsonLd } from "@/components/json-ld";
 import { SearchForm } from "@/components/search-form";
 import { saveSearchAction } from "@/lib/actions";
 import { directoryBoardLink, directoryBoardNotice, directoryJobEmptyLinks, directoryJobEmptyNotice, directoryListedPostLink, directoryListedPostNotice, filterHref } from "@/lib/directory";
+import {
+  directoryIsSuburbPath,
+  suburbNextCityHref,
+  suburbNextLinks,
+  suburbNextNotice,
+  suburbNextPlace,
+  suburbNextShows,
+} from "@/lib/suburb-next";
 import { canAttachJob } from "@/lib/job-match";
 import { defaultSearchName, savedSearchHref } from "@/lib/saved-search";
 import { prisma } from "@/lib/prisma";
@@ -78,6 +86,20 @@ export async function DirectoryResults({
   const listedPost = caregivers.length && !jobTitle ? directoryListedPostLink(filters) : null;
   const listedBoard =
     caregivers.length && !jobTitle && !openRequests && !filters.specialty ? directoryBoardLink() : null;
+  const suburbPlace = suburbNextPlace(caregivers, savedIds);
+  const suburbCityHref = suburbNextCityHref({
+    specialty: filters.specialty,
+    state: filters.state,
+    city: filters.city,
+  });
+  const showSuburbNext =
+    suburbCityHref &&
+    suburbNextShows({
+      isFamily: Boolean(canShortlist),
+      suburbPath: directoryIsSuburbPath(path),
+      profileHref: suburbPlace?.href,
+      jobAttached: Boolean(jobTitle),
+    });
   const pageIds = caregivers.map((carer) => carer.id);
   const inviteRows =
     jobTitle && attachJob && pageIds.length
@@ -307,6 +329,22 @@ export async function DirectoryResults({
               </Link>
               .
             </p>
+          ) : null}
+          {showSuburbNext && suburbPlace && suburbCityHref ? (
+            <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+              <p>{suburbNextNotice()}</p>
+              <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                {suburbNextLinks({
+                  profileHref: suburbPlace.href,
+                  profileName: suburbPlace.name,
+                  cityHref: suburbCityHref,
+                }).map((link) => (
+                  <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                    {link.label}
+                  </Link>
+                ))}
+              </p>
+            </div>
           ) : null}
         </div>
       </div>
