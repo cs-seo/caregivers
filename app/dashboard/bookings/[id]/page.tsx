@@ -39,6 +39,7 @@ import { formatDateTime } from "@/lib/format";
 import { isUnreadFor, markThreadRead } from "@/lib/messages";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
+import { disputeNextLinks, disputeNextNotice } from "@/lib/dispute-next";
 import {
   DISPUTE_NOTE_LIMIT,
   canWriteDisputeReply,
@@ -237,6 +238,20 @@ export default async function BookingDetailPage({
         <p className="mt-3 rounded-xl border border-line bg-card p-3 text-sm text-stone-600">
           {autoReleaseLabel(booking.endAt)}
         </p>
+      ) : null}
+      {booking.status === BOOKING_STATUS.DISPUTED ? (
+        <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+          <p>{disputeNextNotice(isFamily)}</p>
+          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {disputeNextLinks({ isFamily, bookingId: booking.id }).map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="font-medium text-teal hover:underline">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : null}
       <div className="mt-3 flex flex-wrap gap-2">
         {booking.recurringTotal > 1 ? (
