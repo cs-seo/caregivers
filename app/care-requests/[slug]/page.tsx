@@ -35,8 +35,10 @@ import {
   INVITE_STATUS,
   canUpdateInviteNote,
   canWithdrawInvite,
+  inviteNoteSavedNotice,
   inviteStatusLabel,
   inviteStatusTone,
+  inviteWithdrawnNotice,
 } from "@/lib/job-invite";
 import {
   canSendJobMessage,
@@ -88,6 +90,8 @@ export default async function CareRequestPage({
     accepted?: string;
     kept?: string;
     invited?: string;
+    note?: string;
+    withdrawn?: string;
     error?: string;
   }>;
 }) {
@@ -548,6 +552,8 @@ export default async function CareRequestPage({
 
       <aside className="h-fit rounded-2xl border border-line bg-card p-5">
         {query.invited ? <InviteSentNotice /> : null}
+        {query.note ? <p className="mb-3 text-sm text-teal">{inviteNoteSavedNotice()}</p> : null}
+        {query.withdrawn ? <p className="mb-3 text-sm text-teal">{inviteWithdrawnNotice()}</p> : null}
         {query.proposed ? <p className="mb-3 text-sm text-teal">Proposal sent.</p> : null}
         {query.updated ? <p className="mb-3 text-sm text-teal">Proposal updated.</p> : null}
         {query.sent ? <p className="mb-3 text-sm text-teal">Message sent.</p> : null}

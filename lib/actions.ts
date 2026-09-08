@@ -39,6 +39,7 @@ import {
   canCreateInvite,
   canUpdateInviteNote,
   canWithdrawInvite,
+  inviteFlashHref,
   inviteReturnHref,
   isSafeInviteReturnPath,
   sanitizeInviteNote,
@@ -765,6 +766,7 @@ export async function updateInviteNoteAction(formData: FormData) {
   revalidatePath(`/care-requests/${invite.request.slug}`);
   revalidatePath(`/caregiver/${invite.caregiver.slug}`);
   revalidatePath("/dashboard");
+  redirect(inviteFlashHref(next, "note"));
 }
 
 export async function withdrawInviteAction(formData: FormData) {
@@ -788,6 +790,7 @@ export async function withdrawInviteAction(formData: FormData) {
   revalidatePath(`/caregiver/${invite.caregiver.slug}`);
   revalidatePath("/care-requests");
   revalidatePath("/dashboard");
+  redirect(inviteFlashHref(next, "withdrawn"));
 }
 
 export async function withdrawProposalAction(formData: FormData) {

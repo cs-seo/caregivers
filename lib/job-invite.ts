@@ -96,15 +96,29 @@ export function inviteSentNotice() {
   return "Invite sent.";
 }
 
+export function inviteNoteSavedNotice() {
+  return "Note saved.";
+}
+
+export function inviteWithdrawnNotice() {
+  return "Invite withdrawn. The request stays open.";
+}
+
 export function isInviteFlash(value?: string | string[] | null) {
   const raw = Array.isArray(value) ? value[0] : value;
   return raw === "1";
 }
 
-export function inviteReturnHref(path: string) {
+export type InviteFlash = "invited" | "note" | "withdrawn";
+
+export function inviteFlashHref(path: string, flag: InviteFlash) {
   const next = isSafeInviteReturnPath(path) ? path : "/dashboard";
-  if (/(?:[?&])invited=1(?:&|$)/.test(next)) return next;
-  return next.includes("?") ? `${next}&invited=1` : `${next}?invited=1`;
+  if (new RegExp(`(?:[?&])${flag}=1(?:&|$)`).test(next)) return next;
+  return next.includes("?") ? `${next}&${flag}=1` : `${next}?${flag}=1`;
+}
+
+export function inviteReturnHref(path: string) {
+  return inviteFlashHref(path, "invited");
 }
 
 export type InviteJobOption = {

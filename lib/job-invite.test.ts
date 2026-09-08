@@ -12,8 +12,11 @@ import {
   isSafeInviteReturnPath,
   defaultInviteJobSlug,
   invitableOpenJobs,
+  inviteFlashHref,
+  inviteNoteSavedNotice,
   inviteReturnHref,
   inviteSentNotice,
+  inviteWithdrawnNotice,
   isInviteFlash,
   sanitizeInviteNote,
 } from "./job-invite";
@@ -111,6 +114,16 @@ test("inviteReturnHref appends invited=1 on a safe return path", () => {
   assert.equal(isInviteFlash("1"), true);
   assert.equal(isInviteFlash(["1"]), true);
   assert.equal(isInviteFlash("true"), false);
+  assert.equal(inviteNoteSavedNotice(), "Note saved.");
+  assert.equal(inviteWithdrawnNotice(), "Invite withdrawn. The request stays open.");
+  assert.equal(
+    inviteFlashHref("/care-requests/weekday-aged-care-marrickville", "note"),
+    "/care-requests/weekday-aged-care-marrickville?note=1",
+  );
+  assert.equal(
+    inviteFlashHref("/care-requests/overnight-respite-adelaide", "withdrawn"),
+    "/care-requests/overnight-respite-adelaide?withdrawn=1",
+  );
 });
 
 test("invitableOpenJobs skips hired, proposed and already-invited requests", () => {
