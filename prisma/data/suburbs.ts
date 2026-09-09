@@ -214,6 +214,14 @@ export const SUBURBS_BY_CITY: Record<string, Record<string, string[]>> = {
     bathurst: ["Bathurst", "Kelso"],
     lismore: ["Lismore", "Goonellabah"],
     nowra: ["Nowra", "Bomaderry", "Vincentia"],
+    goulburn: ["Goulburn", "Eastgrove"],
+    armidale: ["Armidale", "North Hill"],
+    griffith: ["Griffith", "Yoogali"],
+    "broken-hill": ["Broken Hill", "South Broken Hill"],
+    queanbeyan: ["Queanbeyan", "Queanbeyan East", "Karabar"],
+    taree: ["Taree", "Cundletown"],
+    grafton: ["Grafton", "South Grafton"],
+    katoomba: ["Katoomba", "Leura", "Wentworth Falls"],
   },
   vic: {
     melbourne: [
@@ -365,6 +373,11 @@ export const SUBURBS_BY_CITY: Record<string, Record<string, string[]>> = {
     warrnambool: ["Warrnambool", "Dennington"],
     wodonga: ["Wodonga", "West Wodonga"],
     traralgon: ["Traralgon", "Morwell", "Moe"],
+    wangaratta: ["Wangaratta", "Waldara"],
+    horsham: ["Horsham", "Haven"],
+    sale: ["Sale", "Wurruk"],
+    echuca: ["Echuca", "Echuca West"],
+    hamilton: ["Hamilton", "Parklands"],
   },
   qld: {
     brisbane: [
@@ -540,6 +553,11 @@ export const SUBURBS_BY_CITY: Record<string, Record<string, string[]>> = {
     rockhampton: ["Rockhampton", "Allenstown", "North Rockhampton", "Kawana"],
     bundaberg: ["Bundaberg", "Bargara", "Ashfield"],
     "hervey-bay": ["Hervey Bay", "Pialba", "Urangan", "Torquay"],
+    gladstone: ["Gladstone", "Kin Kora", "New Auckland"],
+    maryborough: ["Maryborough", "Granville"],
+    gympie: ["Gympie", "Southside"],
+    ipswich: ["Ipswich", "Booval", "Yamanto"],
+    "mount-isa": ["Mount Isa", "Soldiers Hill"],
   },
   wa: {
     perth: [
@@ -655,6 +673,9 @@ export const SUBURBS_BY_CITY: Record<string, Record<string, string[]>> = {
     kalgoorlie: ["Kalgoorlie", "Boulder", "South Kalgoorlie"],
     broome: ["Broome", "Cable Beach"],
     busselton: ["Busselton", "Dunsborough", "Vasse"],
+    "port-hedland": ["Port Hedland", "South Hedland"],
+    karratha: ["Karratha", "Nickol", "Pegs Creek"],
+    esperance: ["Esperance", "Castletown"],
   },
   sa: {
     adelaide: [
@@ -749,6 +770,9 @@ export const SUBURBS_BY_CITY: Record<string, Record<string, string[]>> = {
     "murray-bridge": ["Murray Bridge"],
     "port-lincoln": ["Port Lincoln"],
     "victor-harbor": ["Victor Harbor", "Encounter Bay", "Port Elliot"],
+    "port-augusta": ["Port Augusta", "Stirling North"],
+    "port-pirie": ["Port Pirie", "Solomontown"],
+    gawler: ["Gawler", "Gawler East", "Evanston"],
   },
   tas: {
     hobart: [
@@ -785,6 +809,7 @@ export const SUBURBS_BY_CITY: Record<string, Record<string, string[]>> = {
     launceston: ["Launceston", "East Launceston", "West Launceston", "Trevallyn", "Newstead", "Kings Meadows", "Youngtown", "Prospect", "Riverside", "Legana"],
     devonport: ["Devonport", "East Devonport", "Spreyton"],
     burnie: ["Burnie", "Somerset", "Wynyard"],
+    ulverstone: ["Ulverstone", "West Ulverstone", "Turners Beach"],
   },
   act: {
     canberra: [
@@ -911,6 +936,7 @@ export const SUBURBS_BY_CITY: Record<string, Record<string, string[]>> = {
     ],
     "alice-springs": ["Alice Springs", "East Side", "Larapinta", "Gillen"],
     palmerston: ["Palmerston", "Driver", "Gray", "Woodroffe", "Rosebery", "Bakewell", "Gunn", "Zuccoli"],
+    katherine: ["Katherine", "Katherine East"],
   },
 };
 

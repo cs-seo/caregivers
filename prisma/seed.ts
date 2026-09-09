@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { CITIES_BY_STATE } from "./data/cities";
 import { featuredCarers } from "./data/featured-carers";
 import { generateCarers } from "./data/generate-carers";
 import { SUBURBS_BY_CITY, slugifySuburb } from "./data/suburbs";
@@ -145,78 +146,6 @@ const states = [
   { slug: "nt", name: "Northern Territory", abbrev: "NT" },
 ];
 
-const citiesByState: Record<string, { slug: string; name: string; lat: number; lng: number }[]> = {
-  nsw: [
-    { slug: "sydney", name: "Sydney", lat: -33.8688, lng: 151.2093 },
-    { slug: "newcastle", name: "Newcastle", lat: -32.9283, lng: 151.7817 },
-    { slug: "wollongong", name: "Wollongong", lat: -34.4278, lng: 150.8931 },
-    { slug: "central-coast", name: "Central Coast", lat: -33.4267, lng: 151.3417 },
-    { slug: "coffs-harbour", name: "Coffs Harbour", lat: -30.2963, lng: 153.1135 },
-    { slug: "wagga-wagga", name: "Wagga Wagga", lat: -35.1082, lng: 147.3598 },
-    { slug: "albury", name: "Albury", lat: -36.0737, lng: 146.9135 },
-    { slug: "tamworth", name: "Tamworth", lat: -31.0927, lng: 150.9271 },
-    { slug: "port-macquarie", name: "Port Macquarie", lat: -31.4333, lng: 152.9 },
-    { slug: "orange", name: "Orange", lat: -33.2833, lng: 149.1 },
-    { slug: "dubbo", name: "Dubbo", lat: -32.2569, lng: 148.6011 },
-    { slug: "bathurst", name: "Bathurst", lat: -33.419, lng: 149.577 },
-    { slug: "lismore", name: "Lismore", lat: -28.809, lng: 153.278 },
-    { slug: "nowra", name: "Nowra", lat: -34.873, lng: 150.603 },
-  ],
-  vic: [
-    { slug: "melbourne", name: "Melbourne", lat: -37.8136, lng: 144.9631 },
-    { slug: "geelong", name: "Geelong", lat: -38.1499, lng: 144.3617 },
-    { slug: "ballarat", name: "Ballarat", lat: -37.5622, lng: 143.8503 },
-    { slug: "bendigo", name: "Bendigo", lat: -36.757, lng: 144.279 },
-    { slug: "shepparton", name: "Shepparton", lat: -36.3833, lng: 145.4 },
-    { slug: "mildura", name: "Mildura", lat: -34.188, lng: 142.158 },
-    { slug: "warrnambool", name: "Warrnambool", lat: -38.381, lng: 142.488 },
-    { slug: "wodonga", name: "Wodonga", lat: -36.121, lng: 146.888 },
-    { slug: "traralgon", name: "Traralgon", lat: -38.196, lng: 146.54 },
-  ],
-  qld: [
-    { slug: "brisbane", name: "Brisbane", lat: -27.4698, lng: 153.0251 },
-    { slug: "gold-coast", name: "Gold Coast", lat: -28.0167, lng: 153.4 },
-    { slug: "sunshine-coast", name: "Sunshine Coast", lat: -26.65, lng: 153.0667 },
-    { slug: "townsville", name: "Townsville", lat: -19.259, lng: 146.817 },
-    { slug: "cairns", name: "Cairns", lat: -16.9186, lng: 145.7781 },
-    { slug: "toowoomba", name: "Toowoomba", lat: -27.5598, lng: 151.9507 },
-    { slug: "mackay", name: "Mackay", lat: -21.1411, lng: 149.186 },
-    { slug: "rockhampton", name: "Rockhampton", lat: -23.378, lng: 150.51 },
-    { slug: "bundaberg", name: "Bundaberg", lat: -24.866, lng: 152.349 },
-    { slug: "hervey-bay", name: "Hervey Bay", lat: -25.288, lng: 152.838 },
-  ],
-  wa: [
-    { slug: "perth", name: "Perth", lat: -31.9505, lng: 115.8605 },
-    { slug: "mandurah", name: "Mandurah", lat: -32.5269, lng: 115.7217 },
-    { slug: "bunbury", name: "Bunbury", lat: -33.327, lng: 115.641 },
-    { slug: "geraldton", name: "Geraldton", lat: -28.774, lng: 114.609 },
-    { slug: "albany", name: "Albany", lat: -35.027, lng: 117.884 },
-    { slug: "kalgoorlie", name: "Kalgoorlie", lat: -30.749, lng: 121.466 },
-    { slug: "broome", name: "Broome", lat: -17.961, lng: 122.236 },
-    { slug: "busselton", name: "Busselton", lat: -33.653, lng: 115.345 },
-  ],
-  sa: [
-    { slug: "adelaide", name: "Adelaide", lat: -34.9285, lng: 138.6007 },
-    { slug: "mount-gambier", name: "Mount Gambier", lat: -37.828, lng: 140.782 },
-    { slug: "whyalla", name: "Whyalla", lat: -33.034, lng: 137.584 },
-    { slug: "murray-bridge", name: "Murray Bridge", lat: -35.12, lng: 139.267 },
-    { slug: "port-lincoln", name: "Port Lincoln", lat: -34.727, lng: 135.856 },
-    { slug: "victor-harbor", name: "Victor Harbor", lat: -35.55, lng: 138.617 },
-  ],
-  tas: [
-    { slug: "hobart", name: "Hobart", lat: -42.8821, lng: 147.3272 },
-    { slug: "launceston", name: "Launceston", lat: -41.433, lng: 147.144 },
-    { slug: "devonport", name: "Devonport", lat: -41.18, lng: 146.35 },
-    { slug: "burnie", name: "Burnie", lat: -41.055, lng: 145.907 },
-  ],
-  act: [{ slug: "canberra", name: "Canberra", lat: -35.2809, lng: 149.13 }],
-  nt: [
-    { slug: "darwin", name: "Darwin", lat: -12.4634, lng: 130.8456 },
-    { slug: "alice-springs", name: "Alice Springs", lat: -23.698, lng: 133.881 },
-    { slug: "palmerston", name: "Palmerston", lat: -12.481, lng: 130.983 },
-  ],
-};
-
 async function main() {
   await prisma.review.deleteMany();
   await prisma.payment.deleteMany();
@@ -257,7 +186,7 @@ async function main() {
   const stateBySlug = Object.fromEntries(stateRecords.map((s) => [s.slug, s]));
 
   const cityRecords: { key: string; id: string }[] = [];
-  for (const [stateSlug, cities] of Object.entries(citiesByState)) {
+  for (const [stateSlug, cities] of Object.entries(CITIES_BY_STATE)) {
     const state = stateBySlug[stateSlug];
     for (const city of cities) {
       const created = await prisma.city.create({
