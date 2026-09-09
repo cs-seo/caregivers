@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { auth } from "@/auth";
 import { JsonLd } from "@/components/json-ld";
 import { FamilyStartPanel } from "@/components/family-start";
 import { forCarersHomeCta, forCarersHomeHref, forCarersHomeNotice } from "@/lib/for-carers";
+import { howItWorksNextLinks, howItWorksNextNotice, howItWorksNextShows } from "@/lib/how-it-works-next";
 import { pageMeta } from "@/lib/seo";
 
 export const metadata = pageMeta({
@@ -66,7 +68,9 @@ const faqs = [
   },
 ];
 
-export default function HowItWorksPage() {
+export default async function HowItWorksPage() {
+  const session = await auth();
+  const showHowItWorksNext = howItWorksNextShows({ isFamily: session?.user?.role === "FAMILY" });
   return (
     <div className="mx-auto max-w-3xl">
       <JsonLd
@@ -125,7 +129,20 @@ export default function HowItWorksPage() {
           </p>
         </li>
       </ol>
-      <FamilyStartPanel />
+      {showHowItWorksNext ? (
+        <div className="mt-8 rounded-xl bg-sage p-3 text-sm">
+          <p>{howItWorksNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {howItWorksNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : (
+        <FamilyStartPanel />
+      )}
       <p className="mt-8 rounded-2xl bg-sage px-4 py-3 text-sm text-stone-700">
         Carers: {forCarersHomeNotice()}{" "}
         <Link href={forCarersHomeHref()} className="font-medium text-teal hover:underline">
