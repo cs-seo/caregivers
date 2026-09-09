@@ -21,6 +21,7 @@ import {
   profileJobFitNotice,
   toJobMatchCarer,
 } from "@/lib/job-match";
+import { bookNextLinks, bookNextNotice, bookNextShows } from "@/lib/book-next";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { getCaregiverBySlug, getUpcomingAvailability } from "@/lib/queries";
@@ -99,6 +100,10 @@ export default async function BookPage({
           "family",
         )
       : null;
+  const showBookNext = bookNextShows({
+    isFamily: session?.user.role === "FAMILY",
+    jobAttached: Boolean(job),
+  });
 
   return (
     <div className="mx-auto max-w-xl">
@@ -122,6 +127,20 @@ export default async function BookPage({
         Next 14 days: {fortnightLabel(fortnight)}.
         {carer.instantBook ? ` ${noticeLabel(carer.noticeHours)}.` : ""}
       </p>
+      {showBookNext ? (
+        <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+          <p>{bookNextNotice()}</p>
+          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {bookNextLinks().map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="font-medium text-teal hover:underline">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       {hourChips.length ? (
         <div className="mt-3 rounded-xl bg-sage p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Usual weekly hours</p>
