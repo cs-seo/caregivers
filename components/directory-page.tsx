@@ -39,6 +39,11 @@ import {
   companionCareSaNextNotice,
   companionCareSaNextShows,
 } from "@/lib/companion-care-sa-next";
+import {
+  nanniesSaNextLinks,
+  nanniesSaNextNotice,
+  nanniesSaNextShows,
+} from "@/lib/nannies-sa-next";
 import { respiteNextLinks, respiteNextNotice, respiteNextShows } from "@/lib/respite-next";
 import {
   directoryIsSuburbPath,
@@ -184,6 +189,13 @@ export async function DirectoryResults({
     jobAttached: Boolean(jobTitle),
   });
   const showCompanionCareSaNext = companionCareSaNextShows({
+    isFamily: Boolean(canShortlist),
+    specialtySlug: filters.specialty,
+    stateSlug: filters.state,
+    stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
+    jobAttached: Boolean(jobTitle),
+  });
+  const showNanniesSaNext = nanniesSaNextShows({
     isFamily: Boolean(canShortlist),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
@@ -387,6 +399,17 @@ export async function DirectoryResults({
           <p>{companionCareSaNextNotice()}</p>
           <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
             {companionCareSaNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showNanniesSaNext ? (
+        <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+          <p>{nanniesSaNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {nanniesSaNextLinks().map((link) => (
               <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
                 {link.label}
               </Link>
