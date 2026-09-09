@@ -1,57 +1,366 @@
-import Link from 'next/link';
+import Link from "next/link";
+import { CaregiverCardView } from "@/components/caregiver-card";
+import { JsonLd } from "@/components/json-ld";
+import { ReviewCard } from "@/components/review-card";
+import { SearchForm } from "@/components/search-form";
+import { SITE_NAME, siteUrl } from "@/lib/constants";
+import {
+  forCarersHomeCta,
+  forCarersHomeHeading,
+  forCarersHomeHref,
+  forCarersHomeNotice,
+  forCarersRegisterHref,
+} from "@/lib/for-carers";
+import { homeFamilyLinks, homeFamilyNotice } from "@/lib/home-family";
+import { formatAud } from "@/lib/money";
+import { prisma } from "@/lib/prisma";
+import { caregiverCardInclude, getCityHubs, getRecentReviews, getShortlistedIds, getSpecialties, withTrust } from "@/lib/queries";
+import { requireUser } from "@/lib/session";
+import { pageMeta } from "@/lib/seo";
 
-export default function Home() {
+export const metadata = pageMeta({
+  title: `${SITE_NAME} — Verified carers across Australia`,
+  description:
+    "Hire verified aged care workers, nannies, NDIS support workers and housekeepers. Instant Book with escrow so carers are paid only after the job is complete.",
+  path: "/",
+});
+
+export default async function HomePage() {
+  const viewer = await requireUser();
+  const [specialties, featured, stats, hubs, reviews, savedIds] = await Promise.all([
+    getSpecialties(),
+    prisma.caregiverProfile.findMany({
+      where: { reviewCount: { gt: 0 } },
+      include: caregiverCardInclude,
+      orderBy: { ratingAvg: "desc" },
+      take: 4,
+    }),
+    prisma.caregiverProfile.aggregate({
+      _count: true,
+      _avg: { hourlyRateCents: true },
+    }),
+    getCityHubs(),
+    getRecentReviews(4),
+    getShortlistedIds(viewer?.role === "FAMILY" ? viewer.id : null),
+  ]);
+  const canShortlist = viewer?.role === "FAMILY";
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-center gap-8 py-32 px-16 bg-white dark:bg-black">
-        <svg
-          viewBox="0 0 69 26"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="fill-black dark:fill-white"
-        >
-          <path d="M13.7917 24.3604C12.4622 25.3549 10.7895 25.8884 8.82032 25.8884C6.66971 25.8884 4.87412 25.3543 3.47587 24.3604H13.7917Z"></path>
-          <path d="M27.8204 24.3604C26.802 25.2894 25.534 25.8884 24.1756 25.8884C22.4188 25.8884 21.02 25.339 20.108 24.3604H27.8204Z"></path>
-          <path d="M44.5726 24.3604C43.0194 25.3511 41.0762 25.8884 38.8367 25.8884C36.5972 25.8884 34.6541 25.3511 33.1008 24.3604H44.5726Z"></path>
-          <path d="M6.10452 21.7838C6.64469 22.5408 7.32257 23.0964 8.12748 23.4234H2.40008C1.94592 22.9414 1.55318 22.3936 1.22435 21.7838H6.10452Z"></path>
-          <path d="M15.9753 21.7838C15.6457 22.3936 15.2602 22.9415 14.8213 23.4234H11.8608C12.7015 23.0973 13.4264 22.543 14.0227 21.7838H15.9753Z"></path>
-          <path d="M23.2016 21.7838C23.3205 22.5267 23.6272 23.0906 24.0875 23.4234H19.4507C19.2008 22.9377 19.0348 22.3887 18.9611 21.7838H23.2016Z"></path>
-          <path d="M29.6415 21.7838C29.3929 22.3649 29.0672 22.9198 28.6798 23.4234H26.2913C26.809 23.0921 27.2884 22.5303 27.6965 21.7838H29.6415Z"></path>
-          <path d="M34.7756 21.7838C35.1876 22.498 35.7076 23.0447 36.3327 23.4234H31.8901C31.3725 22.9406 30.9182 22.3925 30.5327 21.7838H34.7756Z"></path>
-          <path d="M47.1403 21.7838C46.7548 22.3925 46.3005 22.9406 45.7829 23.4234H41.3477C41.9765 23.0447 42.5011 22.4979 42.9178 21.7838H47.1403Z"></path>
-          <path d="M4.97293 19.2072C5.1237 19.8073 5.31836 20.3552 5.55486 20.8468H0.788749C0.585257 20.3346 0.420002 19.7875 0.293988 19.2072H4.97293Z"></path>
-          <path d="M16.9458 19.2072C16.8042 19.7876 16.6278 20.3347 16.4179 20.8468H14.6376C14.9063 20.3562 15.1356 19.8083 15.3244 19.2072H16.9458Z"></path>
-          <path d="M23.146 20.8468H18.9172V19.2072H23.146V20.8468Z"></path>
-          <path d="M33.879 19.2072C33.9937 19.8097 34.1454 20.3562 34.3337 20.8468H30.0171C30.0067 20.8251 29.9961 20.8035 29.9859 20.7817C29.9802 20.8034 29.9741 20.8251 29.9682 20.8468H28.1326C28.3289 20.3505 28.4984 19.8012 28.6354 19.2072H33.879Z"></path>
-          <path d="M48.2582 19.2072C48.1017 19.7867 47.8998 20.3339 47.6561 20.8468H43.3651C43.5558 20.3562 43.71 19.8097 43.8264 19.2072H48.2582Z"></path>
-          <path d="M4.61127 16.6306C4.63883 17.207 4.69545 17.7543 4.78 18.2703H0.128844C0.056725 17.7466 0.0134713 17.1997 0 16.6306H4.61127Z"></path>
-          <path d="M17.2781 17.2464C17.2423 17.5969 17.1958 17.9383 17.1392 18.2703H15.5758C15.6704 17.8506 15.7479 17.4096 15.8073 16.9484L17.2781 17.2464Z"></path>
-          <path d="M23.146 18.2703H18.9172V16.6306H23.146V18.2703Z"></path>
-          <path d="M33.6225 16.6306C33.6374 17.2111 33.6755 17.7576 33.7361 18.2703H28.8183C28.902 17.7493 28.9618 17.2012 28.9946 16.6306H33.6225Z"></path>
-          <path d="M48.643 16.6306C48.6191 17.199 48.5595 17.7459 48.4664 18.2703H43.9719C44.0335 17.7576 44.072 17.211 44.0873 16.6306H48.643Z"></path>
-          <path d="M23.146 6.89115H28.9193V8.56739H23.146V15.6937H18.9172V8.56739H15.8592L16.4324 14.49L14.9983 14.6762C14.0055 9.75933 13.1963 8.00865 9.8132 7.85966C6.45181 7.85968 4.61542 10.5441 4.592 15.6937H0.00268892C0.175472 9.48821 3.32011 6.14613 8.93079 6.14613C9.77653 6.14614 10.7326 6.25781 11.8725 6.51853C13.152 6.78855 14.2702 6.89115 15.697 6.89115C19.7286 6.89112 21.3074 4.20914 22.0796 0H23.146V6.89115Z"></path>
-          <path d="M38.8367 6.14613C44.6383 6.14616 48.4971 9.86614 48.6497 15.6937H44.092C44.0101 10.6034 42.1785 7.97132 38.8367 7.97128C35.5308 7.97128 33.6998 10.6034 33.618 15.6937H29.0235C29.1761 9.86611 33.0351 6.14613 38.8367 6.14613Z"></path>
-          <path
-            fillRule="evenodd"
-            clipRule="evenodd"
-            d="M58.5142 19.14C59.5559 19.14 60.9024 19.5091 60.9532 22.5701H58.3236C57.7138 22.5701 57.3201 22.734 57.3709 23.3763C57.5233 25.2074 57.9934 25.385 58.6413 25.385C59.3145 25.385 59.937 25.18 60.2545 23.9229C60.28 23.8546 60.4706 23.8545 60.5468 23.8545C60.6103 23.8545 60.8389 23.8546 60.8135 23.9229C60.4197 25.6993 59.6702 26 58.6413 26C57.5996 26 55.9862 25.631 55.9862 22.5701C55.9862 19.4954 57.536 19.14 58.5142 19.14ZM58.5142 19.5773C57.9044 19.5773 57.4217 19.9736 57.3455 22.0917H59.5813C59.5051 19.9737 59.1367 19.5773 58.5142 19.5773Z"
-          ></path>
-          <path d="M63.258 19.2631C63.3215 19.2631 63.3342 19.4543 63.3342 19.509C63.3342 19.55 63.3216 19.7276 63.258 19.7276C62.6737 19.7276 62.7118 20.083 62.8262 20.5066C62.9913 21.1899 63.5121 22.9663 63.6137 23.4309C63.6391 23.5676 63.7662 23.5539 63.817 23.4309L65.0238 20.1786C65.0365 20.124 65.1763 20.124 65.2525 20.124C65.3287 20.124 65.4685 20.124 65.4939 20.1786L66.6625 23.4309C66.7006 23.5539 66.8404 23.5539 66.8658 23.4309L67.6661 20.5203C67.7931 20.083 67.8186 19.7276 67.2342 19.7276C67.1834 19.7276 67.1707 19.5773 67.1707 19.509C67.1707 19.427 67.1834 19.2631 67.2342 19.2631H68.9238C68.9746 19.2631 69 19.427 69 19.509C69 19.5773 68.9746 19.7276 68.9238 19.7276C68.3903 19.7276 68.2378 20.1239 68.1235 20.5339C67.9965 20.9438 66.5613 25.8484 66.5482 25.9043C66.5228 25.959 66.4339 25.959 66.3704 25.959C66.3069 25.959 66.2179 25.9317 66.2052 25.9043C66.1036 25.426 65.0619 22.6247 64.9222 22.1054C64.9095 21.9824 64.7443 21.9824 64.7062 22.1191C64.6554 22.2286 63.3347 25.8485 63.3216 25.9043C63.3089 25.959 63.2326 25.959 63.1564 25.959C63.0802 25.959 63.004 25.959 62.9786 25.9043L61.4033 20.5339C61.2763 20.0693 61.1111 19.7276 60.5649 19.7276C60.5268 19.7276 60.5014 19.591 60.5014 19.509C60.5014 19.4133 60.5268 19.2631 60.5649 19.2631H63.258Z"></path>
-          <path d="M53.2441 19.1264C54.0064 19.1264 55.2766 19.3724 55.2766 21.2718V24.5105C55.2766 24.9204 55.3275 25.3167 55.8991 25.3167C55.9499 25.3167 55.9627 25.4807 55.9627 25.549C55.9627 25.631 55.9499 25.795 55.8991 25.795H53.2823C53.2441 25.795 53.2187 25.6584 53.2187 25.5627C53.2187 25.4671 53.2314 25.3167 53.2823 25.3167C53.8666 25.3167 53.892 24.9204 53.892 24.5105V21.5178C53.892 19.9053 53.4347 19.8507 53.0536 19.8507C52.4184 19.8507 52.2024 20.3699 52.0119 20.7525V24.5105C52.0119 24.9341 52.0627 25.3167 52.6598 25.3167C52.7106 25.3167 52.7233 25.508 52.7233 25.549C52.7233 25.6037 52.6979 25.795 52.6598 25.795H49.8777C49.8269 25.795 49.8015 25.6583 49.8015 25.549C49.8015 25.4671 49.8269 25.3168 49.8777 25.3167C50.6526 25.3167 50.7034 24.9068 50.7034 24.5105V20.5476C50.7034 20.0693 50.5764 19.7413 49.8777 19.7413C49.8269 19.7413 49.8015 19.6047 49.8015 19.4954C49.8015 19.3861 49.8269 19.2631 49.8777 19.2631H51.6308C51.8213 19.2631 51.9611 19.3314 51.9992 19.673C52.0119 19.7687 52.0754 19.796 52.1389 19.7276C52.3422 19.4817 52.6598 19.1264 53.2441 19.1264Z"></path>
-          <path d="M48.0394 25.9621H46.8V24.629H48.0394V25.9621Z"></path>
-        </svg>
-        <div className="flex flex-col items-center text-center gap-6">
-          <h1 className="max-w-xs text-2xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            Ready for your first task
+    <div className="space-y-16">
+      <JsonLd
+        data={[
+          {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: SITE_NAME,
+            url: siteUrl(),
+            description: "Australian marketplace for verified carers with escrow payments.",
+            areaServed: "AU",
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: SITE_NAME,
+            url: siteUrl(),
+            potentialAction: {
+              "@type": "SearchAction",
+              target: `${siteUrl()}/caregivers?q={search_term_string}`,
+              "query-input": "required name=search_term_string",
+            },
+          },
+        ]}
+      />
+
+      <section className="grid items-center gap-10 md:grid-cols-2">
+        <div>
+          <p className="text-sm font-medium uppercase tracking-wide text-clay">Australia-wide directory</p>
+          <h1 className="mt-2 text-4xl font-semibold tracking-tight text-ink md:text-5xl">
+            Book verified carers the way you hire on Upwork.
           </h1>
-          <Link
-            href="/caregivers"
-            className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black font-semibold rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
-          >
-            View Live Caregivers
+          <p className="mt-4 text-lg text-stone-600">
+            Search by specialty and city, check work history, then Instant Book. Your payment is held in escrow
+            and released to the carer only when the booking is complete.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              href="/caregivers"
+              className="rounded-full bg-teal px-5 py-2.5 font-medium text-white no-underline hover:bg-teal-deep"
+            >
+              Find a carer
+            </Link>
+            <Link
+              href="/post-a-job"
+              className="rounded-full border border-teal px-5 py-2.5 font-medium text-teal no-underline hover:bg-sage"
+            >
+              Post a care request
+            </Link>
+          </div>
+          <p className="mt-3 text-sm text-stone-500">
+            Carers:{" "}
+            <Link href={forCarersHomeHref()} className="font-medium text-teal hover:underline">
+              {forCarersHomeCta()}
+            </Link>
+          </p>
+          <p className="mt-4 text-sm text-stone-500">
+            {stats._count} verified profiles · typical rate{" "}
+            {formatAud(Math.round(stats._avg.hourlyRateCents ?? 0))}/hr
+          </p>
+          <ul className="mt-5 flex flex-wrap gap-2 text-xs text-stone-600">
+            {["WWCC / Blue Card / Ochre Card", "NDIS Worker Screening", "AHPRA for nurses", "Escrow until care is done"].map(
+              (item) => (
+                <li key={item} className="rounded-full border border-line bg-card px-3 py-1">
+                  {item}
+                </li>
+              ),
+            )}
+          </ul>
+          {viewer?.role === "FAMILY" ? (
+            <div className="mt-6 rounded-xl bg-sage p-3 text-sm">
+              <p>{homeFamilyNotice()}</p>
+              <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                {homeFamilyLinks().map((link) => (
+                  <li key={link.href}>
+                    <Link href={link.href} className="font-medium text-teal hover:underline">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </div>
+        <SearchForm />
+      </section>
+
+      <section>
+        <h2 className="text-2xl font-semibold text-ink">Popular local searches</h2>
+        <p className="mt-2 text-sm text-stone-600">
+          Long-tail pages for the way people actually search — suburb plus care type.
+        </p>
+        <ul className="mt-4 grid gap-2 text-sm sm:grid-cols-2 md:grid-cols-3">
+          {[
+            ["/caregivers/babysitters/nsw/sydney/newtown", "Date-night babysitters in Newtown"],
+            ["/caregivers/babysitters/vic/melbourne/fitzroy", "Babysitters in Fitzroy"],
+            ["/caregivers/nannies/nsw/sydney/bondi", "Nannies in Bondi"],
+            ["/caregivers/aged-care/nsw/sydney/marrickville", "Aged care in Marrickville"],
+            ["/caregivers/disability-support/vic/melbourne/brunswick", "NDIS support in Brunswick"],
+            ["/caregivers/babysitters/qld/brisbane/paddington", "Babysitters in Paddington"],
+            ["/caregivers/nannies/wa/perth/claremont", "Nannies in Claremont"],
+            ["/caregivers/babysitters/sa/adelaide/norwood", "Date-night babysitters in Norwood"],
+            ["/caregivers/aged-care/sa/adelaide/norwood", "Aged care in Norwood"],
+            ["/caregivers/babysitters/tas/hobart/battery-point", "Babysitters in Battery Point"],
+            ["/caregivers/after-school-care/act/canberra/griffith", "After-school care in Griffith"],
+            ["/caregivers/nursing/tas/hobart/sandy-bay", "Nurses in Sandy Bay"],
+            ["/caregivers/disability-support/nt/darwin/nightcliff", "Support workers in Nightcliff"],
+          ].map(([href, label]) => (
+            <li key={href}>
+              <Link className="text-teal hover:underline" href={href}>
+                {label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 text-sm">
+          <Link href="/locations" className="text-teal">
+            Browse every city and suburb
+          </Link>
+          {" · "}
+          <Link href="/guides" className="text-teal">
+            Hiring guides
+          </Link>
+        </p>
+      </section>
+
+      <section className="rounded-3xl border border-line bg-card px-6 py-8">
+        <p className="text-sm font-medium uppercase tracking-wide text-clay">Date night · last-minute · overnight</p>
+        <h2 className="mt-2 text-2xl font-semibold text-ink">Babysitters you can book like a ride</h2>
+        <p className="mt-2 max-w-3xl text-stone-600">
+          Book a vetted sitter for Friday night without an agency membership. CareProof adds escrow, suburb pages, and
+          WWCC plus child first aid (asthma and anaphylaxis) on every babysitting listing.
+        </p>
+        <ul className="mt-5 grid gap-3 text-sm sm:grid-cols-3">
+          <li className="rounded-2xl bg-sage/70 p-4">
+            <p className="font-semibold text-ink">One-off or recurring</p>
+            <p className="mt-1 text-stone-600">
+              Date night tonight, or book 4–12 standing Fridays. Each week is its own escrow hold.
+            </p>
+          </li>
+          <li className="rounded-2xl bg-sage/70 p-4">
+            <p className="font-semibold text-ink">No extra per sibling</p>
+            <p className="mt-1 text-stone-600">The advertised hourly rate is for the household, not per child.</p>
+          </li>
+          <li className="rounded-2xl bg-sage/70 p-4">
+            <p className="font-semibold text-ink">Reviews after the sit</p>
+            <p className="mt-1 text-stone-600">
+              Only families with a released escrow booking can leave a rating. Carers can publish one public reply.
+            </p>
+          </li>
+        </ul>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Link href="/caregivers/babysitters" className="rounded-full bg-teal px-5 py-2.5 text-sm font-medium text-white no-underline">
+            Browse babysitters
+          </Link>
+          <Link href="/caregivers/nannies" className="rounded-full border border-teal px-5 py-2.5 text-sm font-medium text-teal no-underline">
+            Find a regular nanny
+          </Link>
+          <Link href="/guides/hire-a-babysitter" className="text-sm font-medium text-teal">
+            How to book a sitter
           </Link>
         </div>
-      </main>
+      </section>
+
+      <section>
+        <h2 className="text-2xl font-semibold text-ink">Built for Australian care</h2>
+        <div className="mt-5 grid gap-4 md:grid-cols-3">
+          <div className="rounded-2xl border border-line bg-card p-5">
+            <h3 className="font-semibold text-ink">My Aged Care packages</h3>
+            <p className="mt-2 text-sm text-stone-600">
+              Book in-home personal care, respite and nursing against a Home Care Package. Rates are inc GST so the
+              invoice matches what coordinators expect.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-line bg-card p-5">
+            <h3 className="font-semibold text-ink">NDIS plan-managed or self-managed</h3>
+            <p className="mt-2 text-sm text-stone-600">
+              Support workers list NDIS Worker Screening and shift notes. Escrow holds the session fee until the
+              booking is released — useful when a plan manager needs evidence.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-line bg-card p-5">
+            <h3 className="font-semibold text-ink">State checks, not a generic badge</h3>
+            <p className="mt-2 text-sm text-stone-600">
+              NSW WWCC, Queensland Blue Card, NT Ochre Card, ACT WWVP and Aged Care Worker Screening sit on the
+              profile with expiry dates.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-3xl border border-line bg-card px-6 py-8">
+        <h2 className="text-2xl font-semibold text-ink">{forCarersHomeHeading()}</h2>
+        <p className="mt-2 max-w-3xl text-stone-600">{forCarersHomeNotice()}</p>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Link
+            href={forCarersHomeHref()}
+            className="rounded-full bg-teal px-5 py-2.5 text-sm font-medium text-white no-underline"
+          >
+            {forCarersHomeCta()}
+          </Link>
+          <Link
+            href={forCarersRegisterHref()}
+            className="rounded-full border border-teal px-5 py-2.5 text-sm font-medium text-teal no-underline"
+          >
+            Create a carer profile
+          </Link>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-2xl font-semibold text-ink">Capital-city hubs</h2>
+        <p className="mt-2 text-sm text-stone-600">Live listings, not a brochure. Open a city then filter by suburb.</p>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 md:grid-cols-5">
+          {hubs.map((city) => (
+            <Link
+              key={city.id}
+              href={`/locations/${city.state.slug}/${city.slug}`}
+              className="rounded-2xl border border-line bg-card p-4 no-underline hover:border-teal"
+            >
+              <p className="font-semibold text-ink">{city.name}</p>
+              <p className="mt-1 text-sm text-stone-500">
+                {city._count.caregivers} carers · {city.state.abbrev}
+              </p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-2xl font-semibold text-ink">Browse by care type</h2>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+          {specialties.map((specialty) => (
+            <Link
+              key={specialty.id}
+              href={`/caregivers/${specialty.slug}`}
+              className="rounded-2xl border border-line bg-card p-4 no-underline hover:border-teal"
+            >
+              <p className="font-semibold text-teal">{specialty.pluralName}</p>
+              <p className="mt-1 text-sm text-stone-600">{specialty.description}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <div className="flex items-end justify-between">
+          <h2 className="text-2xl font-semibold text-ink">Highly reviewed carers</h2>
+          <Link href="/caregivers" className="text-sm text-teal">
+            View directory
+          </Link>
+        </div>
+        <div className="mt-5 grid gap-4">
+          {featured.map((carer) => (
+            <CaregiverCardView
+              key={carer.id}
+              caregiver={withTrust(carer)}
+              shortlist={{
+                saved: savedIds.has(carer.id),
+                signedIn: Boolean(canShortlist),
+                next: "/",
+              }}
+            />
+          ))}
+        </div>
+      </section>
+
+      {reviews.length > 0 ? (
+        <section>
+          <h2 className="text-2xl font-semibold text-ink">Reviews from released bookings</h2>
+          <p className="mt-2 text-sm text-stone-600">
+            Families can only review after escrow is released. Carers can publish one public reply.
+          </p>
+          <ul className="mt-5 grid gap-4 md:grid-cols-2">
+            {reviews.map((review) => (
+              <li key={review.id} className="rounded-2xl border border-line bg-card p-5">
+                <ReviewCard
+                  authorName={review.author.name}
+                  rating={review.rating}
+                  body={review.body}
+                  createdAt={review.createdAt}
+                  caregiverName={review.caregiver.user.name}
+                  caregiverHref={`/caregiver/${review.caregiver.slug}`}
+                  location={`${review.caregiver.suburb}, ${review.caregiver.city.name} ${review.caregiver.city.state.abbrev}`}
+                  reply={review.reply}
+                  repliedAt={review.repliedAt}
+                />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      <section className="grid gap-6 rounded-3xl bg-teal px-6 py-10 text-white md:grid-cols-3">
+        <div>
+          <p className="text-sm uppercase tracking-wide text-sage">1. Choose</p>
+          <h3 className="mt-2 text-xl font-semibold">Verified experience</h3>
+          <p className="mt-2 text-sage">
+            Every profile shows WWCC, NDIS screening, AHPRA and employer-confirmed work history — not just a bio.
+          </p>
+        </div>
+        <div>
+          <p className="text-sm uppercase tracking-wide text-sage">2. Book</p>
+          <h3 className="mt-2 text-xl font-semibold">Hire in a few clicks</h3>
+          <p className="mt-2 text-sage">
+            Instant Book from a profile, or post a request and compare proposals the way you would on Upwork.
+          </p>
+        </div>
+        <div>
+          <p className="text-sm uppercase tracking-wide text-sage">3. Pay safely</p>
+          <h3 className="mt-2 text-xl font-semibold">Escrow, then release</h3>
+          <p className="mt-2 text-sage">
+            CareProof collects payment first. The carer is paid only when you confirm — or automatically after 72 hours.
+          </p>
+        </div>
+      </section>
     </div>
   );
 }

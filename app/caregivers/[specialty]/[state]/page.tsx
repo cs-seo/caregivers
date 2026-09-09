@@ -1,0 +1,90 @@
+import { notFound } from "next/navigation";
+import { DirectoryResults } from "@/components/directory-page";
+import { FaqBlock, LinkGrid, RelatedSpecialties } from "@/components/seo-landing";
+import { filterCurrent, parseFilters } from "@/lib/directory";
+import { isInviteFlash } from "@/lib/job-invite";
+import { jobBoardHref, openRequestsNotice } from "@/lib/job-board";
+import { acceptingJobWhere } from "@/lib/job-status";
+import { landingDescription, landingFaqs, landingH1, landingIntro, landingTitle } from "@/lib/seo-content";
+import { directoryStats, getSpecialties, getSpecialty, getState } from "@/lib/queries";
+import { prisma } from "@/lib/prisma";
+import { pageMeta } from "@/lib/seo";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ specialty: string; state: string }>;
+}) {
+  const { specialty, state } = await params;
+  const [spec, st] = await Promise.all([getSpecialty(specialty), getState(state)]);
+  if (!spec || !st) return {};
+  const place = { specialty: spec, state: st };
+  return pageMeta({
+    title: landingTitle(place),
+    description: landingDescription(place),
+    path: `/caregivers/${spec.slug}/${st.slug}`,
+  });
+}
+
+export default async function StateDirectoryPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ specialty: string; state: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [{ specialty, state }, query] = await Promise.all([params, searchParams]);
+  const [spec, st, specialties] = await Promise.all([
+    getSpecialty(specialty),
+    getState(state),
+    getSpecialties(),
+  ]);
+  if (!spec || !st) notFound();
+  const filters = { ...parseFilters(query), specialty: spec.slug, state: st.slug };
+  const [stats, openCount] = await Promise.all([
+    directoryStats(filters),
+    prisma.careRequest.count({
+      where: { ...acceptingJobWhere(), specialtyId: spec.id, city: { stateId: st.id } },
+    }),
+  ]);
+  const place = { specialty: spec, state: st };
+
+  return (
+    <DirectoryResults
+      title={landingH1(place)}
+      intro={landingIntro(place, stats)}
+      breadcrumbs={[
+        { name: "Home", href: "/" },
+        { name: "Carers", href: "/caregivers" },
+        { name: spec.pluralName, href: `/caregivers/${spec.slug}` },
+        { name: st.abbrev },
+      ]}
+      filters={filters}
+      filterAction={`/caregivers/${spec.slug}/${st.slug}`}
+      current={filterCurrent(filters)}
+      invited={isInviteFlash(query.invited)}
+      path={`/caregivers/${spec.slug}/${st.slug}`}
+      openRequests={
+        openCount
+          ? {
+              href: jobBoardHref({ specialty: spec.slug, state: st.slug }),
+              label: openRequestsNotice(openCount, st.name, spec.name),
+            }
+          : null
+      }
+      extras={
+        <>
+          <FaqBlock faqs={landingFaqs(place)} />
+          <RelatedSpecialties place={place} specialties={specialties} />
+          <LinkGrid
+            title={`Cities in ${st.name}`}
+            links={st.cities.map((city) => ({
+              href: `/caregivers/${spec.slug}/${st.slug}/${city.slug}`,
+              label: `${spec.pluralName} in ${city.name}`,
+            }))}
+          />
+        </>
+      }
+    />
+  );
+}

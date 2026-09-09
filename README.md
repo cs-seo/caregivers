@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CareProof
 
-## Getting Started
+Verified carers directory for Australia. Families search by specialty and city, check work history and screening, then book with **escrow** — payment is collected first and released to the carer after the booking.
 
-First, run the development server:
+## Features
+
+- SEO URLs: `/caregivers/{specialty}/{state}/{city}/{suburb}` and `/caregiver/{slug}`
+- Instant Book and request-to-book
+- Care requests + proposals + hire
+- Escrow ledger (demo by default; Stripe Connect when keys are set)
+- WWCC, NDIS, AHPRA and employer-confirmed work history
+- Reviews only after a released booking
+- Carers edit their own public profile from `/dashboard/profile`
+- Booking message thread between family and carer
+
+## Setup
 
 ```bash
+cp .env.example .env
+npm install
+npx prisma migrate dev
+npm run db:seed
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Demo logins (password `CareProof123!`):
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Family: `family@careproof.com.au`
+- Carer: `carer@careproof.com.au`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Five-minute demo
 
-## Learn More
+1. Open `/caregivers/nannies/nsw/sydney/bondi` — Priya Nair plus nearby clones from her profile.
+2. Log in as the family. Dashboard shows a request waiting on James, escrow with Sarah, and after-school care in progress with Priya.
+3. Open Sarah’s booking and use the message thread.
+4. Log in as the carer (`carer@careproof.com.au`) and edit `/dashboard/profile`.
+5. Join as a new carer at `/register` — you land on the profile checklist.
 
-To learn more about Next.js, take a look at the following resources:
+## Vercel
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Preview builds no longer require `DATABASE_URL` at compile time. If it is missing, CareProof uses `prisma/demo.db` (copied to `/tmp` on Vercel so bookings can write). Set `AUTH_SECRET` and `NEXT_PUBLIC_SITE_URL` on the project for production.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Payments
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Without `STRIPE_SECRET_KEY`, checkout writes to the in-app escrow ledger so hold/release still works. With Stripe keys, PaymentIntents and Connect transfers are created in AUD.
