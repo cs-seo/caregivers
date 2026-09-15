@@ -63,6 +63,9 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Emit a self-contained server bundle (.next/standalone) so the app can run
+  // in a minimal container with `node server.js` and no dev dependencies.
+  output: "standalone",
   async headers() {
     return [
       {
