@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { SITE_NAME } from "@/lib/constants";
+import { crawlFooterSpecialtyLinks, crawlFooterStateLinks } from "@/lib/crawl-links";
 import { footerBoardLink } from "@/lib/footer-board";
 import { getSpecialties, getStates } from "@/lib/queries";
 
 export async function SiteFooter() {
   const [specialties, states] = await Promise.all([getSpecialties(), getStates()]);
   const board = footerBoardLink();
+  const specialtyLinks = crawlFooterSpecialtyLinks(specialties);
+  const stateLinks = crawlFooterStateLinks(states);
 
   return (
     <footer className="mt-16 border-t border-line bg-teal-deep text-sage print:hidden">
@@ -19,10 +22,10 @@ export async function SiteFooter() {
         <div>
           <p className="text-sm font-semibold text-white">Specialties</p>
           <ul className="mt-3 space-y-1 text-sm">
-            {specialties.slice(0, 8).map((specialty) => (
-              <li key={specialty.id}>
-                <Link className="hover:text-white" href={`/caregivers/${specialty.slug}`}>
-                  {specialty.pluralName}
+            {specialtyLinks.map((link) => (
+              <li key={link.href}>
+                <Link className="hover:text-white" href={link.href}>
+                  {link.label}
                 </Link>
               </li>
             ))}
@@ -31,10 +34,10 @@ export async function SiteFooter() {
         <div>
           <p className="text-sm font-semibold text-white">States</p>
           <ul className="mt-3 space-y-1 text-sm">
-            {states.map((state) => (
-              <li key={state.id}>
-                <Link className="hover:text-white" href={`/caregivers/aged-care/${state.slug}`}>
-                  {state.name}
+            {stateLinks.map((link) => (
+              <li key={link.href}>
+                <Link className="hover:text-white" href={link.href}>
+                  {link.label}
                 </Link>
               </li>
             ))}

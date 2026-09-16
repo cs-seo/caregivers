@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { locationBoardLink, locationBoardNotice } from "@/lib/job-board";
+import { crawlSuburbSpecialtyLinks } from "@/lib/crawl-links";
 import { geelongNextLinks, geelongNextNotice, geelongNextShows } from "@/lib/geelong-next";
 import { goldCoastNextLinks, goldCoastNextNotice, goldCoastNextShows } from "@/lib/gold-coast-next";
 import { newcastleNextLinks, newcastleNextNotice, newcastleNextShows } from "@/lib/newcastle-next";
@@ -253,13 +254,14 @@ export default async function CityLocationsPage({
             <li key={suburb.id}>
               <span className="font-medium text-ink">{suburb.name}</span>
               <ul className="mt-1 space-y-0.5 text-sm">
-                {specialties.slice(0, 4).map((spec) => (
-                  <li key={spec.id}>
-                    <Link
-                      className="text-teal hover:underline"
-                      href={`/caregivers/${spec.slug}/${place.state.slug}/${place.slug}/${suburb.slug}`}
-                    >
-                      {spec.pluralName}
+                {crawlSuburbSpecialtyLinks(specialties, {
+                  stateSlug: place.state.slug,
+                  citySlug: place.slug,
+                  suburbSlug: suburb.slug,
+                }).map((link) => (
+                  <li key={link.href}>
+                    <Link className="text-teal hover:underline" href={link.href}>
+                      {link.label}
                     </Link>
                   </li>
                 ))}

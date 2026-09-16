@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { HIRE_GUIDES } from "@/lib/seo-content";
 import { siteUrl } from "@/lib/constants";
+import { crawlStaticPaths } from "@/lib/crawl-links";
 import { acceptingJobWhere } from "@/lib/job-status";
 import { prisma } from "@/lib/prisma";
 
@@ -28,16 +29,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }))
     .catch(() => empty);
 
-  const staticRoutes = [
-    "",
-    "/caregivers",
-    "/care-requests",
-    "/how-it-works",
-    "/for-carers",
-    "/trust-and-safety",
-    "/guides",
-    "/locations",
-  ].map((path) => ({
+  const staticRoutes = crawlStaticPaths().map((path) => ({
     url: `${base}${path || "/"}`,
     changeFrequency: "daily" as const,
     priority: path === "" ? 1 : 0.8,

@@ -65,7 +65,7 @@ export default async function SuburbDirectoryPage({
     ? await directoryStats({ specialty: spec.slug, state: place.city.state.slug, city: place.city.slug })
     : exactStats;
   const seo = { specialty: spec, state: place.city.state, city: place.city, suburb: place };
-  const siblingSuburbs = place.city.suburbs.filter((item) => item.slug !== place.slug).slice(0, 18);
+  const siblingSuburbs = place.city.suburbs.filter((item) => item.slug !== place.slug);
 
   return (
     <DirectoryResults

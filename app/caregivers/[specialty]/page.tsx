@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { DirectoryResults } from "@/components/directory-page";
 import { FaqBlock, LinkGrid, RelatedSpecialties } from "@/components/seo-landing";
 import { filterCurrent, parseFilters } from "@/lib/directory";
+import { crawlSpecialtyCityLinks } from "@/lib/crawl-links";
 import { isInviteFlash } from "@/lib/job-invite";
 import { jobBoardHref, openRequestsNotice } from "@/lib/job-board";
 import { acceptingJobWhere } from "@/lib/job-status";
@@ -84,19 +85,8 @@ export default async function SpecialtyPage({
             }))}
           />
           <LinkGrid
-            title={`Popular cities for ${record.pluralName.toLowerCase()}`}
-            links={states.flatMap((state) =>
-              state.cities
-                .filter((city) =>
-                  ["sydney", "melbourne", "brisbane", "perth", "adelaide", "canberra", "hobart", "darwin", "gold-coast", "newcastle", "geelong"].includes(
-                    city.slug,
-                  ),
-                )
-                .map((city) => ({
-                  href: `/caregivers/${record.slug}/${state.slug}/${city.slug}`,
-                  label: `${record.pluralName} in ${city.name}`,
-                })),
-            )}
+            title={`${record.pluralName} by city`}
+            links={crawlSpecialtyCityLinks(record, states)}
           />
           {guide ? (
             <LinkGrid
