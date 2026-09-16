@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
+import { isRecordId } from "@/lib/validate";
 import { bookingToIcsEvent, bookingsToIcs, shouldIncludeInCalendar } from "@/lib/ics";
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -9,6 +10,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.redirect(new URL("/login", process.env.AUTH_URL ?? "http://localhost:3000"));
   }
   const { id } = await params;
+  if (!isRecordId(id)) return new NextResponse("Not found", { status: 404 });
   const booking = await prisma.booking.findUnique({
     where: { id },
     include: {
