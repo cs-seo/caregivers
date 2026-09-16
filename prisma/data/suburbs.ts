@@ -273,6 +273,7 @@ export const SUBURBS_BY_CITY: Record<string, Record<string, string[]>> = {
     parkes: ["Parkes", "Cookamidgera", "Alectown", "Tichborne"],
     cowra: ["Cowra", "Wattamondara", "Woodstock", "Billimari"],
     gunnedah: ["Gunnedah", "Curlewis", "Kelvin", "Mullaley"],
+    moree: ["Moree", "Ashley", "Biniguy", "Pallamallawa"],
   },
   vic: {
     melbourne: [
@@ -446,6 +447,7 @@ export const SUBURBS_BY_CITY: Record<string, Record<string, string[]>> = {
     "swan-hill": ["Swan Hill", "Lake Boga", "Nyah West", "Woorinen South"],
     castlemaine: ["Castlemaine", "Campbells Creek", "Chewton", "McKenzie Hill"],
     benalla: ["Benalla", "Winton", "Goorambat", "Thoona"],
+    ararat: ["Ararat", "Armstrong", "Moyston", "Pomonal"],
   },
   qld: {
     brisbane: [

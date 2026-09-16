@@ -15,7 +15,7 @@ const REGION_HUBS = [
 
 test("CITIES_BY_STATE has unique slugs per state and covers long-tail towns and regions", () => {
   const slugs = Object.values(CITIES_BY_STATE).flatMap((cities) => cities.map((city) => city.slug));
-  assert.ok(slugs.length >= 119);
+  assert.ok(slugs.length >= 121);
   for (const [stateSlug, cities] of Object.entries(CITIES_BY_STATE)) {
     const seen = new Set<string>();
     for (const city of cities) {
@@ -27,7 +27,9 @@ test("CITIES_BY_STATE has unique slugs per state and covers long-tail towns and 
   }
   assert.ok(CITIES_BY_STATE.nsw.some((city) => city.slug === "hunter-valley"));
   assert.ok(CITIES_BY_STATE.nsw.some((city) => city.slug === "byron-bay"));
+  assert.ok(CITIES_BY_STATE.nsw.some((city) => city.slug === "moree"));
   assert.ok(CITIES_BY_STATE.vic.some((city) => city.slug === "mornington-peninsula"));
+  assert.ok(CITIES_BY_STATE.vic.some((city) => city.slug === "ararat"));
   assert.ok(CITIES_BY_STATE.qld.some((city) => city.slug === "logan"));
   assert.ok(CITIES_BY_STATE.wa.some((city) => city.slug === "margaret-river"));
   assert.ok(CITIES_BY_STATE.sa.some((city) => city.slug === "barossa"));
@@ -57,4 +59,6 @@ test("region hubs keep satellite towns as suburb pages", () => {
   assert.ok(SUBURBS_BY_CITY.vic["mornington-peninsula"].includes("Rosebud"));
   assert.ok(SUBURBS_BY_CITY.sa.barossa.includes("Tanunda"));
   assert.ok(SUBURBS_BY_CITY.nsw.katoomba.includes("Blackheath"));
+  assert.ok(SUBURBS_BY_CITY.nsw.moree.includes("Pallamallawa"));
+  assert.ok(SUBURBS_BY_CITY.vic.ararat.includes("Pomonal"));
 });

@@ -33,6 +33,7 @@ export const CITIES_BY_STATE: Record<string, SeedCity[]> = {
     { slug: "parkes", name: "Parkes", lat: -33.137, lng: 148.176 },
     { slug: "cowra", name: "Cowra", lat: -33.835, lng: 148.696 },
     { slug: "gunnedah", name: "Gunnedah", lat: -30.981, lng: 150.256 },
+    { slug: "moree", name: "Moree", lat: -29.465, lng: 149.8411 },
   ],
   vic: [
     { slug: "melbourne", name: "Melbourne", lat: -37.8136, lng: 144.9631 },
@@ -58,6 +59,7 @@ export const CITIES_BY_STATE: Record<string, SeedCity[]> = {
     { slug: "swan-hill", name: "Swan Hill", lat: -35.338, lng: 143.554 },
     { slug: "castlemaine", name: "Castlemaine", lat: -37.064, lng: 144.217 },
     { slug: "benalla", name: "Benalla", lat: -36.551, lng: 145.984 },
+    { slug: "ararat", name: "Ararat", lat: -37.284, lng: 142.931 },
   ],
   qld: [
     { slug: "brisbane", name: "Brisbane", lat: -27.4698, lng: 153.0251 },
