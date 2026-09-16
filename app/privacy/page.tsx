@@ -1,4 +1,7 @@
+import Link from "next/link";
+import { auth } from "@/auth";
 import { LegalNextPanel } from "@/components/legal-next";
+import { privacyNextLinks, privacyNextNotice, privacyNextShows } from "@/lib/privacy-next";
 import { pageMeta } from "@/lib/seo";
 
 export const metadata = pageMeta({
@@ -7,7 +10,9 @@ export const metadata = pageMeta({
   path: "/privacy",
 });
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const session = await auth();
+  const showPrivacyNext = privacyNextShows({ isFamily: session?.user?.role === "FAMILY" });
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <h1 className="text-3xl font-semibold text-ink">Privacy</h1>
@@ -39,7 +44,20 @@ export default function PrivacyPage() {
           the document. Do not upload another person’s check without their consent.
         </p>
       </section>
-      <LegalNextPanel />
+      {showPrivacyNext ? (
+        <div className="mt-8 rounded-xl bg-sage p-3 text-sm">
+          <p>{privacyNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {privacyNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : (
+        <LegalNextPanel />
+      )}
     </div>
   );
 }
