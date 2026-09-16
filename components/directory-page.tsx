@@ -134,6 +134,11 @@ import {
   specialNeedsQldNextNotice,
   specialNeedsQldNextShows,
 } from "@/lib/special-needs-qld-next";
+import {
+  nursingVicNextLinks,
+  nursingVicNextNotice,
+  nursingVicNextShows,
+} from "@/lib/nursing-vic-next";
 import { respiteNextLinks, respiteNextNotice, respiteNextShows } from "@/lib/respite-next";
 import {
   directoryIsSuburbPath,
@@ -412,6 +417,13 @@ export async function DirectoryResults({
     jobAttached: Boolean(jobTitle),
   });
   const showSpecialNeedsQldNext = specialNeedsQldNextShows({
+    isFamily: Boolean(canShortlist),
+    specialtySlug: filters.specialty,
+    stateSlug: filters.state,
+    stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
+    jobAttached: Boolean(jobTitle),
+  });
+  const showNursingVicNext = nursingVicNextShows({
     isFamily: Boolean(canShortlist),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
@@ -824,6 +836,17 @@ export async function DirectoryResults({
           <p>{specialNeedsQldNextNotice()}</p>
           <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
             {specialNeedsQldNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showNursingVicNext ? (
+        <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+          <p>{nursingVicNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {nursingVicNextLinks().map((link) => (
               <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
                 {link.label}
               </Link>
