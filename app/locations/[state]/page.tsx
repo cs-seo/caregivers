@@ -47,7 +47,7 @@ export default async function StateLocationsPage({ params }: { params: Promise<{
       />
       <h1 className="text-3xl font-semibold text-ink">Carers in {record.name}</h1>
       <p className="mt-3 text-stone-600">
-        Open a city to see suburb pages, or jump straight into a care type for the whole state.
+        Open a city or region to see suburb pages, or jump straight into a care type for the whole state.
       </p>
       <ul className="mt-4 flex flex-wrap gap-3 text-sm">
         {specialties.map((spec) => (

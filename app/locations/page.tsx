@@ -22,8 +22,8 @@ export default async function LocationsPage() {
       <Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "Locations" }]} />
       <h1 className="text-3xl font-semibold text-ink">Carers by city and suburb</h1>
       <p className="mt-3 max-w-2xl text-stone-600">
-        Every capital and regional centre has specialty pages. Capitals also have suburb pages for searches like
-        “nanny Bondi” or “NDIS support worker Chermside”.
+        Every capital, region and regional centre has specialty pages. Suburb pages catch long-tail searches like
+        “nanny Bondi”, “NDIS support worker Chermside”, “aged care in Bowral” or “babysitter in Tanunda”.
       </p>
       <p className="mt-4 max-w-2xl text-sm text-stone-600">{locationSpecialtyNotice()}</p>
       {showLocationNext ? (
