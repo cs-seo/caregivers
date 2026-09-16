@@ -26,7 +26,11 @@ export default async function LoginPage({
       <p className="mt-2 text-sm text-stone-500">
         Demo family: family@careproof.com.au · Demo carer: carer@careproof.com.au · Password: CareProof123!
       </p>
-      {query.error ? <p className="mt-4 text-sm text-clay">Those details did not match.</p> : null}
+      {query.error === "rate" ? (
+        <p className="mt-4 text-sm text-clay">Too many login attempts. Please wait a few minutes and try again.</p>
+      ) : query.error ? (
+        <p className="mt-4 text-sm text-clay">Those details did not match.</p>
+      ) : null}
       <form action={loginAction} className="mt-6 space-y-4 rounded-2xl border border-line bg-card p-5">
         <input type="hidden" name="callbackUrl" value={query.callbackUrl ?? "/dashboard"} />
         <label className="block text-sm">

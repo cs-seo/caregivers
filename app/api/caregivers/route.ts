@@ -2,8 +2,19 @@ import { NextResponse } from "next/server";
 import { isAvailableNowLive, isAwayToday, isInstantBookLive } from "@/lib/availability";
 import { parseFilters } from "@/lib/directory";
 import { searchCaregivers } from "@/lib/queries";
+import { rateLimit } from "@/lib/rate-limit";
+import { clientIpFromRequest } from "@/lib/request-ip";
 
 export async function GET(request: Request) {
+  // Throttle scraping of the public directory endpoint per client IP.
+  const ip = clientIpFromRequest(request);
+  const limit = rateLimit(`api-caregivers:${ip}`, { limit: 60, windowMs: 60_000 });
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: "Too many requests" },
+      { status: 429, headers: { "Retry-After": String(Math.ceil(limit.retryAfterMs / 1000)) } },
+    );
+  }
   const url = new URL(request.url);
   const filters = parseFilters(Object.fromEntries(url.searchParams.entries()));
   const caregivers = await searchCaregivers(filters, 40);
