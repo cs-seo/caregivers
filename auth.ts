@@ -5,6 +5,13 @@ import { prisma } from "@/lib/prisma";
 
 const isProduction = process.env.NODE_ENV === "production";
 
+// Drive cookie security off the actual deployment protocol rather than NODE_ENV
+// so production HTTPS gets Secure/`__Secure-` cookies while a local `npm start`
+// over HTTP still works. NextAuth defaults to this behaviour; we pin it
+// explicitly so it cannot silently regress.
+const publicUrl = process.env.AUTH_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? "";
+const useSecureCookies = publicUrl.startsWith("https://");
+
 function resolveAuthSecret(): string {
   const secret = process.env.AUTH_SECRET?.trim();
   if (secret) return secret;
@@ -23,16 +30,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   // controlled by AUTH_TRUST_HOST in the environment.
   trustHost: true,
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
-  // In production NextAuth uses __Secure-/__Host- prefixed cookies automatically;
-  // pin the security-relevant flags explicitly so they cannot regress.
-  useSecureCookies: isProduction,
+  useSecureCookies,
   cookies: {
     sessionToken: {
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: isProduction,
+        secure: useSecureCookies,
       },
     },
   },
