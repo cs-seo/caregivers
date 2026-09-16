@@ -1,0 +1,58 @@
+name: Deploy (Vercel)
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to Vercel (production)
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - name: Check Vercel credentials
+        id: guard
+        run: |
+          if [ -n "$VERCEL_TOKEN" ] && [ -n "$VERCEL_ORG_ID" ] && [ -n "$VERCEL_PROJECT_ID" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "Vercel credentials present — proceeding with deploy."
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Deploy skipped::VERCEL_TOKEN / VERCEL_ORG_ID / VERCEL_PROJECT_ID are not all set. Add them in repo Settings → Secrets and variables → Actions to enable production deploys."
+          fi
+
+      - name: Checkout
+        if: steps.guard.outputs.enabled == 'true'
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        if: steps.guard.outputs.enabled == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Vercel CLI
+        if: steps.guard.outputs.enabled == 'true'
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel environment (production)
+        if: steps.guard.outputs.enabled == 'true'
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+
+      - name: Build project artifacts
+        if: steps.guard.outputs.enabled == 'true'
+        run: vercel build --prod --token="$VERCEL_TOKEN"
+
+      - name: Deploy to production
+        if: steps.guard.outputs.enabled == 'true'
+        run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
