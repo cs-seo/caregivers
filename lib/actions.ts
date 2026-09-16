@@ -27,6 +27,8 @@ import { acceptingJobWhere, isJobAccepting } from "./job-status";
 import { directoryStats } from "./queries";
 import { filtersFromSearchHref, isSafeSearchHref, MAX_SAVED_SEARCHES } from "./saved-search";
 import { requireRole, requireUser } from "./session";
+import { rateLimit } from "./rate-limit";
+import { clientIp } from "./request-ip";
 import {
   canCounterProposal,
   canPassOnProposal,
@@ -57,6 +59,25 @@ import {
   windowsFromForm,
 } from "./weekly-windows";
 
+// Per-instance abuse protection. See lib/rate-limit.ts for the production note
+// (a shared store such as Redis + an edge/WAF limit are required at scale).
+const RATE_LIMITS = {
+  auth: { limit: 10, windowMs: 5 * 60_000 },
+  register: { limit: 5, windowMs: 15 * 60_000 },
+  mutation: { limit: 40, windowMs: 60_000 },
+} as const;
+
+function withinRate(scope: keyof typeof RATE_LIMITS, id: string): boolean {
+  return rateLimit(`${scope}:${id}`, RATE_LIMITS[scope]).ok;
+}
+
+/** Throws a generic error when a per-user mutation rate is exceeded. */
+function enforceMutationRate(userId: string) {
+  if (!withinRate("mutation", userId)) {
+    throw new Error("Too many requests. Please slow down and try again in a moment.");
+  }
+}
+
 function bookingFormHref(slug: string, formData: FormData, error?: string) {
   const rawStart = String(formData.get("startAt") ?? "");
   const start = /^\d{4}-\d{2}-\d{2}/.test(rawStart) ? rawStart.slice(0, 10) : "";
@@ -76,6 +97,11 @@ export async function loginAction(formData: FormData) {
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
   const callbackUrl = String(formData.get("callbackUrl") ?? "/dashboard");
+  const ip = await clientIp();
+  // Throttle credential stuffing / brute force per client IP.
+  if (!withinRate("auth", ip)) {
+    redirect(`/login?error=rate&callbackUrl=${encodeURIComponent(callbackUrl)}`);
+  }
   try {
     await signIn("credentials", { email, password, redirectTo: callbackUrl });
   } catch (error) {
@@ -87,6 +113,10 @@ export async function loginAction(formData: FormData) {
 }
 
 export async function registerAction(formData: FormData) {
+  const ip = await clientIp();
+  if (!withinRate("register", ip)) {
+    redirect("/register?error=rate");
+  }
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
@@ -144,6 +174,7 @@ export async function registerAction(formData: FormData) {
 export async function createBookingAction(formData: FormData) {
   const user = await requireRole(ROLES.FAMILY);
   if (!user) redirect(`/login?callbackUrl=${encodeURIComponent(bookingFormHref(String(formData.get("slug") ?? ""), formData))}`);
+  enforceMutationRate(user.id);
 
   const slug = String(formData.get("slug") ?? "");
   const specialtyId = String(formData.get("specialtyId") ?? "");
@@ -509,6 +540,7 @@ export async function releaseNowAction(formData: FormData) {
 export async function disputeBookingAction(formData: FormData) {
   const user = await requireUser();
   if (!user) redirect("/login");
+  enforceMutationRate(user.id);
   const bookingId = String(formData.get("bookingId") ?? "");
   const note = sanitizeDisputeNote(String(formData.get("disputeNote") ?? ""));
   const booking = await prisma.booking.findUnique({
@@ -583,6 +615,7 @@ export async function resolveDisputeAction(formData: FormData) {
 export async function createCareRequestAction(formData: FormData) {
   const user = await requireRole(ROLES.FAMILY);
   if (!user) redirect("/login?callbackUrl=/post-a-job");
+  enforceMutationRate(user.id);
 
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
@@ -628,6 +661,7 @@ export async function createCareRequestAction(formData: FormData) {
 export async function createProposalAction(formData: FormData) {
   const user = await requireRole(ROLES.CAREGIVER);
   if (!user?.caregiverProfile) redirect("/login");
+  enforceMutationRate(user.id);
   const slug = String(formData.get("slug") ?? "");
   const coverLetter = String(formData.get("coverLetter") ?? "").trim();
   const rateCents = Math.round(Number(formData.get("rate")) * 100);
@@ -962,6 +996,7 @@ export async function hireProposalAction(formData: FormData) {
 export async function createReviewAction(formData: FormData) {
   const user = await requireRole(ROLES.FAMILY);
   if (!user) redirect("/login");
+  enforceMutationRate(user.id);
   const bookingId = String(formData.get("bookingId") ?? "");
   const rating = Number(formData.get("rating") ?? 0);
   const body = String(formData.get("body") ?? "").trim();
@@ -1166,6 +1201,7 @@ export async function applyHouseholdToUpcomingAction(_formData: FormData) {
 export async function sendJobMessageAction(formData: FormData) {
   const user = await requireUser();
   if (!user) redirect("/login");
+  enforceMutationRate(user.id);
   const slug = String(formData.get("slug") ?? "");
   const caregiverId = String(formData.get("caregiverId") ?? "");
   const body = sanitizeJobMessage(String(formData.get("body") ?? ""));
@@ -1218,6 +1254,7 @@ export async function sendJobMessageAction(formData: FormData) {
 export async function sendMessageAction(formData: FormData) {
   const user = await requireUser();
   if (!user) redirect("/login");
+  enforceMutationRate(user.id);
   const bookingId = String(formData.get("bookingId") ?? "");
   const body = String(formData.get("body") ?? "").trim();
   const booking = await prisma.booking.findUnique({

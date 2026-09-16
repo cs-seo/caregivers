@@ -26,6 +26,12 @@ export default async function RegisterPage({
     <div className="mx-auto max-w-md">
       <h1 className="text-3xl font-semibold text-ink">Join CareProof</h1>
       {query.error === "exists" ? <p className="mt-3 text-sm text-clay">That email is already registered.</p> : null}
+      {query.error === "rate" ? (
+        <p className="mt-3 text-sm text-clay">Too many sign-up attempts. Please wait a few minutes and try again.</p>
+      ) : null}
+      {query.error === "invalid" ? (
+        <p className="mt-3 text-sm text-clay">Enter your name, a valid email, and a password of at least 8 characters.</p>
+      ) : null}
       <form action={registerAction} className="mt-6 space-y-4 rounded-2xl border border-line bg-card p-5">
         <label className="block text-sm">
           Full name
