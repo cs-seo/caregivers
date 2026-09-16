@@ -64,6 +64,11 @@ import {
   nursingSaNextNotice,
   nursingSaNextShows,
 } from "@/lib/nursing-sa-next";
+import {
+  personalCareSaNextLinks,
+  personalCareSaNextNotice,
+  personalCareSaNextShows,
+} from "@/lib/personal-care-sa-next";
 import { respiteNextLinks, respiteNextNotice, respiteNextShows } from "@/lib/respite-next";
 import {
   directoryIsSuburbPath,
@@ -244,6 +249,13 @@ export async function DirectoryResults({
     jobAttached: Boolean(jobTitle),
   });
   const showNursingSaNext = nursingSaNextShows({
+    isFamily: Boolean(canShortlist),
+    specialtySlug: filters.specialty,
+    stateSlug: filters.state,
+    stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
+    jobAttached: Boolean(jobTitle),
+  });
+  const showPersonalCareSaNext = personalCareSaNextShows({
     isFamily: Boolean(canShortlist),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
@@ -502,6 +514,17 @@ export async function DirectoryResults({
           <p>{nursingSaNextNotice()}</p>
           <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
             {nursingSaNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showPersonalCareSaNext ? (
+        <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+          <p>{personalCareSaNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {personalCareSaNextLinks().map((link) => (
               <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
                 {link.label}
               </Link>
