@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { locationBoardLink, locationBoardNotice } from "@/lib/job-board";
+import { crawlSuburbSpecialtyLinks } from "@/lib/crawl-links";
 import { geelongNextLinks, geelongNextNotice, geelongNextShows } from "@/lib/geelong-next";
 import { goldCoastNextLinks, goldCoastNextNotice, goldCoastNextShows } from "@/lib/gold-coast-next";
 import { newcastleNextLinks, newcastleNextNotice, newcastleNextShows } from "@/lib/newcastle-next";
@@ -11,6 +12,7 @@ import { byronBayNextLinks, byronBayNextNotice, byronBayNextShows } from "@/lib/
 import { coffsHarbourNextLinks, coffsHarbourNextNotice, coffsHarbourNextShows } from "@/lib/coffs-harbour-next";
 import { hunterValleyNextLinks, hunterValleyNextNotice, hunterValleyNextShows } from "@/lib/hunter-valley-next";
 import { clareNextLinks, clareNextNotice, clareNextShows } from "@/lib/clare-next";
+import { gunnedahNextLinks, gunnedahNextNotice, gunnedahNextShows } from "@/lib/gunnedah-next";
 import { lismoreNextLinks, lismoreNextNotice, lismoreNextShows } from "@/lib/lismore-next";
 import { toowoombaNextLinks, toowoombaNextNotice, toowoombaNextShows } from "@/lib/toowoomba-next";
 import { getCity, getSpecialties } from "@/lib/queries";
@@ -87,6 +89,11 @@ export default async function CityLocationsPage({
     citySlug: place.slug,
   });
   const showClareNext = clareNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showGunnedahNext = gunnedahNextShows({
     isFamily,
     stateSlug: place.state.slug,
     citySlug: place.slug,
@@ -236,6 +243,17 @@ export default async function CityLocationsPage({
             ))}
           </p>
         </div>
+      ) : showGunnedahNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{gunnedahNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {gunnedahNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
       ) : null}
       <p className="mt-6 text-sm text-stone-600">
         {locationBoardNotice(place.name)}{" "}
@@ -253,13 +271,14 @@ export default async function CityLocationsPage({
             <li key={suburb.id}>
               <span className="font-medium text-ink">{suburb.name}</span>
               <ul className="mt-1 space-y-0.5 text-sm">
-                {specialties.slice(0, 4).map((spec) => (
-                  <li key={spec.id}>
-                    <Link
-                      className="text-teal hover:underline"
-                      href={`/caregivers/${spec.slug}/${place.state.slug}/${place.slug}/${suburb.slug}`}
-                    >
-                      {spec.pluralName}
+                {crawlSuburbSpecialtyLinks(specialties, {
+                  stateSlug: place.state.slug,
+                  citySlug: place.slug,
+                  suburbSlug: suburb.slug,
+                }).map((link) => (
+                  <li key={link.href}>
+                    <Link className="text-teal hover:underline" href={link.href}>
+                      {link.label}
                     </Link>
                   </li>
                 ))}

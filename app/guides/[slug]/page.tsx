@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { JsonLd } from "@/components/json-ld";
+import { crawlSpecialtyCityLinks } from "@/lib/crawl-links";
 import { HIRE_GUIDES, childCheckLabel } from "@/lib/seo-content";
 import { guideNextLinks, guideNextNotice, guideNextShows, guideNextState } from "@/lib/guide-next";
 import { invoiceGuideLinks, invoiceGuideNotice } from "@/lib/invoice-guide";
@@ -62,16 +63,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
         })
       : null;
 
-  const capitals = states.flatMap((state) =>
-    state.cities
-      .filter((city) =>
-        ["sydney", "melbourne", "brisbane", "perth", "adelaide", "canberra", "hobart", "darwin"].includes(city.slug),
-      )
-      .map((city) => ({
-        href: `/caregivers/${specialty.slug}/${state.slug}/${city.slug}`,
-        label: `${specialty.pluralName} in ${city.name}`,
-      })),
-  );
+  const cityLinks = crawlSpecialtyCityLinks(specialty, states);
 
   return (
     <article className="mx-auto max-w-3xl">
@@ -192,7 +184,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
 
       <h2 className="mt-12 text-xl font-semibold">Find {specialty.pluralName.toLowerCase()} by city</h2>
       <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-        {capitals.map((link) => (
+        {cityLinks.map((link) => (
           <li key={link.href}>
             <Link className="text-teal hover:underline" href={link.href}>
               {link.label}

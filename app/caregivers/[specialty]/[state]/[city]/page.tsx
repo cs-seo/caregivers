@@ -54,7 +54,7 @@ export default async function CityDirectoryPage({
     }),
   ]);
   const seo = { specialty: spec, state: place.state, city: place };
-  const nearby = (st?.cities ?? []).filter((item) => item.slug !== place.slug).slice(0, 10);
+  const nearby = (st?.cities ?? []).filter((item) => item.slug !== place.slug);
   const suburbs = place.suburbs ?? [];
 
   return (
