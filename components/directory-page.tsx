@@ -104,6 +104,11 @@ import {
   nanniesVicNextNotice,
   nanniesVicNextShows,
 } from "@/lib/nannies-vic-next";
+import {
+  babysittersVicNextLinks,
+  babysittersVicNextNotice,
+  babysittersVicNextShows,
+} from "@/lib/babysitters-vic-next";
 import { respiteNextLinks, respiteNextNotice, respiteNextShows } from "@/lib/respite-next";
 import {
   directoryIsSuburbPath,
@@ -340,6 +345,13 @@ export async function DirectoryResults({
     jobAttached: Boolean(jobTitle),
   });
   const showNanniesVicNext = nanniesVicNextShows({
+    isFamily: Boolean(canShortlist),
+    specialtySlug: filters.specialty,
+    stateSlug: filters.state,
+    stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
+    jobAttached: Boolean(jobTitle),
+  });
+  const showBabysittersVicNext = babysittersVicNextShows({
     isFamily: Boolean(canShortlist),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
@@ -686,6 +698,17 @@ export async function DirectoryResults({
           <p>{nanniesVicNextNotice()}</p>
           <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
             {nanniesVicNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showBabysittersVicNext ? (
+        <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+          <p>{babysittersVicNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {babysittersVicNextLinks().map((link) => (
               <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
                 {link.label}
               </Link>
