@@ -385,12 +385,6 @@ export async function seedDemoShortlist(prisma: PrismaClient) {
   return saved;
 }
 
-const READ_DEMO_BODIES = [
-  "Hi Sarah — Mum is expecting you from 8am. The key is in the lockbox, code 2048.",
-  "Thanks Alex. I’ll arrive at 7:50 and send a note after breakfast.",
-  "Priya, school finishes at 3:10 today. Luca has swimming gear in the blue bag.",
-];
-
 const JAMES_UNREAD = "I can do Saturday. Let’s meet at Parramatta station at 9:50.";
 const FAMILY_TO_SARAH_UNREAD = "Also please bring the blood pressure cuff from the hall cupboard.";
 
