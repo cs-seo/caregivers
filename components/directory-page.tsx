@@ -129,6 +129,11 @@ import {
   companionCareVicNextNotice,
   companionCareVicNextShows,
 } from "@/lib/companion-care-vic-next";
+import {
+  specialNeedsQldNextLinks,
+  specialNeedsQldNextNotice,
+  specialNeedsQldNextShows,
+} from "@/lib/special-needs-qld-next";
 import { respiteNextLinks, respiteNextNotice, respiteNextShows } from "@/lib/respite-next";
 import {
   directoryIsSuburbPath,
@@ -400,6 +405,13 @@ export async function DirectoryResults({
     jobAttached: Boolean(jobTitle),
   });
   const showCompanionCareVicNext = companionCareVicNextShows({
+    isFamily: Boolean(canShortlist),
+    specialtySlug: filters.specialty,
+    stateSlug: filters.state,
+    stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
+    jobAttached: Boolean(jobTitle),
+  });
+  const showSpecialNeedsQldNext = specialNeedsQldNextShows({
     isFamily: Boolean(canShortlist),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
@@ -801,6 +813,17 @@ export async function DirectoryResults({
           <p>{companionCareVicNextNotice()}</p>
           <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
             {companionCareVicNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showSpecialNeedsQldNext ? (
+        <div className="mt-4 rounded-xl bg-sage p-3 text-sm">
+          <p>{specialNeedsQldNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {specialNeedsQldNextLinks().map((link) => (
               <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
                 {link.label}
               </Link>
