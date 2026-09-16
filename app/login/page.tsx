@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { auth } from "@/auth";
 import { GuestBrowsePanel } from "@/components/guest-browse";
 import { loginAction } from "@/lib/actions";
+import { loginNextLinks, loginNextNotice, loginNextShows } from "@/lib/login-next";
 import { pageMeta } from "@/lib/seo";
 
 export const metadata = pageMeta({
@@ -16,6 +18,8 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string; callbackUrl?: string }>;
 }) {
   const query = await searchParams;
+  const session = await auth();
+  const showLoginNext = loginNextShows({ isFamily: session?.user?.role === "FAMILY" });
   return (
     <div className="mx-auto max-w-md">
       <h1 className="text-3xl font-semibold text-ink">Log in</h1>
@@ -40,7 +44,22 @@ export default async function LoginPage({
       <p className="mt-4 text-sm">
         New here? <Link href="/register" className="text-teal">Create an account</Link>
       </p>
-      <GuestBrowsePanel />
+      {showLoginNext ? (
+        <div className="mt-6 rounded-xl bg-sage p-3 text-sm">
+          <p>{loginNextNotice()}</p>
+          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {loginNextLinks().map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="font-medium text-teal hover:underline">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <GuestBrowsePanel />
+      )}
     </div>
   );
 }
