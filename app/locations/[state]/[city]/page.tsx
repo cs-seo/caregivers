@@ -9,6 +9,7 @@ import { newcastleNextLinks, newcastleNextNotice, newcastleNextShows } from "@/l
 import { perthNextLinks, perthNextNotice, perthNextShows } from "@/lib/perth-next";
 import { byronBayNextLinks, byronBayNextNotice, byronBayNextShows } from "@/lib/byron-bay-next";
 import { coffsHarbourNextLinks, coffsHarbourNextNotice, coffsHarbourNextShows } from "@/lib/coffs-harbour-next";
+import { hunterValleyNextLinks, hunterValleyNextNotice, hunterValleyNextShows } from "@/lib/hunter-valley-next";
 import { lismoreNextLinks, lismoreNextNotice, lismoreNextShows } from "@/lib/lismore-next";
 import { toowoombaNextLinks, toowoombaNextNotice, toowoombaNextShows } from "@/lib/toowoomba-next";
 import { getCity, getSpecialties } from "@/lib/queries";
@@ -75,6 +76,11 @@ export default async function CityLocationsPage({
     citySlug: place.slug,
   });
   const showByronBayNext = byronBayNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showHunterValleyNext = hunterValleyNextShows({
     isFamily,
     stateSlug: place.state.slug,
     citySlug: place.slug,
@@ -196,6 +202,17 @@ export default async function CityLocationsPage({
           <p>{byronBayNextNotice()}</p>
           <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
             {byronBayNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showHunterValleyNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{hunterValleyNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {hunterValleyNextLinks().map((link) => (
               <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
                 {link.label}
               </Link>
