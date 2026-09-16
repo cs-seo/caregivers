@@ -25,6 +25,7 @@ import { gympieNextLinks, gympieNextNotice, gympieNextShows } from "@/lib/gympie
 import { cairnsNextLinks, cairnsNextNotice, cairnsNextShows } from "@/lib/cairns-next";
 import { townsvilleNextLinks, townsvilleNextNotice, townsvilleNextShows } from "@/lib/townsville-next";
 import { mackayNextLinks, mackayNextNotice, mackayNextShows } from "@/lib/mackay-next";
+import { rockhamptonNextLinks, rockhamptonNextNotice, rockhamptonNextShows } from "@/lib/rockhampton-next";
 import { lismoreNextLinks, lismoreNextNotice, lismoreNextShows } from "@/lib/lismore-next";
 import { toowoombaNextLinks, toowoombaNextNotice, toowoombaNextShows } from "@/lib/toowoomba-next";
 import { getCity, getSpecialties } from "@/lib/queries";
@@ -166,6 +167,11 @@ export default async function CityLocationsPage({
     citySlug: place.slug,
   });
   const showMackayNext = mackayNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showRockhamptonNext = rockhamptonNextShows({
     isFamily,
     stateSlug: place.state.slug,
     citySlug: place.slug,
@@ -452,6 +458,17 @@ export default async function CityLocationsPage({
           <p>{mackayNextNotice()}</p>
           <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
             {mackayNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showRockhamptonNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{rockhamptonNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {rockhamptonNextLinks().map((link) => (
               <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
                 {link.label}
               </Link>
