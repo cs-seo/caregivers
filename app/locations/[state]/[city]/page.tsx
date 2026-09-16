@@ -16,6 +16,7 @@ import { gunnedahNextLinks, gunnedahNextNotice, gunnedahNextShows } from "@/lib/
 import { dalbyNextLinks, dalbyNextNotice, dalbyNextShows } from "@/lib/dalby-next";
 import { swanHillNextLinks, swanHillNextNotice, swanHillNextShows } from "@/lib/swan-hill-next";
 import { bundabergNextLinks, bundabergNextNotice, bundabergNextShows } from "@/lib/bundaberg-next";
+import { armidaleNextLinks, armidaleNextNotice, armidaleNextShows } from "@/lib/armidale-next";
 import { lismoreNextLinks, lismoreNextNotice, lismoreNextShows } from "@/lib/lismore-next";
 import { toowoombaNextLinks, toowoombaNextNotice, toowoombaNextShows } from "@/lib/toowoomba-next";
 import { getCity, getSpecialties } from "@/lib/queries";
@@ -112,6 +113,11 @@ export default async function CityLocationsPage({
     citySlug: place.slug,
   });
   const showBundabergNext = bundabergNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showArmidaleNext = armidaleNextShows({
     isFamily,
     stateSlug: place.state.slug,
     citySlug: place.slug,
@@ -299,6 +305,17 @@ export default async function CityLocationsPage({
           <p>{bundabergNextNotice()}</p>
           <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
             {bundabergNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showArmidaleNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{armidaleNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {armidaleNextLinks().map((link) => (
               <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
                 {link.label}
               </Link>
