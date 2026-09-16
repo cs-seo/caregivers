@@ -1,4 +1,0 @@
--- AlterTable
-ALTER TABLE "SavedSearch" ADD COLUMN "alertsOn" BOOLEAN NOT NULL DEFAULT true;
-ALTER TABLE "SavedSearch" ADD COLUMN "lastAlertedCount" INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE "SavedSearch" ADD COLUMN "alertedAt" DATETIME;
