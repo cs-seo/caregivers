@@ -15,10 +15,10 @@ const marrickville = {
 };
 
 test("jobPostingJsonLd describes an accepting sit for Google Jobs", () => {
-  const data = jobPostingJsonLd(marrickville, true, "https://careproof.com.au");
+  const data = jobPostingJsonLd(marrickville, true, "https://caregiver.com.au");
   assert.equal(data?.["@type"], "JobPosting");
   assert.equal(data?.title, marrickville.title);
-  assert.equal(data?.url, "https://careproof.com.au/care-requests/weekday-aged-care-marrickville");
+  assert.equal(data?.url, "https://caregiver.com.au/care-requests/weekday-aged-care-marrickville");
   assert.equal(data?.employmentType, "CONTRACTOR");
   assert.equal(data?.industry, "Aged care");
   assert.equal(data?.jobLocation.address.addressLocality, "Sydney");

@@ -5,8 +5,8 @@ import { jobShareHeading, jobShareNotice, jobSharePath, jobShareUrl } from "./jo
 test("jobShareUrl is the public care-request path", () => {
   assert.equal(jobSharePath("weekday-aged-care-marrickville"), "/care-requests/weekday-aged-care-marrickville");
   assert.equal(
-    jobShareUrl("weekday-aged-care-marrickville", "https://careproof.com.au"),
-    "https://careproof.com.au/care-requests/weekday-aged-care-marrickville",
+    jobShareUrl("weekday-aged-care-marrickville", "https://caregiver.com.au"),
+    "https://caregiver.com.au/care-requests/weekday-aged-care-marrickville",
   );
 });
 

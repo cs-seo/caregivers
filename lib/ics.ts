@@ -1,4 +1,4 @@
-import { BOOKING_STATUS } from "./constants";
+import { BOOKING_STATUS, SITE_HOST } from "./constants";
 import { parseSydneyDateTimeLocal, sydneyDateKey } from "./format";
 import { weekdayFromDateKey, type WeeklyWindow } from "./weekly-windows";
 
@@ -59,7 +59,7 @@ function vevent(event: IcsEventInput, now: Date) {
     : [`DTSTART:${icsDate(event.startAt)}`, `DTEND:${icsDate(event.endAt)}`];
   return [
     "BEGIN:VEVENT",
-    `UID:${event.id}@careproof.com.au`,
+    `UID:${event.id}@${SITE_HOST}`,
     `DTSTAMP:${icsDate(now)}`,
     ...startEnd,
     `SUMMARY:${summary}`,

@@ -27,7 +27,7 @@ export async function seedPendingRequestedAt(prisma: PrismaClient) {
 }
 
 export async function seedDemoDeclineReason(prisma: PrismaClient) {
-  const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
+  const family = await prisma.user.findUnique({ where: { email: "family@caregiver.com.au" } });
   const tess = await prisma.caregiverProfile.findUnique({
     where: { slug: "tess-okonkwo-babysitter-sydney" },
     include: { specialties: true },
@@ -78,7 +78,7 @@ export async function seedDemoDeclineReason(prisma: PrismaClient) {
 }
 
 export async function seedDemoPipeline(prisma: PrismaClient) {
-  const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
+  const family = await prisma.user.findUnique({ where: { email: "family@caregiver.com.au" } });
   const sarah = await prisma.caregiverProfile.findUnique({
     where: { slug: "sarah-nguyen-aged-care-sydney" },
     include: { specialties: true },
@@ -183,7 +183,7 @@ export async function seedDemoPipeline(prisma: PrismaClient) {
       },
       {
         bookingId: held.id,
-        senderId: (await prisma.user.findUnique({ where: { email: "carer@careproof.com.au" } }))!.id,
+        senderId: (await prisma.user.findUnique({ where: { email: "carer@caregiver.com.au" } }))!.id,
         body: "Thanks Alex. I’ll arrive at 7:50 and send a note after breakfast.",
       },
       {
@@ -198,7 +198,7 @@ export async function seedDemoPipeline(prisma: PrismaClient) {
 }
 
 export async function seedDemoRecurring(prisma: PrismaClient) {
-  const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
+  const family = await prisma.user.findUnique({ where: { email: "family@caregiver.com.au" } });
   const priya = await prisma.caregiverProfile.findUnique({
     where: { slug: "priya-nair-nanny-sydney" },
     include: { specialties: true },
@@ -258,7 +258,7 @@ export async function seedDemoRecurring(prisma: PrismaClient) {
 
 export async function seedDemoFundingRefs(prisma: PrismaClient) {
   const family = await prisma.user.findUnique({
-    where: { email: "family@careproof.com.au" },
+    where: { email: "family@caregiver.com.au" },
     include: { familyProfile: true },
   });
   if (!family?.familyProfile) return 0;
@@ -303,7 +303,7 @@ export async function seedDemoBlockedDates(prisma: PrismaClient) {
 }
 
 export async function seedDemoSeriesActions(prisma: PrismaClient) {
-  const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
+  const family = await prisma.user.findUnique({ where: { email: "family@caregiver.com.au" } });
   const james = await prisma.caregiverProfile.findUnique({
     where: { slug: "james-okafor-disability-support-sydney" },
     include: { specialties: true },
@@ -365,7 +365,7 @@ export async function seedDemoExpiringChecks(prisma: PrismaClient) {
 }
 
 export async function seedDemoShortlist(prisma: PrismaClient) {
-  const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
+  const family = await prisma.user.findUnique({ where: { email: "family@caregiver.com.au" } });
   if (!family) return 0;
   const slugs = [
     "sarah-nguyen-aged-care-sydney",
@@ -395,9 +395,9 @@ const JAMES_UNREAD = "I can do Saturday. Let’s meet at Parramatta station at 9
 const FAMILY_TO_SARAH_UNREAD = "Also please bring the blood pressure cuff from the hall cupboard.";
 
 export async function seedDemoUnreadMessages(prisma: PrismaClient) {
-  const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
-  const sarahUser = await prisma.user.findUnique({ where: { email: "carer@careproof.com.au" } });
-  const jamesUser = await prisma.user.findUnique({ where: { email: "james.okafor@careproof.com.au" } });
+  const family = await prisma.user.findUnique({ where: { email: "family@caregiver.com.au" } });
+  const sarahUser = await prisma.user.findUnique({ where: { email: "carer@caregiver.com.au" } });
+  const jamesUser = await prisma.user.findUnique({ where: { email: "james.okafor@caregiver.com.au" } });
   if (!family || !sarahUser || !jamesUser) return 0;
 
   await prisma.message.updateMany({
@@ -452,7 +452,7 @@ const PRIYA_HANDOVER = {
 
 export async function seedDemoHandover(prisma: PrismaClient) {
   const family = await prisma.user.findUnique({
-    where: { email: "family@careproof.com.au" },
+    where: { email: "family@caregiver.com.au" },
     include: { familyProfile: true },
   });
   if (!family?.familyProfile) return 0;
@@ -640,7 +640,7 @@ const LEICHHARDT_WELCOME = "Side gate is unlocked. Mum likes tea before the walk
 const LEICHHARDT_COVER = "I can cover Wednesday mornings in Leichhardt and already support a nearby client.";
 
 export async function seedDemoHiredRequest(prisma: PrismaClient) {
-  const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
+  const family = await prisma.user.findUnique({ where: { email: "family@caregiver.com.au" } });
   const sarah = await prisma.caregiverProfile.findUnique({
     where: { slug: "sarah-nguyen-aged-care-sydney" },
   });
@@ -742,8 +742,8 @@ const ALEX_TO_JAMES_JOB = "Could you do 8:15 if 8am is tight? Mum is usually up 
 const JAMES_TO_ALEX_JOB = "Yes — 8:15 works on Mon/Wed/Fri. I’ll confirm once I see the week.";
 
 export async function seedDemoJobMessages(prisma: PrismaClient) {
-  const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
-  const jamesUser = await prisma.user.findUnique({ where: { email: "james.okafor@careproof.com.au" } });
+  const family = await prisma.user.findUnique({ where: { email: "family@caregiver.com.au" } });
+  const jamesUser = await prisma.user.findUnique({ where: { email: "james.okafor@caregiver.com.au" } });
   const james = await prisma.caregiverProfile.findUnique({
     where: { slug: "james-okafor-disability-support-sydney" },
   });
@@ -796,7 +796,7 @@ const ELENA_AWAITING_NOTE =
 
 export async function seedDemoProposalAlerts(prisma: PrismaClient) {
   const family = await prisma.user.findUnique({
-    where: { email: "family@careproof.com.au" },
+    where: { email: "family@caregiver.com.au" },
     include: { familyProfile: true },
   });
   if (!family?.familyProfile) return 0;
@@ -847,7 +847,7 @@ export async function seedDemoJobAlerts(prisma: PrismaClient) {
 }
 
 export async function seedDemoAwaitingPay(prisma: PrismaClient) {
-  const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
+  const family = await prisma.user.findUnique({ where: { email: "family@caregiver.com.au" } });
   const elena = await prisma.caregiverProfile.findUnique({
     where: { slug: "elena-rossi-companion-care-sydney" },
     include: { specialties: true },
@@ -889,7 +889,7 @@ const CHLOE_DISPUTE_REPLY =
   "I stayed until 1:00 pm and recorded the morning medication. Happy to walk through the afternoon notes.";
 
 export async function seedDemoDispute(prisma: PrismaClient) {
-  const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
+  const family = await prisma.user.findUnique({ where: { email: "family@caregiver.com.au" } });
   const chloe = await prisma.caregiverProfile.findUnique({
     where: { slug: "chloe-bennett-aged-care-adelaide" },
     include: { specialties: true },
@@ -1085,7 +1085,7 @@ export async function seedDemoExpiredJob(prisma: PrismaClient) {
     }
     return 1;
   }
-  const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
+  const family = await prisma.user.findUnique({ where: { email: "family@caregiver.com.au" } });
   const specialty = await prisma.specialty.findUnique({ where: { slug: "companion-care" } });
   const city = await prisma.city.findFirst({
     where: { slug: "sydney", state: { slug: "nsw" } },
@@ -1131,7 +1131,7 @@ export async function seedDemoJobStarts(prisma: PrismaClient) {
 }
 
 export async function seedDemoSavedSearches(prisma: PrismaClient) {
-  const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
+  const family = await prisma.user.findUnique({ where: { email: "family@caregiver.com.au" } });
   if (!family) return 0;
   await prisma.savedSearch.deleteMany({
     where: {

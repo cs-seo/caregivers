@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BOOKING_STATUS, ROLES } from "@/lib/constants";
+import { BOOKING_STATUS, DEMO_FAMILY_EMAIL, ROLES } from "@/lib/constants";
 import { formatDateTime } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { composeReviewDueAlert, reviewsDueLabel } from "@/lib/reviews";
@@ -35,7 +35,7 @@ export default async function ReviewsDuePage() {
       when: formatDateTime(booking.startAt),
     })),
   );
-  const email = user.email ?? "family@careproof.com.au";
+  const email = user.email ?? DEMO_FAMILY_EMAIL;
 
   return (
     <div className="mx-auto max-w-2xl">

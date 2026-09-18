@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { GuestBrowsePanel } from "@/components/guest-browse";
 import { loginAction } from "@/lib/actions";
+import { DEMO_CARER_EMAIL, DEMO_FAMILY_EMAIL } from "@/lib/constants";
 import { loginNextLinks, loginNextNotice, loginNextShows } from "@/lib/login-next";
 import { pageMeta } from "@/lib/seo";
 
@@ -24,7 +25,7 @@ export default async function LoginPage({
     <div className="mx-auto max-w-md">
       <h1 className="text-3xl font-semibold text-ink">Log in</h1>
       <p className="mt-2 text-sm text-stone-500">
-        Demo family: family@careproof.com.au · Demo carer: carer@careproof.com.au · Password: CareProof123!
+        Demo family: {DEMO_FAMILY_EMAIL} · Demo carer: {DEMO_CARER_EMAIL} · Password: CareProof123!
       </p>
       {query.error ? <p className="mt-4 text-sm text-clay">Those details did not match.</p> : null}
       <form action={loginAction} className="mt-6 space-y-4 rounded-2xl border border-line bg-card p-5">

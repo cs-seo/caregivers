@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { markJobAlertSentAction, toggleJobAlertsAction } from "@/lib/actions";
-import { ROLES } from "@/lib/constants";
+import { DEMO_CARER_EMAIL, ROLES } from "@/lib/constants";
 import { formatJobStart, matchingJobs } from "@/lib/job-match";
 import { acceptingJobWhere } from "@/lib/job-status";
 import { prisma } from "@/lib/prisma";
@@ -53,7 +53,7 @@ export default async function JobAlertsPage({
     fitting.length,
     delta.newCount,
   );
-  const email = user.email ?? "carer@careproof.com.au";
+  const email = user.email ?? DEMO_CARER_EMAIL;
 
   return (
     <div className="mx-auto max-w-2xl">

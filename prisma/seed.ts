@@ -229,7 +229,7 @@ async function main() {
   const familyUsers = await Promise.all([
     prisma.user.create({
       data: {
-        email: "family@careproof.com.au",
+        email: "family@caregiver.com.au",
         passwordHash,
         name: "Alex Martin",
         phone: "0400 111 222",
@@ -250,7 +250,7 @@ async function main() {
     }),
     prisma.user.create({
       data: {
-        email: "family2@careproof.com.au",
+        email: "family2@caregiver.com.au",
         passwordHash,
         name: "Jess and Sam Clarke",
         phone: "0400 333 444",
@@ -266,7 +266,7 @@ async function main() {
     }),
     prisma.user.create({
       data: {
-        email: "family3@careproof.com.au",
+        email: "family3@caregiver.com.au",
         passwordHash,
         name: "David Okonkwo",
         phone: "0400 555 666",
@@ -306,12 +306,12 @@ async function main() {
     }
   }
 
-  const sarah = carerProfiles.find((u) => u.email === "carer@careproof.com.au")!.caregiverProfile!;
-  const priya = carerProfiles.find((u) => u.email === "priya.nair@careproof.com.au")!.caregiverProfile!;
-  const maya = carerProfiles.find((u) => u.email === "maya.chen@careproof.com.au")!.caregiverProfile!;
-  const daniel = carerProfiles.find((u) => u.email === "daniel.kemp@careproof.com.au")!.caregiverProfile!;
-  const chloe = carerProfiles.find((u) => u.email === "chloe.bennett@careproof.com.au")!.caregiverProfile!;
-  const william = carerProfiles.find((u) => u.email === "william.park@careproof.com.au")!.caregiverProfile!;
+  const sarah = carerProfiles.find((u) => u.email === "carer@caregiver.com.au")!.caregiverProfile!;
+  const priya = carerProfiles.find((u) => u.email === "priya.nair@caregiver.com.au")!.caregiverProfile!;
+  const maya = carerProfiles.find((u) => u.email === "maya.chen@caregiver.com.au")!.caregiverProfile!;
+  const daniel = carerProfiles.find((u) => u.email === "daniel.kemp@caregiver.com.au")!.caregiverProfile!;
+  const chloe = carerProfiles.find((u) => u.email === "chloe.bennett@caregiver.com.au")!.caregiverProfile!;
+  const william = carerProfiles.find((u) => u.email === "william.park@caregiver.com.au")!.caregiverProfile!;
 
   const requests = await Promise.all([
     prisma.careRequest.create({
@@ -680,7 +680,7 @@ async function main() {
   console.log(
     `Seeded ${carerProfiles.length} featured carers + ${generatedCount} generated profiles, ${familyUsers.length} families, ${requests.length} jobs, ${suburbCount} suburbs, ${pipeline.created} live demo bookings, ${shortlisted} shortlisted, ${recurring} recurring weeks, ${expiring} expiring checks, ${series} series weeks, ${blocked} days off, ${funding} funding refs, ${unread} unread messages, ${searches} saved searches, ${handover} handover notes, ${invoices} invoice numbers, ${replies} review replies, ${portraits} portraits, ${weekly} weekly windows, ${notice} notice hours, ${jobStarts} job start times, ${hired} hired demo request, ${invites} job invite, ${jobMessages} job messages, ${passOn} pass-on rows.`,
   );
-  console.log("Demo logins: family@careproof.com.au / carer@careproof.com.au / CareProof123!");
+  console.log("Demo logins: family@caregiver.com.au / carer@caregiver.com.au / CareProof123!");
 }
 
 main()

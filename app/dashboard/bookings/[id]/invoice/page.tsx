@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { PrintLink } from "@/components/print-link";
-import { PLATFORM_ABN, PLATFORM_ENTITY, SITE_NAME } from "@/lib/constants";
+import { PLATFORM_ABN, PLATFORM_ENTITY, SITE_HOST, SITE_NAME } from "@/lib/constants";
 import { fundingLines } from "@/lib/funding";
 import { invoiceNextLinks, invoiceNextNotice } from "@/lib/invoice-next";
 import { formatDate, formatDateTime } from "@/lib/format";
@@ -73,6 +73,8 @@ export default async function BookingInvoicePage({
             <h1 className="text-2xl font-semibold text-ink">{SITE_NAME}</h1>
             <p className="mt-1 text-sm text-stone-600">
               {PLATFORM_ENTITY}
+              <br />
+              {SITE_HOST}
               <br />
               ABN {PLATFORM_ABN} (demo)
               <br />

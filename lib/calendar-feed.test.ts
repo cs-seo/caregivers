@@ -16,8 +16,8 @@ test("isCalendarToken rejects junk and short secrets", () => {
 });
 
 test("subscribeUrls builds https and webcal links", () => {
-  const urls = subscribeUrls("demo-token-value-1234", "https://careproof.com.au");
-  assert.equal(urls.https, "https://careproof.com.au/feed/demo-token-value-1234/ics");
-  assert.equal(urls.webcal, "webcal://careproof.com.au/feed/demo-token-value-1234/ics");
+  const urls = subscribeUrls("demo-token-value-1234", "https://caregiver.com.au");
+  assert.equal(urls.https, "https://caregiver.com.au/feed/demo-token-value-1234/ics");
+  assert.equal(urls.webcal, "webcal://caregiver.com.au/feed/demo-token-value-1234/ics");
   assert.equal(calendarFeedPath("demo-token-value-1234"), "/feed/demo-token-value-1234/ics");
 });

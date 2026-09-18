@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import { LegalNextPanel } from "@/components/legal-next";
+import { SITE_HOST } from "@/lib/constants";
 import { termsNextLinks, termsNextNotice, termsNextShows } from "@/lib/terms-next";
 import { pageMeta } from "@/lib/seo";
 
@@ -17,8 +18,8 @@ export default async function TermsPage() {
     <div className="mx-auto max-w-3xl space-y-6">
       <h1 className="text-3xl font-semibold text-ink">Terms</h1>
       <p className="text-stone-600">
-        By creating an account you agree to use CareProof to book in-home care in Australia, pay into escrow, and
-        treat the other party fairly.
+        By creating an account you agree to use CareProof at {SITE_HOST} to book in-home care in Australia, pay
+        into escrow, and treat the other party fairly.
       </p>
       <section>
         <h2 className="text-xl font-semibold text-ink">Families</h2>

@@ -54,7 +54,7 @@ export function fallbackSearchName(href: string) {
 
 export function filtersFromSearchHref(href: string): DirectoryFilters | null {
   if (!isSafeSearchHref(href)) return null;
-  const url = new URL(href, "https://careproof.example");
+  const url = new URL(href, "https://caregiver.com.au");
   const parts = url.pathname.replace(/^\/caregivers\/?/, "").split("/").filter(Boolean);
   const params: Record<string, string> = {};
   url.searchParams.forEach((value, key) => {

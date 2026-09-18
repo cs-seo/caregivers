@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { markProposalAlertSentAction, toggleProposalAlertsAction } from "@/lib/actions";
-import { ROLES } from "@/lib/constants";
+import { DEMO_FAMILY_EMAIL, ROLES } from "@/lib/constants";
 import { acceptingJobWhere } from "@/lib/job-status";
 import { prisma } from "@/lib/prisma";
 import {
@@ -57,7 +57,7 @@ export default async function ProposalAlertsPage({
     pending.length,
     delta.newCount,
   );
-  const email = user.email ?? "family@careproof.com.au";
+  const email = user.email ?? DEMO_FAMILY_EMAIL;
 
   return (
     <div className="mx-auto max-w-2xl">

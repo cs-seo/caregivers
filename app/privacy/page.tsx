@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import { LegalNextPanel } from "@/components/legal-next";
+import { SITE_HOST } from "@/lib/constants";
 import { privacyNextLinks, privacyNextNotice, privacyNextShows } from "@/lib/privacy-next";
 import { pageMeta } from "@/lib/seo";
 
@@ -17,8 +18,8 @@ export default async function PrivacyPage() {
     <div className="mx-auto max-w-3xl space-y-6">
       <h1 className="text-3xl font-semibold text-ink">Privacy</h1>
       <p className="text-stone-600">
-        CareProof is an Australian marketplace. We collect the account, booking and screening details needed to
-        introduce families and carers, hold escrow, and show verified work history.
+        CareProof ({SITE_HOST}) is an Australian marketplace. We collect the account, booking and screening
+        details needed to introduce families and carers, hold escrow, and show verified work history.
       </p>
       <section>
         <h2 className="text-xl font-semibold text-ink">What we store</h2>

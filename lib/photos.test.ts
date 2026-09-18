@@ -20,11 +20,11 @@ test("sanitizePhotoUrl rejects unsafe schemes and paths", () => {
 
 test("absolutePhotoUrl prefixes local portraits", () => {
   assert.equal(
-    absolutePhotoUrl("/portraits/priya-nair.svg", "https://careproof.com.au"),
-    "https://careproof.com.au/portraits/priya-nair.svg",
+    absolutePhotoUrl("/portraits/priya-nair.svg", "https://caregiver.com.au"),
+    "https://caregiver.com.au/portraits/priya-nair.svg",
   );
-  assert.equal(absolutePhotoUrl("https://cdn.example.com/a.png", "https://careproof.com.au"), "https://cdn.example.com/a.png");
-  assert.equal(absolutePhotoUrl(null, "https://careproof.com.au"), null);
+  assert.equal(absolutePhotoUrl("https://cdn.example.com/a.png", "https://caregiver.com.au"), "https://cdn.example.com/a.png");
+  assert.equal(absolutePhotoUrl(null, "https://caregiver.com.au"), null);
 });
 
 test("portraitSvg is a circular illustrated avatar, not a photo", () => {

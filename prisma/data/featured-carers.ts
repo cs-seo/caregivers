@@ -33,7 +33,7 @@ export type FeaturedCarer = {
 
 export const featuredCarers: FeaturedCarer[] = [
   {
-    email: "carer@careproof.com.au",
+    email: "carer@caregiver.com.au",
     name: "Sarah Nguyen",
     slug: "sarah-nguyen-aged-care-sydney",
     headline: "AHPRA-registered nurse offering in-home aged care in Sydney's inner west",
@@ -79,7 +79,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0412 880 114",
   },
   {
-    email: "priya.nair@careproof.com.au",
+    email: "priya.nair@caregiver.com.au",
     name: "Priya Nair",
     slug: "priya-nair-nanny-sydney",
     headline: "Live-out nanny and after-school carer in Sydney's east",
@@ -116,7 +116,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0418 220 901",
   },
   {
-    email: "james.okafor@careproof.com.au",
+    email: "james.okafor@caregiver.com.au",
     name: "James Okafor",
     slug: "james-okafor-disability-support-sydney",
     headline: "NDIS support worker for community access across Greater Sydney",
@@ -154,7 +154,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0403 771 255",
   },
   {
-    email: "elena.rossi@careproof.com.au",
+    email: "elena.rossi@caregiver.com.au",
     name: "Elena Rossi",
     slug: "elena-rossi-companion-care-sydney",
     headline: "Companion carer and housekeeper for inner Sydney apartments",
@@ -187,7 +187,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0421 664 088",
   },
   {
-    email: "liam.patel@careproof.com.au",
+    email: "liam.patel@caregiver.com.au",
     name: "Liam Patel",
     slug: "liam-patel-aged-care-newcastle",
     headline: "Male aged care worker for personal care and overnight respite in Newcastle",
@@ -222,7 +222,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0490 112 334",
   },
   {
-    email: "maya.chen@careproof.com.au",
+    email: "maya.chen@caregiver.com.au",
     name: "Maya Chen",
     slug: "maya-chen-nanny-melbourne",
     headline: "Bilingual Mandarin-English nanny in Melbourne's inner north",
@@ -254,7 +254,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0432 908 771",
   },
   {
-    email: "tom.baker@careproof.com.au",
+    email: "tom.baker@caregiver.com.au",
     name: "Tom Baker",
     slug: "tom-baker-disability-support-melbourne",
     headline: "NDIS support worker and community access specialist in Melbourne",
@@ -287,7 +287,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0477 201 664",
   },
   {
-    email: "hannah.lee@careproof.com.au",
+    email: "hannah.lee@caregiver.com.au",
     name: "Hannah Lee",
     slug: "hannah-lee-nursing-melbourne",
     headline: "Registered nurse for complex in-home care across Melbourne",
@@ -321,7 +321,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0411 556 902",
   },
   {
-    email: "sofia.martinez@careproof.com.au",
+    email: "sofia.martinez@caregiver.com.au",
     name: "Sofia Martinez",
     slug: "sofia-martinez-housekeeping-melbourne",
     headline: "Housekeeper and domestic assistant for Melbourne families",
@@ -348,7 +348,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0408 331 229",
   },
   {
-    email: "noah.williams@careproof.com.au",
+    email: "noah.williams@caregiver.com.au",
     name: "Noah Williams",
     slug: "noah-williams-aged-care-geelong",
     headline: "Aged care and respite worker covering Geelong and the Bellarine",
@@ -380,7 +380,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0429 880 015",
   },
   {
-    email: "aisha.rahman@careproof.com.au",
+    email: "aisha.rahman@caregiver.com.au",
     name: "Aisha Rahman",
     slug: "aisha-rahman-nanny-brisbane",
     headline: "Nanny and babysitter for Brisbane's inner west",
@@ -411,7 +411,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0433 119 870",
   },
   {
-    email: "daniel.kemp@careproof.com.au",
+    email: "daniel.kemp@caregiver.com.au",
     name: "Daniel Kemp",
     slug: "daniel-kemp-disability-support-brisbane",
     headline: "NDIS support worker for Brisbane and Moreton Bay",
@@ -443,7 +443,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0466 221 094",
   },
   {
-    email: "grace.holloway@careproof.com.au",
+    email: "grace.holloway@caregiver.com.au",
     name: "Grace Holloway",
     slug: "grace-holloway-aged-care-gold-coast",
     headline: "Aged care and companion carer on the Gold Coast",
@@ -475,7 +475,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0417 663 201",
   },
   {
-    email: "lucas.brown@careproof.com.au",
+    email: "lucas.brown@caregiver.com.au",
     name: "Lucas Brown",
     slug: "lucas-brown-nursing-perth",
     headline: "Enrolled nurse for in-home aged care across Perth's northern suburbs",
@@ -508,7 +508,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0402 778 341",
   },
   {
-    email: "amelia.foster@careproof.com.au",
+    email: "amelia.foster@caregiver.com.au",
     name: "Amelia Foster",
     slug: "amelia-foster-nanny-perth",
     headline: "Nanny and after-school carer in Perth's western suburbs",
@@ -539,7 +539,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0455 019 228",
   },
   {
-    email: "samuel.adebayo@careproof.com.au",
+    email: "samuel.adebayo@caregiver.com.au",
     name: "Samuel Adebayo",
     slug: "samuel-adebayo-disability-support-perth",
     headline: "NDIS support worker for Perth and Mandurah",
@@ -571,7 +571,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0488 201 773",
   },
   {
-    email: "chloe.bennett@careproof.com.au",
+    email: "chloe.bennett@caregiver.com.au",
     name: "Chloe Bennett",
     slug: "chloe-bennett-aged-care-adelaide",
     headline: "Aged care worker and companion in Adelaide's eastern suburbs",
@@ -604,7 +604,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0413 990 226",
   },
   {
-    email: "harry.ng@careproof.com.au",
+    email: "harry.ng@caregiver.com.au",
     name: "Harry Ng",
     slug: "harry-ng-nanny-adelaide",
     headline: "Male nanny and after-school carer in Adelaide",
@@ -634,7 +634,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0422 667 109",
   },
   {
-    email: "isla.macdonald@careproof.com.au",
+    email: "isla.macdonald@caregiver.com.au",
     name: "Isla Macdonald",
     slug: "isla-macdonald-nursing-hobart",
     headline: "Registered nurse for in-home care in Hobart and the Eastern Shore",
@@ -667,7 +667,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0438 201 554",
   },
   {
-    email: "ben.taylor@careproof.com.au",
+    email: "ben.taylor@caregiver.com.au",
     name: "Ben Taylor",
     slug: "ben-taylor-disability-support-hobart",
     headline: "Disability support worker covering Hobart and Kingston",
@@ -698,7 +698,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0499 334 118",
   },
   {
-    email: "olivia.grant@careproof.com.au",
+    email: "olivia.grant@caregiver.com.au",
     name: "Olivia Grant",
     slug: "olivia-grant-nanny-canberra",
     headline: "Nanny and babysitter for Canberra families",
@@ -730,7 +730,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0414 229 880",
   },
   {
-    email: "marcus.hill@careproof.com.au",
+    email: "marcus.hill@caregiver.com.au",
     name: "Marcus Hill",
     slug: "marcus-hill-aged-care-canberra",
     headline: "Personal care and respite worker in Canberra and Queanbeyan",
@@ -762,7 +762,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0471 880 442",
   },
   {
-    email: "fatima.yilmaz@careproof.com.au",
+    email: "fatima.yilmaz@caregiver.com.au",
     name: "Fatima Yilmaz",
     slug: "fatima-yilmaz-disability-support-darwin",
     headline: "NDIS support worker in Darwin and Palmerston",
@@ -793,7 +793,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0401 228 773",
   },
   {
-    email: "jack.murray@careproof.com.au",
+    email: "jack.murray@caregiver.com.au",
     name: "Jack Murray",
     slug: "jack-murray-aged-care-darwin",
     headline: "Aged care worker for Darwin and rural Top End visits",
@@ -823,7 +823,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0427 119 005",
   },
   {
-    email: "ruby.shaw@careproof.com.au",
+    email: "ruby.shaw@caregiver.com.au",
     name: "Ruby Shaw",
     slug: "ruby-shaw-nanny-gold-coast",
     headline: "Casual babysitter and nanny from Broadbeach to Tweed",
@@ -853,7 +853,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0450 882 119",
   },
   {
-    email: "ethan.cole@careproof.com.au",
+    email: "ethan.cole@caregiver.com.au",
     name: "Ethan Cole",
     slug: "ethan-cole-special-needs-sydney",
     headline: "Special needs carer and after-school support in Sydney",
@@ -886,7 +886,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0419 334 770",
   },
   {
-    email: "nina.kovac@careproof.com.au",
+    email: "nina.kovac@caregiver.com.au",
     name: "Nina Kovac",
     slug: "nina-kovac-housekeeping-sydney",
     headline: "Housekeeper for busy Sydney households",
@@ -913,7 +913,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0405 118 226",
   },
   {
-    email: "william.park@careproof.com.au",
+    email: "william.park@caregiver.com.au",
     name: "William Park",
     slug: "william-park-respite-melbourne",
     headline: "Overnight respite and companion care in Melbourne",
@@ -945,7 +945,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0431 667 900",
   },
   {
-    email: "zoe.anderson@careproof.com.au",
+    email: "zoe.anderson@caregiver.com.au",
     name: "Zoe Anderson",
     slug: "zoe-anderson-nanny-brisbane",
     headline: "Newborn and infant nanny in Brisbane",
@@ -985,7 +985,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0467 229 118",
   },
   {
-    email: "chris.owens@careproof.com.au",
+    email: "chris.owens@caregiver.com.au",
     name: "Chris Owens",
     slug: "chris-owens-personal-care-wollongong",
     headline: "Personal care assistant for the Illawarra",
@@ -1017,7 +1017,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0428 554 003",
   },
   {
-    email: "lara.schmidt@careproof.com.au",
+    email: "lara.schmidt@caregiver.com.au",
     name: "Lara Schmidt",
     slug: "lara-schmidt-companion-care-adelaide",
     headline: "Companion carer for Adelaide's coastal suburbs",
@@ -1047,7 +1047,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0416 778 220",
   },
   {
-    email: "owen.fraser@careproof.com.au",
+    email: "owen.fraser@caregiver.com.au",
     name: "Owen Fraser",
     slug: "owen-fraser-after-school-canberra",
     headline: "After-school carer and homework help in Canberra",
@@ -1079,7 +1079,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0449 201 336",
   },
   {
-    email: "tess.okonkwo@careproof.com.au",
+    email: "tess.okonkwo@caregiver.com.au",
     name: "Tess Okonkwo",
     slug: "tess-okonkwo-babysitter-sydney",
     headline: "Date-night and last-minute babysitter in Sydney's inner west",
@@ -1113,7 +1113,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0413 662 880",
   },
   {
-    email: "jonah.hale@careproof.com.au",
+    email: "jonah.hale@caregiver.com.au",
     name: "Jonah Hale",
     slug: "jonah-hale-babysitter-melbourne",
     headline: "Evening babysitter for Fitzroy date nights and visitor stays",
@@ -1145,7 +1145,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0432 118 904",
   },
   {
-    email: "mei.laurent@careproof.com.au",
+    email: "mei.laurent@caregiver.com.au",
     name: "Mei Laurent",
     slug: "mei-laurent-nanny-brisbane",
     headline: "Bilingual overnight nanny for Brisbane and visiting families",
@@ -1179,7 +1179,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0408 771 255",
   },
   {
-    email: "saskia.berg@careproof.com.au",
+    email: "saskia.berg@caregiver.com.au",
     name: "Saskia Berg",
     slug: "saskia-berg-babysitter-perth",
     headline: "Cottesloe babysitter for date nights and beach-week days",
@@ -1211,7 +1211,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0421 903 441",
   },
   {
-    email: "harpreet.gill@careproof.com.au",
+    email: "harpreet.gill@caregiver.com.au",
     name: "Harpreet Gill",
     slug: "harpreet-gill-babysitter-sydney",
     headline: "Last-minute babysitter with a car across inner Sydney",
@@ -1245,7 +1245,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0417 229 018",
   },
   {
-    email: "ella.bright@careproof.com.au",
+    email: "ella.bright@caregiver.com.au",
     name: "Ella Bright",
     slug: "ella-bright-nanny-brisbane",
     headline: "Overnight and event babysitter in Fortitude Valley",
@@ -1277,7 +1277,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0455 301 772",
   },
   {
-    email: "nora.vukovic@careproof.com.au",
+    email: "nora.vukovic@caregiver.com.au",
     name: "Nora Vukovic",
     slug: "nora-vukovic-babysitter-adelaide",
     headline: "Date-night babysitter for Norwood and the eastern suburbs",
@@ -1311,7 +1311,7 @@ export const featuredCarers: FeaturedCarer[] = [
     phone: "0412 774 903",
   },
   {
-    email: "caleb.shore@careproof.com.au",
+    email: "caleb.shore@caregiver.com.au",
     name: "Caleb Shore",
     slug: "caleb-shore-babysitter-hobart",
     headline: "Evening and weekend babysitter in Battery Point",

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { siteUrl } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { bookingToIcsEvent, bookingsToIcs, shouldIncludeInCalendar } from "@/lib/ics";
@@ -6,7 +7,7 @@ import { bookingToIcsEvent, bookingsToIcs, shouldIncludeInCalendar } from "@/lib
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
   if (!user) {
-    return NextResponse.redirect(new URL("/login", process.env.AUTH_URL ?? "http://localhost:3000"));
+    return NextResponse.redirect(new URL("/login", process.env.AUTH_URL ?? siteUrl()));
   }
   const { id } = await params;
   const booking = await prisma.booking.findUnique({

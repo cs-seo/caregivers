@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { markInviteAlertSentAction, toggleInviteAlertsAction } from "@/lib/actions";
-import { ROLES } from "@/lib/constants";
+import { SITE_HOST, ROLES } from "@/lib/constants";
 import { formatJobStart } from "@/lib/job-match";
 import { acceptingJobWhere } from "@/lib/job-status";
 import { prisma } from "@/lib/prisma";
@@ -59,7 +59,7 @@ export default async function InviteAlertsPage({
     invites.length,
     delta.newCount,
   );
-  const email = user.email ?? "james.okafor@careproof.com.au";
+  const email = user.email ?? `james.okafor@${SITE_HOST}`;
 
   return (
     <div className="mx-auto max-w-2xl">

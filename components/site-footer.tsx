@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SITE_NAME } from "@/lib/constants";
+import { SITE_HOST, SITE_NAME } from "@/lib/constants";
 import { crawlFooterSpecialtyLinks, crawlFooterStateLinks } from "@/lib/crawl-links";
 import { footerBoardLink } from "@/lib/footer-board";
 import { getSpecialties, getStates } from "@/lib/queries";
@@ -15,6 +15,7 @@ export async function SiteFooter() {
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 md:grid-cols-4">
         <div>
           <p className="text-lg font-semibold text-white">{SITE_NAME}</p>
+          <p className="mt-1 text-sm text-white/80">{SITE_HOST}</p>
           <p className="mt-2 text-sm text-sage/80">
             Verified carers across Australia. Funds stay in escrow until the booking is complete.
           </p>
@@ -100,7 +101,7 @@ export async function SiteFooter() {
         </div>
       </div>
       <div className="border-t border-white/10 py-4 text-center text-xs text-sage/70">
-        © {new Date().getFullYear()} {SITE_NAME}. Escrow protects families and carers. Prices in AUD.
+        © {new Date().getFullYear()} {SITE_NAME} · {SITE_HOST}. Escrow protects families and carers. Prices in AUD.
       </div>
     </footer>
   );

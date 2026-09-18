@@ -25,20 +25,20 @@ npm run dev
 
 Demo logins (password `CareProof123!`):
 
-- Family: `family@careproof.com.au`
-- Carer: `carer@careproof.com.au`
+- Family: `family@caregiver.com.au`
+- Carer: `carer@caregiver.com.au`
 
 ## Five-minute demo
 
 1. Open `/caregivers/nannies/nsw/sydney/bondi` — Priya Nair plus nearby clones from her profile.
 2. Log in as the family. Dashboard shows a request waiting on James, escrow with Sarah, and after-school care in progress with Priya.
 3. Open Sarah’s booking and use the message thread.
-4. Log in as the carer (`carer@careproof.com.au`) and edit `/dashboard/profile`.
+4. Log in as the carer (`carer@caregiver.com.au`) and edit `/dashboard/profile`.
 5. Join as a new carer at `/register` — you land on the profile checklist.
 
 ## Vercel
 
-Preview builds no longer require `DATABASE_URL` at compile time. If it is missing, CareProof uses `prisma/demo.db` (copied to `/tmp` on Vercel so bookings can write). Set `AUTH_SECRET` and `NEXT_PUBLIC_SITE_URL` on the project for production.
+Preview builds no longer require `DATABASE_URL` at compile time. If it is missing, CareProof uses `prisma/demo.db` (copied to `/tmp` on Vercel so bookings can write). Production domain is **caregiver.com.au**. Set `AUTH_SECRET`, `AUTH_URL=https://caregiver.com.au`, and `NEXT_PUBLIC_SITE_URL=https://caregiver.com.au` on the project.
 
 ## Payments
 

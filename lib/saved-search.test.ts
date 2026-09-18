@@ -99,7 +99,7 @@ test("searchAlertLabel and composeSearchAlert describe new carers since the last
   assert.equal(digest.subject, "CareProof: 23 new carers — Aged care in Sydney · needed 15 Sept 2026");
   assert.match(digest.body, /43 carers match now · 23 new/);
   assert.match(digest.body, /\/caregivers\/aged-care\/nsw\/sydney\?availableOn=2026-09-15/);
-  assert.ok(searchAlertMailto("family@careproof.com.au", digest).startsWith("mailto:family%40careproof.com.au"));
+  assert.ok(searchAlertMailto("family@caregiver.com.au", digest).startsWith("mailto:family%40caregiver.com.au"));
 });
 
 test("jobAlertLabel and composeJobFitAlert describe new fitting jobs", () => {

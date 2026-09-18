@@ -164,8 +164,8 @@ export function generateCarers(count = 480, templates: FeaturedCarer[] = feature
     if (usedSlugs.has(slug)) slug = `${slug}-${i}`;
     usedSlugs.add(slug);
 
-    let email = `${first}.${last}.${i}@careproof.com.au`.toLowerCase().replace(/[^a-z0-9.@]/g, "");
-    if (usedEmails.has(email)) email = `carer.${i}@careproof.com.au`;
+    let email = `${first}.${last}.${i}@caregiver.com.au`.toLowerCase().replace(/[^a-z0-9.@]/g, "");
+    if (usedEmails.has(email)) email = `carer.${i}@caregiver.com.au`;
     usedEmails.add(email);
 
     const jitter = range(rand, -200, 300);

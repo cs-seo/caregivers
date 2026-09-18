@@ -44,8 +44,8 @@ test("bookingsToIcs writes one VEVENT per week in a series", () => {
   assert.match(ics, /^BEGIN:VCALENDAR\r\n/);
   assert.match(ics, /X-WR-CALNAME:CareProof weekly series/);
   assert.equal((ics.match(/BEGIN:VEVENT/g) ?? []).length, 2);
-  assert.match(ics, /UID:week-1@careproof.com.au/);
-  assert.match(ics, /UID:week-2@careproof.com.au/);
+  assert.match(ics, /UID:week-1@caregiver.com.au/);
+  assert.match(ics, /UID:week-2@caregiver.com.au/);
   assert.match(ics, /SUMMARY:Babysitters with James Okafor \(week 1 of 3\)/);
   assert.match(ics, /DTSTART:20261010T060000Z/);
   assert.match(ics, /DTEND:20261017T100000Z/);
@@ -65,7 +65,7 @@ test("bookingsToIcs writes all-day away events as DATE values", () => {
     "CareProof roster",
   );
   assert.match(ics, /X-WR-CALNAME:CareProof roster/);
-  assert.match(ics, /UID:away-carer-1-2026-09-13@careproof.com.au/);
+  assert.match(ics, /UID:away-carer-1-2026-09-13@caregiver.com.au/);
   assert.match(ics, /DTSTART;VALUE=DATE:20260913/);
   assert.match(ics, /DTEND;VALUE=DATE:20260914/);
   assert.match(ics, /SUMMARY:Away · Sarah Nguyen/);

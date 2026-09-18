@@ -39,7 +39,7 @@ async function main() {
     if (created % 50 === 0) console.log(`Created ${created}/${generated.length}...`);
   }
 
-  const family = await prisma.user.findUnique({ where: { email: "family@careproof.com.au" } });
+  const family = await prisma.user.findUnique({ where: { email: "family@caregiver.com.au" } });
   const agedCare = specBySlug["aged-care"] ?? specialties[0];
   if (family && newProfileIds.length > 0) {
     const reviewCount = Math.min(90, newProfileIds.length);

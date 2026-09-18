@@ -4,7 +4,7 @@ import { markSavedSearchAlertSentAction, toggleSavedSearchAlertsAction } from "@
 import { directoryStats } from "@/lib/queries";
 import { requireUser } from "@/lib/session";
 import { pageMeta } from "@/lib/seo";
-import { ROLES } from "@/lib/constants";
+import { DEMO_FAMILY_EMAIL, ROLES } from "@/lib/constants";
 import {
   composeSearchAlert,
   filtersFromSearchHref,
@@ -44,7 +44,7 @@ export default async function SavedSearchAlertsPage({
     }),
   );
   const watched = rows.filter((row) => row.search.alertsOn);
-  const email = user.email ?? "family@careproof.com.au";
+  const email = user.email ?? DEMO_FAMILY_EMAIL;
   const digest = composeSearchAlert(
     watched.map((row) => ({
       name: row.search.name,

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { siteUrl } from "@/lib/constants";
 import { bookingsToIcs } from "@/lib/ics";
 import { rosterCalendarForUser } from "@/lib/roster-calendar";
 import { requireUser } from "@/lib/session";
@@ -6,7 +7,7 @@ import { requireUser } from "@/lib/session";
 export async function GET() {
   const user = await requireUser();
   if (!user) {
-    return NextResponse.redirect(new URL("/login", process.env.AUTH_URL ?? "http://localhost:3000"));
+    return NextResponse.redirect(new URL("/login", process.env.AUTH_URL ?? siteUrl()));
   }
 
   const { events, calendarName } = await rosterCalendarForUser(user);

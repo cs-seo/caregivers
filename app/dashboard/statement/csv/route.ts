@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { siteUrl } from "@/lib/constants";
 import { fundedInvoicePeers, persistMissingInvoiceNumbers } from "@/lib/invoice-peers";
 import { australianFinancialYear, statementCsv, toStatementRows } from "@/lib/statement";
 import { prisma } from "@/lib/prisma";
@@ -7,7 +8,7 @@ import { requireUser } from "@/lib/session";
 export async function GET() {
   const user = await requireUser();
   if (!user) {
-    return NextResponse.redirect(new URL("/login", process.env.AUTH_URL ?? "http://localhost:3000"));
+    return NextResponse.redirect(new URL("/login", process.env.AUTH_URL ?? siteUrl()));
   }
   const isFamily = user.role === "FAMILY";
   const bookings = await prisma.booking.findMany({
