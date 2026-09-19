@@ -14,6 +14,8 @@ import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { getSpecialties, getStates } from "@/lib/queries";
 import { pageMeta } from "@/lib/seo";
+import { TrackView } from "@/components/analytics";
+import { ANALYTICS_EVENTS } from "@/lib/analytics";
 import Link from "next/link";
 
 export const metadata = pageMeta({
@@ -60,6 +62,7 @@ export default async function PostJobPage({
 
   return (
     <div className="mx-auto max-w-xl">
+      <TrackView event={ANALYTICS_EVENTS.JOB_POST_STARTED} props={{ specialty: prefill.specialty, city: prefill.city }} />
       <h1 className="text-3xl font-semibold text-ink">Post a care request</h1>
       <p className="mt-2 text-stone-600">
         Like posting a job on Upwork: describe the care, set a budget, and hire the best proposal into escrow.

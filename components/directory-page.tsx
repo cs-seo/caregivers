@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { TrackView } from "@/components/analytics";
+import { ANALYTICS_EVENTS } from "@/lib/analytics";
 import { AttachJobBanner } from "@/components/attach-job-banner";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { CaregiverCardView } from "@/components/caregiver-card";
@@ -460,8 +462,28 @@ export async function DirectoryResults({
   const inviteByCarer = new Map(inviteRows.map((row) => [row.caregiverId, row]));
   const proposedIds = new Set(proposedRows.map((row) => row.caregiverId));
 
+  // A "search" is a user-driven query: free text, an availability filter, or
+  // filters chosen on the generic /caregivers page (as opposed to the route
+  // params that define a specialty/location landing page).
+  const searchPerformed =
+    Boolean(filters.q || filters.availableOn || filters.availableNow) ||
+    (path === "/caregivers" &&
+      Boolean(filters.specialty || filters.state || filters.city));
+
   return (
     <div>
+      {searchPerformed ? (
+        <TrackView
+          event={ANALYTICS_EVENTS.SEARCH_PERFORMED}
+          props={{
+            specialty: filters.specialty,
+            state: filters.state,
+            city: filters.city,
+            q: filters.q,
+            results: stats.count,
+          }}
+        />
+      ) : null}
       <JsonLd
         data={[
           breadcrumbJsonLd(

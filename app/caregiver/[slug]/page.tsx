@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { TrackClick, TrackView } from "@/components/analytics";
+import { ANALYTICS_EVENTS } from "@/lib/analytics";
 import { AttachJobBanner } from "@/components/attach-job-banner";
 import { Badge, CredentialDetails } from "@/components/badges";
 import { InviteSentNotice } from "@/components/invite-sent-notice";
@@ -183,6 +185,7 @@ export default async function CaregiverProfilePage({
 
   return (
     <div className="pb-20 md:pb-0">
+      <TrackView event={ANALYTICS_EVENTS.PROFILE_VIEWED} props={{ slug: carer.slug }} />
       <JsonLd
         data={[
           breadcrumbJsonLd([
@@ -483,16 +486,21 @@ export default async function CaregiverProfilePage({
               <span className="ml-2">{profileJobFitNotice(jobFit.fit, attachJob.startDate)}</span>
             </p>
           ) : null}
-          <Link
-            href={bookHref(carer.slug, {
-              start: startDate || fortnight.nextFree || undefined,
-              at: startDate ? startClock : undefined,
-              job: jobSlug,
-            })}
-            className="mt-4 block rounded-xl bg-teal py-3 text-center font-semibold text-white no-underline hover:bg-teal-deep"
+          <TrackClick
+            event={ANALYTICS_EVENTS.BOOKING_STARTED}
+            props={{ slug: carer.slug, instant: liveInstant }}
           >
-            {liveInstant ? "Book now" : "Request to book"}
-          </Link>
+            <Link
+              href={bookHref(carer.slug, {
+                start: startDate || fortnight.nextFree || undefined,
+                at: startDate ? startClock : undefined,
+                job: jobSlug,
+              })}
+              className="mt-4 block rounded-xl bg-teal py-3 text-center font-semibold text-white no-underline hover:bg-teal-deep"
+            >
+              {liveInstant ? "Book now" : "Request to book"}
+            </Link>
+          </TrackClick>
           {canShortlist && openInviteJobs.length ? (
             <InviteJobPicker
               caregiverId={carer.id}

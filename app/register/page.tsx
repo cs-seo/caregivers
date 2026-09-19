@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/auth";
+import { TrackView } from "@/components/analytics";
+import { ANALYTICS_EVENTS } from "@/lib/analytics";
 import { GuestBrowsePanel } from "@/components/guest-browse";
 import { registerAction } from "@/lib/actions";
 import { parseRegisterRole } from "@/lib/for-carers";
@@ -24,6 +26,7 @@ export default async function RegisterPage({
   const showRegisterNext = registerNextShows({ isFamily: session?.user?.role === "FAMILY" });
   return (
     <div className="mx-auto max-w-md">
+      <TrackView event={ANALYTICS_EVENTS.REGISTRATION_STARTED} props={{ role }} />
       <h1 className="text-3xl font-semibold text-ink">Join CareProof</h1>
       {query.error === "exists" ? <p className="mt-3 text-sm text-clay">That email is already registered.</p> : null}
       <form action={registerAction} className="mt-6 space-y-4 rounded-2xl border border-line bg-card p-5">
