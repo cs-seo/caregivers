@@ -13,7 +13,12 @@ export async function generateSitemaps() {
   return [{ id: "static" }, { id: "locations" }, { id: "directories" }, { id: "profiles" }];
 }
 
-export default async function sitemap({ id }: { id: string }): Promise<MetadataRoute.Sitemap> {
+export default async function sitemap({
+  id,
+}: {
+  id: string | Promise<string>;
+}): Promise<MetadataRoute.Sitemap> {
+  const sitemapId = await id;
   const base = siteUrl();
   const empty = { specialties: [], states: [], suburbs: [], carers: [], jobs: [], listedSuburbs: [] as ListedSuburb[] };
   const data = await Promise.all([
@@ -49,7 +54,7 @@ export default async function sitemap({ id }: { id: string }): Promise<MetadataR
     }))
     .catch(() => empty);
 
-  if (id === "static") {
+  if (sitemapId === "static") {
     const now = new Date();
     const staticPaths = crawlStaticPaths().filter((path) => isDemoMode() || path !== "/care-requests");
     return [
@@ -68,7 +73,7 @@ export default async function sitemap({ id }: { id: string }): Promise<MetadataR
     ];
   }
 
-  if (id === "locations") {
+  if (sitemapId === "locations") {
     const now = new Date();
     return [
       ...data.states.map((state) => ({
@@ -88,7 +93,7 @@ export default async function sitemap({ id }: { id: string }): Promise<MetadataR
     ];
   }
 
-  if (id === "directories") {
+  if (sitemapId === "directories") {
     const now = new Date();
     const suburbSet = isDemoMode()
       ? null

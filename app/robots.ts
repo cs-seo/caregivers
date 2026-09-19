@@ -20,6 +20,11 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: `${siteUrl()}/sitemap.xml`,
+    sitemap: [
+      `${siteUrl()}/sitemap/static.xml`,
+      `${siteUrl()}/sitemap/locations.xml`,
+      `${siteUrl()}/sitemap/directories.xml`,
+      `${siteUrl()}/sitemap/profiles.xml`,
+    ],
   };
 }
