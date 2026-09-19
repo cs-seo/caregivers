@@ -161,6 +161,7 @@ import type { DirectoryFilters as Filters } from "@/lib/queries";
 import { directoryStats, getShortlistedIds, searchCaregiversPage } from "@/lib/queries";
 import { requireUser } from "@/lib/session";
 import { breadcrumbJsonLd } from "@/lib/seo";
+import { leftoverFamily } from "@/lib/demo-mode";
 import { siteUrl } from "@/lib/constants";
 
 export async function DirectoryResults({
@@ -232,211 +233,211 @@ export async function DirectoryResults({
   const showSuburbNext =
     suburbCityHref &&
     suburbNextShows({
-      isFamily: Boolean(canShortlist),
+      isFamily: leftoverFamily(Boolean(canShortlist)),
       suburbPath: directoryIsSuburbPath(path),
       profileHref: suburbPlace?.href,
       jobAttached: Boolean(jobTitle),
     });
   const showCaregiversNext = caregiversNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     nationalPath: directoryIsNationalPath(path),
     jobAttached: Boolean(jobTitle),
     specialtyFilter: Boolean(filters.specialty),
   });
   const specialtyPath = directoryIsSpecialtyPath(path);
   const showDisabilityNext = disabilityNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     specialtyPath,
     jobAttached: Boolean(jobTitle),
   });
   const showNursingNext = nursingNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     specialtyPath,
     jobAttached: Boolean(jobTitle),
   });
   const showRespiteNext = respiteNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     specialtyPath,
     jobAttached: Boolean(jobTitle),
   });
   const showAgedCareNext = agedCareNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     specialtyPath,
     jobAttached: Boolean(jobTitle),
   });
   const showPersonalCareNext = personalCareNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     specialtyPath,
     jobAttached: Boolean(jobTitle),
   });
   const showHousekeepingSaNext = housekeepingSaNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
     stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
     jobAttached: Boolean(jobTitle),
   });
   const showSpecialNeedsSaNext = specialNeedsSaNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
     stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
     jobAttached: Boolean(jobTitle),
   });
   const showCompanionCareSaNext = companionCareSaNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
     stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
     jobAttached: Boolean(jobTitle),
   });
   const showNanniesSaNext = nanniesSaNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
     stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
     jobAttached: Boolean(jobTitle),
   });
   const showAgedCareSaNext = agedCareSaNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
     stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
     jobAttached: Boolean(jobTitle),
   });
   const showAfterSchoolSaNext = afterSchoolSaNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
     stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
     jobAttached: Boolean(jobTitle),
   });
   const showBabysittersSaNext = babysittersSaNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
     stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
     jobAttached: Boolean(jobTitle),
   });
   const showNursingSaNext = nursingSaNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
     stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
     jobAttached: Boolean(jobTitle),
   });
   const showPersonalCareSaNext = personalCareSaNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
     stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
     jobAttached: Boolean(jobTitle),
   });
   const showDisabilitySaNext = disabilitySaNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
     stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
     jobAttached: Boolean(jobTitle),
   });
   const showHousekeepingVicNext = housekeepingVicNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
     stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
     jobAttached: Boolean(jobTitle),
   });
   const showNanniesQldNext = nanniesQldNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
     stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
     jobAttached: Boolean(jobTitle),
   });
   const showBabysittersQldNext = babysittersQldNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
     stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
     jobAttached: Boolean(jobTitle),
   });
   const showAgedCareVicNext = agedCareVicNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
     stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
     jobAttached: Boolean(jobTitle),
   });
   const showAfterSchoolVicNext = afterSchoolVicNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
     stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
     jobAttached: Boolean(jobTitle),
   });
   const showNanniesVicNext = nanniesVicNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
     stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
     jobAttached: Boolean(jobTitle),
   });
   const showBabysittersVicNext = babysittersVicNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
     stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
     jobAttached: Boolean(jobTitle),
   });
   const showHousekeepingQldNext = housekeepingQldNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
     stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
     jobAttached: Boolean(jobTitle),
   });
   const showCompanionCareQldNext = companionCareQldNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
     stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
     jobAttached: Boolean(jobTitle),
   });
   const showDisabilityQldNext = disabilityQldNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
     stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
     jobAttached: Boolean(jobTitle),
   });
   const showCompanionCareVicNext = companionCareVicNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
     stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
     jobAttached: Boolean(jobTitle),
   });
   const showSpecialNeedsQldNext = specialNeedsQldNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
     stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
     jobAttached: Boolean(jobTitle),
   });
   const showNursingVicNext = nursingVicNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
     stateSpecialtyPath: directoryIsStateSpecialtyPath(path),
     jobAttached: Boolean(jobTitle),
   });
   const showPersonalCareQldNext = personalCareQldNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     specialtySlug: filters.specialty,
     stateSlug: filters.state,
     stateSpecialtyPath: directoryIsStateSpecialtyPath(path),

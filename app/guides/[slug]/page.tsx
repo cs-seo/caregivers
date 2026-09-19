@@ -11,6 +11,7 @@ import { guideBoardLink, guideBoardNotice } from "@/lib/job-board";
 import { BOOKING_STATUS } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { getSpecialty, getStates } from "@/lib/queries";
+import { leftoverFamily } from "@/lib/demo-mode";
 import { pageMeta } from "@/lib/seo";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -36,7 +37,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
   if (!specialty) notFound();
   const board = guideBoardLink(specialty);
   const isInvoiceGuide = guide.slug === "gst-invoices-for-hcp-and-ndis";
-  const isFamily = session?.user?.role === "FAMILY";
+  const isFamily = leftoverFamily(session?.user?.role === "FAMILY");
   const nextState = guideNextState(states);
   const showGuideNext = guideNextShows({
     isFamily: Boolean(isFamily),

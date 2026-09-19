@@ -29,6 +29,7 @@ import { rockhamptonNextLinks, rockhamptonNextNotice, rockhamptonNextShows } fro
 import { brisbaneNextLinks, brisbaneNextNotice, brisbaneNextShows } from "@/lib/brisbane-next";
 import { lismoreNextLinks, lismoreNextNotice, lismoreNextShows } from "@/lib/lismore-next";
 import { toowoombaNextLinks, toowoombaNextNotice, toowoombaNextShows } from "@/lib/toowoomba-next";
+import { leftoverFamily } from "@/lib/demo-mode";
 import { getCity, getSpecialties } from "@/lib/queries";
 import { pageMeta } from "@/lib/seo";
 
@@ -56,7 +57,7 @@ export default async function CityLocationsPage({
   const [place, specialties, session] = await Promise.all([getCity(state, city), getSpecialties(), auth()]);
   if (!place) notFound();
   const board = locationBoardLink({ city: place.slug, cityName: place.name });
-  const isFamily = session?.user?.role === "FAMILY";
+  const isFamily = leftoverFamily(session?.user?.role === "FAMILY");
   const showPerthNext = perthNextShows({
     isFamily,
     stateSlug: place.state.slug,

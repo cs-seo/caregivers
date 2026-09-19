@@ -12,6 +12,7 @@ import {
   searchAlertMailto,
 } from "@/lib/saved-search";
 import { proposalAlertsNextLinks, proposalAlertsNextNotice } from "@/lib/proposal-alerts";
+import { isDemoMode } from "@/lib/demo-mode";
 import { requireUser } from "@/lib/session";
 import { pageMeta } from "@/lib/seo";
 
@@ -66,8 +67,9 @@ export default async function ProposalAlertsPage({
       </Link>
       <h1 className="mt-3 text-3xl font-semibold text-ink">Proposal alerts</h1>
       <p className="mt-2 text-stone-600">
-        This demo has no mail server. The digest below is what CareProof would email when a carer proposes on an open
-        request — including a family counter that is still waiting.
+        {isDemoMode()
+          ? "This demo has no mail server. The digest below is what CareProof would email when a carer proposes on an open request — including a family counter that is still waiting."
+          : "New proposals on your open requests appear here, including counters still waiting."}
       </p>
       {query.sent ? (
         <p className="mt-4 rounded-xl bg-sage p-3 text-sm">Digest marked sent. New-proposal counts start from this visit.</p>

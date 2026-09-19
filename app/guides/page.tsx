@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { FamilyStartPanel } from "@/components/family-start";
 import { forCarersHomeCta, forCarersHomeHref, forCarersHomeNotice } from "@/lib/for-carers";
+import { leftoverFamily } from "@/lib/demo-mode";
 import { guidesIndexNextLinks, guidesIndexNextNotice, guidesIndexNextShows } from "@/lib/guides-index-next";
 import { HIRE_GUIDES } from "@/lib/seo-content";
 import { pageMeta } from "@/lib/seo";
@@ -16,7 +17,7 @@ export const metadata = pageMeta({
 
 export default async function GuidesIndexPage() {
   const session = await auth();
-  const showGuidesIndexNext = guidesIndexNextShows({ isFamily: session?.user?.role === "FAMILY" });
+  const showGuidesIndexNext = guidesIndexNextShows({ isFamily: leftoverFamily(session?.user?.role === "FAMILY") });
   return (
     <div>
       <Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "Guides" }]} />

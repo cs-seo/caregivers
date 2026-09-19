@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { LegalNextPanel } from "@/components/legal-next";
 import { SITE_HOST } from "@/lib/constants";
+import { leftoverFamily, SUPPORT_EMAIL } from "@/lib/demo-mode";
 import { termsNextLinks, termsNextNotice, termsNextShows } from "@/lib/terms-next";
 import { pageMeta } from "@/lib/seo";
 
@@ -13,7 +14,7 @@ export const metadata = pageMeta({
 
 export default async function TermsPage() {
   const session = await auth();
-  const showTermsNext = termsNextShows({ isFamily: session?.user?.role === "FAMILY" });
+  const showTermsNext = termsNextShows({ isFamily: leftoverFamily(session?.user?.role === "FAMILY") });
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <h1 className="text-3xl font-semibold text-ink">Terms</h1>
@@ -41,6 +42,12 @@ export default async function TermsPage() {
         <p className="mt-2 text-stone-700">
           Funds stay held until the family confirms completion, 72 hours pass after the booking end, or a dispute is
           resolved as a release or refund.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-semibold text-ink">Questions</h2>
+        <p className="mt-2 text-stone-700">
+          Email {SUPPORT_EMAIL} if a booking, invoice or account needs a human.
         </p>
       </section>
       {showTermsNext ? (

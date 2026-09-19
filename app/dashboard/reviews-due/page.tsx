@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { composeReviewDueAlert, reviewsDueLabel } from "@/lib/reviews";
 import { reviewsDueNextLinks, reviewsDueNextNotice } from "@/lib/reviews-due";
 import { searchAlertMailto } from "@/lib/saved-search";
+import { isDemoMode } from "@/lib/demo-mode";
 import { requireUser } from "@/lib/session";
 import { pageMeta } from "@/lib/seo";
 
@@ -44,8 +45,9 @@ export default async function ReviewsDuePage() {
       </Link>
       <h1 className="mt-3 text-3xl font-semibold text-ink">Reviews to write</h1>
       <p className="mt-2 text-stone-600">
-        This demo has no mail server. The reminder below is what CareProof would email when a released sit still needs a
-        rating. Reviews only open after funds are released.
+        {isDemoMode()
+          ? "This demo has no mail server. The reminder below is what CareProof would email when a released sit still needs a rating. Reviews only open after funds are released."
+          : "Released sits waiting for a rating appear here. Reviews only open after funds are released."}
       </p>
 
       <article className="mt-6 rounded-2xl border border-line bg-card p-5">

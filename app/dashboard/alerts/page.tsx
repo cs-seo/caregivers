@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { markSavedSearchAlertSentAction, toggleSavedSearchAlertsAction } from "@/lib/actions";
 import { directoryStats } from "@/lib/queries";
+import { isDemoMode } from "@/lib/demo-mode";
 import { requireUser } from "@/lib/session";
 import { pageMeta } from "@/lib/seo";
 import { DEMO_FAMILY_EMAIL, ROLES } from "@/lib/constants";
@@ -70,8 +71,9 @@ export default async function SavedSearchAlertsPage({
       </Link>
       <h1 className="mt-3 text-3xl font-semibold text-ink">Saved search alerts</h1>
       <p className="mt-2 text-stone-600">
-        This demo has no mail server. The digest below is what CareProof would email when a watched search gains
-        carers. Send it to yourself, or mark it sent so the new count resets.
+        {isDemoMode()
+          ? "This demo has no mail server. The digest below is what CareProof would email when a watched search gains carers. Send it to yourself, or mark it sent so the new count resets."
+          : "Watched searches list new carers here. Email digests will send when mail is connected."}
       </p>
       {query.sent ? (
         <p className="mt-4 rounded-xl bg-sage p-3 text-sm">Digest marked sent. New-carer counts start from this visit.</p>

@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { LinkGrid } from "@/components/seo-landing";
 import { locationSpecialtyLinks, locationSpecialtyNotice, locationSpecialtyTitle } from "@/lib/location-hub";
+import { leftoverFamily } from "@/lib/demo-mode";
 import { locationNextLinks, locationNextNotice, locationNextShows } from "@/lib/location-next";
 import { getSpecialties, getStates } from "@/lib/queries";
 import { pageMeta } from "@/lib/seo";
@@ -16,7 +17,7 @@ export const metadata = pageMeta({
 
 export default async function LocationsPage() {
   const [states, specialties, session] = await Promise.all([getStates(), getSpecialties(), auth()]);
-  const showLocationNext = locationNextShows({ isFamily: session?.user?.role === "FAMILY" });
+  const showLocationNext = locationNextShows({ isFamily: leftoverFamily(session?.user?.role === "FAMILY") });
   return (
     <div>
       <Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "Locations" }]} />

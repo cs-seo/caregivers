@@ -19,6 +19,7 @@ import {
   startBookingAction,
 } from "@/lib/actions";
 import { BOOKING_STATUS, BOOKING_STATUS_LABELS, UNPAID_BOOKING_STATUSES } from "@/lib/constants";
+import { isDemoMode } from "@/lib/demo-mode";
 import {
   autoReleaseIfDue,
   autoReleaseLabel,
@@ -414,7 +415,9 @@ export default async function BookingDetailPage({
       ) : null}
       {query.error === "card" ? (
         <p className="mt-4 rounded-xl bg-clay/10 p-3 text-sm text-clay">
-          Use the demo Visa 4242 4242 4242 4242, an expiry in this month or later, and a 3-digit CVC.
+          {isDemoMode()
+            ? "Use the demo Visa 4242 4242 4242 4242, an expiry in this month or later, and a 3-digit CVC."
+            : "That card could not be charged. Check the details or try another card."}
         </p>
       ) : null}
       {query.error === "dispute" ? (

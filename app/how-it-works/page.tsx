@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { JsonLd } from "@/components/json-ld";
 import { FamilyStartPanel } from "@/components/family-start";
 import { forCarersHomeCta, forCarersHomeHref, forCarersHomeNotice } from "@/lib/for-carers";
+import { leftoverFamily } from "@/lib/demo-mode";
 import { howItWorksNextLinks, howItWorksNextNotice, howItWorksNextShows } from "@/lib/how-it-works-next";
 import { pageMeta } from "@/lib/seo";
 
@@ -16,11 +17,11 @@ export const metadata = pageMeta({
 const faqs = [
   {
     q: "How do I book a carer?",
-    a: "Open a profile and use Instant Book, or post a care request and hire a proposal. From a posted job you can also invite a carer to apply — they see it on their dashboard and can send a proposal or decline. The page confirms Invite sent so you know it landed. Edit the note while the invite is pending — the page confirms Note saved — or withdraw it and the page confirms Invite withdrawn. The request stays open. Invite alerts preview the email CareProof would send when that invite lands — this demo has no mail server, so you can send the digest to yourself or mark it sent. Opening a matching profile from a request, or booking from the match list, closes that request and attaches the sit to it — same as hiring a proposal. Invite a carer to apply if you want a written proposal first. Either path creates one escrow-backed booking, declines the other pending proposals, and closes leftover invites. When you hire, add an optional welcome note — gate, parking, or how the first morning should go — and it lands on the booking with their proposal. Instant Book already has a notes field. The hired request and your dashboard both link to that booking. Instant Book needs the carer’s notice window — 2 hours for many babysitters, 12 for aged care — and falls back to a request if you need someone sooner.",
+    a: "Open a profile and book when that carer is taking Instant Book, or post a care request and hire a proposal. You can also invite a carer to apply so they send a written proposal first. Either path creates one escrow-backed booking. Instant Book needs the carer’s notice window and becomes a request to book if you need someone sooner.",
   },
   {
     q: "When is the carer paid?",
-    a: "Never up front. After the carer accepts a request-to-book sit, the family pays into escrow with a card. Until they accept, the family dashboard and the sit show that you are waiting — you cannot pay yet, and you can cancel unpaid weeks if you need to withdraw. The carer sees that the family is waiting — including how many days ago they asked — and can accept or decline from the sit. A decline needs a short reason the family can read on the sit and their dashboard. This demo has no live Stripe keys — use Visa 4242 4242 4242 4242, any expiry in this month or later, and any 3-digit CVC. CareProof holds the funds and releases them after you confirm — or automatically 72 hours after the booking ends if there is no dispute. Opening a dispute needs a short reason both sides can read and pauses that 72-hour clock; funds stay in escrow until the family releases them to the carer or refunds the sit. The carer also sees the reason, can publish one public reply, sees that auto-release is paused, and cannot release or refund. Disputed sits stay in the Held for you / In escrow total until that release or refund. Instant Book still collects on the book page.",
+    a: "Never up front. After the carer accepts a request-to-book sit, the family pays into escrow. CareProof holds the funds and releases them after you confirm — or automatically 72 hours after the booking ends if there is no dispute. A dispute pauses that clock until the family releases the sit or refunds it. Instant Book collects on the book page.",
   },
   {
     q: "What makes a carer verified?",
@@ -28,49 +29,49 @@ const faqs = [
   },
   {
     q: "Can I leave a review immediately?",
-    a: "No. Reviews are only accepted after a booking is released. That keeps ratings tied to real, paid work. Released sits waiting for a rating appear on Reviews to write on the family dashboard — this demo has no mail server, so Review reminder shows the email and lets you send it to yourself. The carer can then publish one public reply from the booking, the dashboard Reply needed list, or their profile. Replies cannot be edited.",
+    a: "No. Reviews are only accepted after a booking is released. That keeps ratings tied to real, paid work. Released sits waiting for a rating appear on the family dashboard. The carer can publish one public reply. Replies cannot be edited.",
   },
   {
     q: "Can I book a standing weekly sit?",
-    a: "Yes. On the book page choose 2 to 12 weeks. CareProof creates one escrow booking per week so you can cancel or dispute a single Friday without touching the rest of the series. The dashboard folds those weeks into one card. Download one calendar file for every week, subscribe to a live roster feed, or cancel unpaid remaining weeks while funded holds stay in escrow.",
+    a: "Yes. On the book page choose 2 to 12 weeks. CareProof creates one escrow booking per week so you can cancel or dispute a single Friday without touching the rest of the series. The dashboard folds those weeks into one card.",
   },
   {
     q: "Can I search for a carer who is free on a specific night?",
-    a: "Yes. Use Needed on in search or the directory filters. Add an optional start time to match usual weekly hours that cover that clock time — a 4pm search hides a carer who only works mornings. Without a time, CareProof still hides carers who already have a sit in escrow that day, carers who marked the day as away, and carers whose usual weekly hours are closed that weekday. Overnight windows that run past midnight still count as open the next morning. Available now only lists carers who marked the flag, are not away today, and whose hours include this moment in Australia/Sydney. The same two months appear on the public profile so a family can tap a free day to book. Carers can tap an Open day on the dashboard roster to mark away, or tap Away to come back — same as the profile calendar. The shortlist still summarises the next fortnight. If a carer is away today, Instant Book pauses and they drop out of the Instant Book filter until tomorrow.",
+    a: "Yes. Use Needed on in search or the directory filters. Add an optional start time to match usual weekly hours. Without a time, CareProof still hides carers who already have a sit that day, carers who marked the day as away, and carers whose usual weekly hours are closed that weekday.",
   },
   {
     q: "Can I get a GST tax invoice for a Home Care Package or NDIS plan?",
-    a: "Yes. After funds are in escrow, open the booking and print the tax invoice. CareProof stamps a financial-year number such as CP-2627-0001 when the hold is created, so later sits do not reshuffle earlier invoices. It shows the care rate inc GST, GST as 1/11, the 10% CareProof fee, the carer ABN if they listed one, and the carer payout. Carers open Remittance for the same number showing the amount held or paid to them (100% of the advertised rate). The dashboard FY statement is a printable GST summary of every funded sit in 1 July–30 June, using those same numbers — including disputed sits while funds stay held. Each row and the CSV show the sit status, so a disputed sit is labelled In dispute. Add an NDIS or My Aged Care number on Household and it prints on the invoice, the statement and the CSV.",
+    a: "Yes. After funds are in escrow, open the booking and print the tax invoice. It shows the care rate inc GST, GST as 1/11, the CareProof fee, the carer ABN if they listed one, and the carer payout. Add an NDIS or My Aged Care number on Household and it prints on the invoice and the financial-year statement.",
   },
   {
     q: "How do I message a carer or family?",
-    a: "Each booking has a private thread. Open care requests also have a private thread between the family and an invited or proposing carer — ask about hours or start time before you hire. New messages show a count on Dashboard until you open the booking or the job. Opening the thread marks them read and keeps a New label on that first view.",
+    a: "Each booking has a private thread. Open care requests also have a private thread between the family and an invited or proposing carer — ask about hours or start time before you hire.",
   },
   {
     q: "Can I save a search for later?",
-    a: "Yes. On any directory page, families can save the current filters — specialty, suburb, Needed on, Instant Book or checks. The dashboard shows how many carers match now, and how many are new since you last opened that search. Opening the list marks it seen. Each saved search can also email a digest when the match count grows — this demo has no mail server, so Saved search alerts shows the email and lets you send it to yourself or mark it sent.",
+    a: "Yes. On any directory page, families can save the current filters — specialty, suburb, Needed on, Instant Book or checks. The dashboard shows how many carers match now, and how many are new since you last opened that search.",
   },
   {
     q: "Will I know when a carer proposes?",
-    a: "Yes. Proposal alerts on the family dashboard preview the digest CareProof would email when a pending proposal lands on an open request, including a family counter that is still waiting. This demo has no mail server, so you can send the digest to yourself or mark it sent. Open the job to review, counter, pass on, or hire.",
+    a: "Yes. The family dashboard lists pending proposals on open requests. Open the job to review, counter, pass on, or hire.",
   },
   {
     q: "Which care requests should a carer propose on?",
-    a: "CareProof marks jobs that match your city, specialties and usual weekly hours, including the start clock time the family set. A Saturday 6pm sit does not fit a carer who only works Saturday mornings. Days you marked away and weekdays your roster is closed are skipped. Requests whose start time has already passed expire and leave the open board, job-fit alerts and invite lists. The board can show only jobs that fit, and the carer dashboard lists those matches so you are not reading every post in another state. The dashboard also shows how many fitting jobs are new since you last opened that filtered board. Job alerts preview the email CareProof would send when that count grows — this demo has no mail server, so you can send the digest to yourself or mark it sent. Families who posted a request see how many carers are free at that start, can Book or Invite one, browse every match in the directory, or open their shortlist for that request — Book from the list, a matching profile or the shortlist still closes the request and marks other pending proposals not hired. An invite asks the carer to send a proposal; it does not book them. Add an optional note from the match list, a directory card, a profile or your shortlist so they know why you asked, and edit it while the invite is pending. After an invite or a proposal, the family and that carer can message on the request before anyone is hired. Families can also suggest a different hourly rate; the carer can accept it or keep their original rate. The family dashboard shows that the carer has not replied yet, including how many days ago they suggested the rate. Carers can update a pending proposal or withdraw it while the request is still open, and can decline an invite with an optional reason. Families can withdraw a pending invite or pass on a proposal without closing the request — add a short note so the carer knows why. That note shows on the carer dashboard and the request. If you were not hired, the dashboard says so. You can still propose on a mismatch if the family is flexible.",
+    a: "CareProof marks jobs that match your city, specialties and usual weekly hours, including the start time the family set. Days you marked away and weekdays your roster is closed are skipped. The board can show only jobs that fit so you are not reading every post in another state.",
   },
   {
     q: "What happens if a job’s start time has passed?",
-    a: "CareProof marks it Expired. It drops off the open board, Needed-on match counts, job-fit alerts, invite alerts and proposal alerts. Families still see it on their dashboard. Carers cannot propose, and families cannot invite, counter or hire. Post a new request if you still need cover.",
+    a: "CareProof marks it Expired. It drops off the open board. Families still see it on their dashboard. Carers cannot propose, and families cannot invite, counter or hire. Post a new request if you still need cover.",
   },
   {
     q: "How do I prepare for an upcoming sit?",
-    a: "The dashboard Coming up list shows sits in progress or starting in the next 7 days. Each sit shows whether handover is ready or which notes are still missing — access, care notes or emergency. Open Handover to save keys, parking, allergies and an emergency contact on that sit. Household defaults copy onto new bookings. On an existing sit with empty fields, choose Use household defaults — notes already typed stay. From Household you can copy onto every empty upcoming sit. These notes stay off the public calendar subscribe feed.",
+    a: "The dashboard Coming up list shows sits in progress or starting in the next 7 days. Open Handover to save keys, parking, allergies and an emergency contact on that sit. Household defaults copy onto new bookings.",
   },
 ];
 
 export default async function HowItWorksPage() {
   const session = await auth();
-  const showHowItWorksNext = howItWorksNextShows({ isFamily: session?.user?.role === "FAMILY" });
+  const showHowItWorksNext = howItWorksNextShows({ isFamily: leftoverFamily(session?.user?.role === "FAMILY") });
   return (
     <div className="mx-auto max-w-3xl">
       <JsonLd

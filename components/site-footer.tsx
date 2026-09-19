@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SITE_HOST, SITE_NAME } from "@/lib/constants";
+import { SUPPORT_EMAIL } from "@/lib/demo-mode";
 import { crawlFooterSpecialtyLinks, crawlFooterStateLinks } from "@/lib/crawl-links";
 import { footerBoardLink } from "@/lib/footer-board";
 import { getSpecialties, getStates } from "@/lib/queries";
@@ -17,7 +18,7 @@ export async function SiteFooter() {
           <p className="text-lg font-semibold text-white">{SITE_NAME}</p>
           <p className="mt-1 text-sm text-white/80">{SITE_HOST}</p>
           <p className="mt-2 text-sm text-sage/80">
-            Verified carers across Australia. Funds stay in escrow until the booking is complete.
+            Australian carers directory. Browse by specialty and suburb, then request a sit. Support: {SUPPORT_EMAIL}
           </p>
         </div>
         <div>
@@ -63,8 +64,8 @@ export async function SiteFooter() {
               </Link>
             </li>
             <li>
-              <Link className="hover:text-white" href="/dashboard/shortlist">
-                Family shortlist
+              <Link className="hover:text-white" href="/register">
+                Create an account
               </Link>
             </li>
             <li>
@@ -96,6 +97,11 @@ export async function SiteFooter() {
               <Link className="hover:text-white" href="/terms">
                 Terms
               </Link>
+            </li>
+            <li>
+              <a className="hover:text-white" href={`mailto:${SUPPORT_EMAIL}`}>
+                {SUPPORT_EMAIL}
+              </a>
             </li>
           </ul>
         </div>

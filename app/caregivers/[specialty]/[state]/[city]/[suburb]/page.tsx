@@ -8,21 +8,33 @@ import { acceptingJobWhere } from "@/lib/job-status";
 import { landingDescription, landingFaqs, landingH1, landingIntro, landingTitle } from "@/lib/seo-content";
 import { directoryStats, getSpecialties, getSpecialty, getSuburb } from "@/lib/queries";
 import { prisma } from "@/lib/prisma";
+import { publicJobWhere } from "@/lib/demo-mode";
+import { directoryLandingNoIndex } from "@/lib/launch-seo";
 import { pageMeta } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ specialty: string; state: string; city: string; suburb: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { specialty, state, city, suburb } = await params;
+  const [{ specialty, state, city, suburb }, query] = await Promise.all([params, searchParams]);
   const [spec, place] = await Promise.all([getSpecialty(specialty), getSuburb(state, city, suburb)]);
   if (!spec || !place) return {};
   const seo = { specialty: spec, state: place.city.state, city: place.city, suburb: place };
+  const filters = parseFilters(query);
+  const exactStats = await directoryStats({
+    specialty: spec.slug,
+    state: place.city.state.slug,
+    city: place.city.slug,
+    suburb: place.name,
+  });
   return pageMeta({
     title: landingTitle(seo),
     description: landingDescription(seo),
     path: `/caregivers/${spec.slug}/${place.city.state.slug}/${place.city.slug}/${place.slug}`,
+    noIndex: directoryLandingNoIndex(filters, exactStats.count === 0),
   });
 }
 
@@ -57,7 +69,7 @@ export default async function SuburbDirectoryPage({
   const [exactStats, openCount] = await Promise.all([
     directoryStats(locationFilters),
     prisma.careRequest.count({
-      where: { ...acceptingJobWhere(), cityId: place.city.id, specialtyId: spec.id },
+      where: { ...acceptingJobWhere(), ...publicJobWhere(), cityId: place.city.id, specialtyId: spec.id },
     }),
   ]);
   const nearby = exactStats.count === 0;

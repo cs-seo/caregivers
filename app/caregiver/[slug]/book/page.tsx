@@ -21,6 +21,7 @@ import {
   profileJobFitNotice,
   toJobMatchCarer,
 } from "@/lib/job-match";
+import { leftoverFamily } from "@/lib/demo-mode";
 import { bookNextLinks, bookNextNotice, bookNextShows } from "@/lib/book-next";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
@@ -101,7 +102,7 @@ export default async function BookPage({
         )
       : null;
   const showBookNext = bookNextShows({
-    isFamily: session?.user.role === "FAMILY",
+    isFamily: leftoverFamily(session?.user.role === "FAMILY"),
     jobAttached: Boolean(job),
   });
 

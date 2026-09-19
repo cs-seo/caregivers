@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PrintLink } from "@/components/print-link";
-import { PLATFORM_ABN, PLATFORM_ENTITY, SITE_HOST, SITE_NAME } from "@/lib/constants";
+import { PLATFORM_ENTITY, SITE_HOST, SITE_NAME } from "@/lib/constants";
+import { platformAbnLine } from "@/lib/demo-mode";
 import { formatDate } from "@/lib/format";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
@@ -81,8 +82,12 @@ export default async function StatementPage() {
               {PLATFORM_ENTITY}
               <br />
               {SITE_HOST}
-              <br />
-              ABN {PLATFORM_ABN} (demo)
+              {platformAbnLine() ? (
+                <>
+                  <br />
+                  {platformAbnLine()}
+                </>
+              ) : null}
               <br />
               {period}
             </p>

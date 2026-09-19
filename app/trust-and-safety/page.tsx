@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { FamilyStartPanel } from "@/components/family-start";
 import { trustNextLinks, trustNextNotice, trustNextShows } from "@/lib/trust-next";
+import { leftoverFamily } from "@/lib/demo-mode";
 import { pageMeta } from "@/lib/seo";
 
 export const metadata = pageMeta({
@@ -13,7 +14,7 @@ export const metadata = pageMeta({
 
 export default async function TrustPage() {
   const session = await auth();
-  const showTrustNext = trustNextShows({ isFamily: session?.user?.role === "FAMILY" });
+  const showTrustNext = trustNextShows({ isFamily: leftoverFamily(session?.user?.role === "FAMILY") });
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <h1 className="text-3xl font-semibold text-ink">Trust and safety</h1>
@@ -69,9 +70,9 @@ export default async function TrustPage() {
         <h2 className="text-xl font-semibold">My Aged Care and NDIS invoices</h2>
         <p className="mt-2 text-stone-700">
           Independent carers list an ABN where they have one. After escrow is funded, the booking tax invoice shows the
-          care rate, GST as 1/11, the 10% CareProof fee on top, and the carer payout. That is the split coordinators
-          and plan managers need when they reconcile a Home Care Package or a self-managed NDIS plan. Print the
-          financial-year statement from the dashboard for a running total, or download the CSV.
+          care rate, GST as 1/11, the CareProof fee on top, and the carer payout — the split coordinators and plan
+          managers need for a Home Care Package or a self-managed NDIS plan. Print the financial-year statement from
+          the dashboard, or download the CSV.
         </p>
       </section>
       <section>

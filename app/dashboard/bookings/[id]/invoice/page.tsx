@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { PrintLink } from "@/components/print-link";
-import { PLATFORM_ABN, PLATFORM_ENTITY, SITE_HOST, SITE_NAME } from "@/lib/constants";
+import { PLATFORM_ENTITY, SITE_HOST, SITE_NAME } from "@/lib/constants";
+import { isDemoMode, platformAbnLine } from "@/lib/demo-mode";
 import { fundingLines } from "@/lib/funding";
 import { invoiceNextLinks, invoiceNextNotice } from "@/lib/invoice-next";
 import { formatDate, formatDateTime } from "@/lib/format";
@@ -75,8 +76,12 @@ export default async function BookingInvoicePage({
               {PLATFORM_ENTITY}
               <br />
               {SITE_HOST}
-              <br />
-              ABN {PLATFORM_ABN} (demo)
+              {platformAbnLine() ? (
+                <>
+                  <br />
+                  {platformAbnLine()}
+                </>
+              ) : null}
               <br />
               Issued {formatDate(issued)}
             </p>
@@ -156,8 +161,11 @@ export default async function BookingInvoicePage({
 
         <p className="mt-6 text-xs text-stone-500">
           Care rates are advertised inc GST. CareProof adds 10% on top and holds the total until the booking is
-          released. This demo invoice is for coordinators and plan managers reconciling a Home Care Package or
-          self-managed NDIS plan. Print from the browser for a PDF.
+          released.
+          {isDemoMode()
+            ? " This demo invoice is for coordinators and plan managers reconciling a Home Care Package or self-managed NDIS plan."
+            : " Coordinators and plan managers can file this with a Home Care Package or self-managed NDIS plan."}{" "}
+          Print from the browser for a PDF.
         </p>
       </article>
       <div className="print:hidden mt-4 rounded-xl bg-sage p-3 text-sm">

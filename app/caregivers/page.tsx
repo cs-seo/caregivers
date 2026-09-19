@@ -2,15 +2,24 @@ import { DirectoryResults } from "@/components/directory-page";
 import { FaqBlock, LinkGrid } from "@/components/seo-landing";
 import { filterCurrent, parseFilters } from "@/lib/directory";
 import { isInviteFlash } from "@/lib/job-invite";
+import { directoryLandingNoIndex } from "@/lib/launch-seo";
 import { getSpecialties, getStates } from "@/lib/queries";
 import { pageMeta } from "@/lib/seo";
 
-export const metadata = pageMeta({
-  title: "Find verified carers across Australia",
-  description:
-    "Browse aged care carers, nannies, NDIS support workers, housekeepers and nurses in every Australian state and city. Instant Book with escrow.",
-  path: "/caregivers",
-});
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const filters = parseFilters(await searchParams);
+  return pageMeta({
+    title: "Find verified carers across Australia",
+    description:
+      "Browse aged care carers, nannies, NDIS support workers, housekeepers and nurses in every Australian state and city.",
+    path: "/caregivers",
+    noIndex: directoryLandingNoIndex(filters),
+  });
+}
 
 export default async function CaregiversPage({
   searchParams,

@@ -8,12 +8,16 @@ import { acceptingJobWhere } from "@/lib/job-status";
 import { landingDescription, landingFaqs, landingH1, landingIntro, landingTitle } from "@/lib/seo-content";
 import { directoryStats, getSpecialties, getSpecialty, getState } from "@/lib/queries";
 import { prisma } from "@/lib/prisma";
+import { publicJobWhere } from "@/lib/demo-mode";
+import { directoryLandingNoIndex } from "@/lib/launch-seo";
 import { pageMeta } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ specialty: string; state: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { specialty, state } = await params;
   const [spec, st] = await Promise.all([getSpecialty(specialty), getState(state)]);
@@ -23,6 +27,7 @@ export async function generateMetadata({
     title: landingTitle(place),
     description: landingDescription(place),
     path: `/caregivers/${spec.slug}/${st.slug}`,
+    noIndex: directoryLandingNoIndex(parseFilters(await searchParams)),
   });
 }
 
@@ -44,7 +49,7 @@ export default async function StateDirectoryPage({
   const [stats, openCount] = await Promise.all([
     directoryStats(filters),
     prisma.careRequest.count({
-      where: { ...acceptingJobWhere(), specialtyId: spec.id, city: { stateId: st.id } },
+      where: { ...acceptingJobWhere(), ...publicJobWhere(), specialtyId: spec.id, city: { stateId: st.id } },
     }),
   ]);
   const place = { specialty: spec, state: st };

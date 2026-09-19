@@ -1,4 +1,5 @@
 import { BUSY_BOOKING_STATUSES } from "./booking-overlap";
+import { isDemoMode, isSeededAccountEmail, publicCarerWhere } from "./demo-mode";
 import { stillCurrentWhere } from "./credentials";
 import { sydneyDateKey, sydneyDayBounds } from "./format";
 import { prisma } from "./prisma";
@@ -167,6 +168,7 @@ function caregiverWhere(filters: DirectoryFilters, now = new Date()) {
         }
       : {}),
     ...(availability.length ? { AND: availability } : {}),
+    ...publicCarerWhere(),
   };
 }
 
@@ -241,6 +243,7 @@ export async function getCaregiverBySlug(slug: string) {
     where: { slug },
     include: {
       ...caregiverCardInclude,
+      user: { select: { name: true, email: true } },
       weeklyWindows: { select: { weekday: true, startMin: true, endMin: true } },
       reviews: {
         include: { author: { select: { name: true } } },
@@ -249,6 +252,7 @@ export async function getCaregiverBySlug(slug: string) {
     },
   });
   if (!profile) return null;
+  if (!isDemoMode() && isSeededAccountEmail(profile.user.email)) return null;
   return withTrust(profile);
 }
 
@@ -256,6 +260,7 @@ export async function similarCaregivers(profileId: string, cityId: string, speci
   const results = await prisma.caregiverProfile.findMany({
     where: {
       id: { not: profileId },
+      ...publicCarerWhere(),
       OR: [
         { cityId },
         { specialties: { some: { specialtyId: { in: specialtyIds } } } },
@@ -331,6 +336,7 @@ export async function getUpcomingAvailability(caregiverId: string, days = 14) {
 
 export async function getRecentReviews(take = 4) {
   return prisma.review.findMany({
+    where: publicCarerWhere().user ? { caregiver: publicCarerWhere() } : undefined,
     take,
     orderBy: { createdAt: "desc" },
     include: {

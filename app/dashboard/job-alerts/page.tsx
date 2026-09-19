@@ -6,6 +6,7 @@ import { formatJobStart, matchingJobs } from "@/lib/job-match";
 import { acceptingJobWhere } from "@/lib/job-status";
 import { prisma } from "@/lib/prisma";
 import { composeJobFitAlert, jobAlertLabel, searchAlertDelta, searchAlertMailto } from "@/lib/saved-search";
+import { isDemoMode } from "@/lib/demo-mode";
 import { requireUser } from "@/lib/session";
 import { pageMeta } from "@/lib/seo";
 
@@ -62,8 +63,9 @@ export default async function JobAlertsPage({
       </Link>
       <h1 className="mt-3 text-3xl font-semibold text-ink">Job alerts</h1>
       <p className="mt-2 text-stone-600">
-        This demo has no mail server. The digest below is what CareProof would email when a new request fits your
-        city, specialties and usual hours.
+        {isDemoMode()
+          ? "This demo has no mail server. The digest below is what CareProof would email when a new request fits your city, specialties and usual hours."
+          : "New requests that fit your city, specialties and usual hours appear here."}
       </p>
       {query.sent ? (
         <p className="mt-4 rounded-xl bg-sage p-3 text-sm">Digest marked sent. New-job counts start from this visit.</p>

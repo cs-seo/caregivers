@@ -17,6 +17,8 @@ import { acceptingJobWhere } from "@/lib/job-status";
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { jobsFitDeltaLabel, savedSearchDelta } from "@/lib/saved-search";
+import { leftoverFamily, publicJobWhere } from "@/lib/demo-mode";
+import { marketplacePageNoIndex } from "@/lib/launch-seo";
 import { pageMeta } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -40,6 +42,7 @@ export async function generateMetadata({
     title,
     description: `Browse open care requests${where} from Australian families. Carers send proposals; families hire into escrow.`,
     path: jobBoardHref({ city: board.city, state: board.state, specialty: board.specialty }),
+    noIndex: marketplacePageNoIndex() || Boolean(board.fit),
   });
 }
 
@@ -62,6 +65,7 @@ export default async function CareRequestsPage({
   const requests = await prisma.careRequest.findMany({
     where: {
       ...acceptingJobWhere(),
+      ...publicJobWhere(),
       ...(city ? { cityId: city.id } : state ? { city: { stateId: state.id } } : {}),
       ...(specialty ? { specialtyId: specialty.id } : {}),
     },
@@ -124,7 +128,7 @@ export default async function CareRequestsPage({
   };
   const listedDirectory = jobBoardListedLink(boardContext);
   const showBoardNext = boardNextShows({
-    isFamily: session?.user?.role === "FAMILY",
+    isFamily: leftoverFamily(session?.user?.role === "FAMILY"),
     filtered,
   });
   if (fitOnly && carer && !filtered) {

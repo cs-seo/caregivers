@@ -1,4 +1,5 @@
 import { DEMO_VISA_DISPLAY } from "@/lib/demo-card";
+import { isDemoMode } from "@/lib/demo-mode";
 
 export function DemoCardForm({
   bookingId,
@@ -16,8 +17,9 @@ export function DemoCardForm({
       <input type="hidden" name="bookingId" value={bookingId} />
       <p className="font-medium text-ink">Pay {amountLabel} into escrow</p>
       <p className="text-xs text-stone-500">
-        Demo card only — there are no live Stripe keys here. Use Visa {DEMO_VISA_DISPLAY}, any expiry in this month
-        or later, and any 3-digit CVC.
+        {isDemoMode()
+          ? `Demo card only — there are no live Stripe keys here. Use Visa ${DEMO_VISA_DISPLAY}, any expiry in this month or later, and any 3-digit CVC.`
+          : "Payment is held in escrow until care is complete. Live card processing is being connected — this hold is recorded on the booking."}
       </p>
       <label className="block text-xs text-stone-500">
         Name on card
@@ -25,7 +27,7 @@ export function DemoCardForm({
           name="cardName"
           required
           autoComplete="cc-name"
-          defaultValue="Alex Martin"
+          defaultValue={isDemoMode() ? "Alex Martin" : undefined}
           className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm text-ink"
         />
       </label>
@@ -36,7 +38,7 @@ export function DemoCardForm({
           required
           inputMode="numeric"
           autoComplete="cc-number"
-          placeholder={DEMO_VISA_DISPLAY}
+          placeholder={isDemoMode() ? DEMO_VISA_DISPLAY : "Card number"}
           className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm text-ink"
         />
       </label>

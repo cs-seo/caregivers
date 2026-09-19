@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { GuestBrowsePanel } from "@/components/guest-browse";
 import { registerAction } from "@/lib/actions";
+import { leftoverFamily } from "@/lib/demo-mode";
 import { parseRegisterRole } from "@/lib/for-carers";
 import { registerNextLinks, registerNextNotice, registerNextShows } from "@/lib/register-next";
 import { pageMeta } from "@/lib/seo";
@@ -21,7 +22,7 @@ export default async function RegisterPage({
   const query = await searchParams;
   const role = parseRegisterRole(query.role);
   const session = await auth();
-  const showRegisterNext = registerNextShows({ isFamily: session?.user?.role === "FAMILY" });
+  const showRegisterNext = registerNextShows({ isFamily: leftoverFamily(session?.user?.role === "FAMILY") });
   return (
     <div className="mx-auto max-w-md">
       <h1 className="text-3xl font-semibold text-ink">Join CareProof</h1>

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { locationBoardLink, locationBoardNotice } from "@/lib/job-board";
+import { leftoverFamily } from "@/lib/demo-mode";
 import { getSpecialties, getState } from "@/lib/queries";
 import { pageMeta } from "@/lib/seo";
 import { ntNextLinks, ntNextNotice, ntNextShows } from "@/lib/nt-next";
@@ -28,7 +29,7 @@ export default async function StateLocationsPage({ params }: { params: Promise<{
   const [record, specialties, session] = await Promise.all([getState(state), getSpecialties(), auth()]);
   if (!record) notFound();
   const board = locationBoardLink({ state: record.slug, stateName: record.name });
-  const isFamily = session?.user?.role === "FAMILY";
+  const isFamily = leftoverFamily(session?.user?.role === "FAMILY");
   const showVicNext = vicNextShows({ isFamily, stateSlug: record.slug });
   const showQldNext = qldNextShows({ isFamily, stateSlug: record.slug });
   const showSaNext = saNextShows({ isFamily, stateSlug: record.slug });

@@ -11,6 +11,7 @@ import {
   forCarersRegisterHref,
 } from "@/lib/for-carers";
 import { forCarersNextLinks, forCarersNextNotice, forCarersNextShows } from "@/lib/for-carers-next";
+import { leftoverFamily } from "@/lib/demo-mode";
 import { pageMeta } from "@/lib/seo";
 
 export const metadata = pageMeta({
@@ -22,7 +23,7 @@ export const metadata = pageMeta({
 
 export default async function ForCarersPage() {
   const session = await auth();
-  const showForCarersNext = forCarersNextShows({ isFamily: session?.user?.role === "FAMILY" });
+  const showForCarersNext = forCarersNextShows({ isFamily: leftoverFamily(session?.user?.role === "FAMILY") });
   return (
     <div className="mx-auto max-w-3xl">
       <JsonLd data={forCarersFaqJsonLd()} />

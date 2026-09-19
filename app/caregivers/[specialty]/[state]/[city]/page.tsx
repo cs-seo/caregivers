@@ -8,12 +8,16 @@ import { acceptingJobWhere } from "@/lib/job-status";
 import { landingDescription, landingFaqs, landingH1, landingIntro, landingTitle } from "@/lib/seo-content";
 import { directoryStats, getCity, getSpecialties, getSpecialty, getState } from "@/lib/queries";
 import { prisma } from "@/lib/prisma";
+import { publicJobWhere } from "@/lib/demo-mode";
+import { directoryLandingNoIndex } from "@/lib/launch-seo";
 import { pageMeta } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ specialty: string; state: string; city: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { specialty, state, city } = await params;
   const [spec, place] = await Promise.all([getSpecialty(specialty), getCity(state, city)]);
@@ -23,6 +27,7 @@ export async function generateMetadata({
     title: landingTitle(seo),
     description: landingDescription(seo),
     path: `/caregivers/${spec.slug}/${place.state.slug}/${place.slug}`,
+    noIndex: directoryLandingNoIndex(parseFilters(await searchParams)),
   });
 }
 
@@ -50,7 +55,7 @@ export default async function CityDirectoryPage({
   const [stats, openCount] = await Promise.all([
     directoryStats(filters),
     prisma.careRequest.count({
-      where: { ...acceptingJobWhere(), cityId: place.id, specialtyId: spec.id },
+      where: { ...acceptingJobWhere(), ...publicJobWhere(), cityId: place.id, specialtyId: spec.id },
     }),
   ]);
   const seo = { specialty: spec, state: place.state, city: place };

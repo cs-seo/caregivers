@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { LegalNextPanel } from "@/components/legal-next";
 import { SITE_HOST } from "@/lib/constants";
+import { leftoverFamily, SUPPORT_EMAIL } from "@/lib/demo-mode";
 import { privacyNextLinks, privacyNextNotice, privacyNextShows } from "@/lib/privacy-next";
 import { pageMeta } from "@/lib/seo";
 
@@ -13,7 +14,7 @@ export const metadata = pageMeta({
 
 export default async function PrivacyPage() {
   const session = await auth();
-  const showPrivacyNext = privacyNextShows({ isFamily: session?.user?.role === "FAMILY" });
+  const showPrivacyNext = privacyNextShows({ isFamily: leftoverFamily(session?.user?.role === "FAMILY") });
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <h1 className="text-3xl font-semibold text-ink">Privacy</h1>
@@ -43,6 +44,12 @@ export default async function PrivacyPage() {
         <p className="mt-2 text-stone-700">
           WWCC, NDIS, AHPRA and police-check numbers are shown only as the carer entered them, so families can verify
           the document. Do not upload another person’s check without their consent.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-semibold text-ink">Contact</h2>
+        <p className="mt-2 text-stone-700">
+          Email {SUPPORT_EMAIL} to ask about an account, a booking, or a correction to personal information.
         </p>
       </section>
       {showPrivacyNext ? (

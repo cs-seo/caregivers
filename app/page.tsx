@@ -4,6 +4,7 @@ import { JsonLd } from "@/components/json-ld";
 import { ReviewCard } from "@/components/review-card";
 import { SearchForm } from "@/components/search-form";
 import { SITE_NAME, siteUrl } from "@/lib/constants";
+import { leftoverFamily, publicCarerWhere } from "@/lib/demo-mode";
 import {
   forCarersHomeCta,
   forCarersHomeHeading,
@@ -21,7 +22,7 @@ import { pageMeta } from "@/lib/seo";
 export const metadata = pageMeta({
   title: `${SITE_NAME} — Verified carers across Australia`,
   description:
-    "Hire verified aged care workers, nannies, NDIS support workers and housekeepers. Instant Book with escrow so carers are paid only after the job is complete.",
+    "Find aged care workers, nannies, NDIS support workers and housekeepers across Australia. Browse by suburb, check listed screening, then request a sit on caregiver.com.au.",
   path: "/",
 });
 
@@ -30,12 +31,13 @@ export default async function HomePage() {
   const [specialties, featured, stats, hubs, reviews, savedIds] = await Promise.all([
     getSpecialties(),
     prisma.caregiverProfile.findMany({
-      where: { reviewCount: { gt: 0 } },
+      where: { reviewCount: { gt: 0 }, ...publicCarerWhere() },
       include: caregiverCardInclude,
       orderBy: { ratingAvg: "desc" },
       take: 4,
     }),
     prisma.caregiverProfile.aggregate({
+      where: publicCarerWhere(),
       _count: true,
       _avg: { hourlyRateCents: true },
     }),
@@ -75,11 +77,11 @@ export default async function HomePage() {
         <div>
           <p className="text-sm font-medium uppercase tracking-wide text-clay">Australia-wide directory</p>
           <h1 className="mt-2 text-4xl font-semibold tracking-tight text-ink md:text-5xl">
-            Book verified carers the way you hire on Upwork.
+            Find carers by suburb, the way Australians actually search.
           </h1>
           <p className="mt-4 text-lg text-stone-600">
-            Search by specialty and city, check work history, then Instant Book. Your payment is held in escrow
-            and released to the carer only when the booking is complete.
+            Search by specialty and city, read listed checks and work history, then request a sit. When bookings
+            open, payment is held in escrow and released only after care is complete.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
@@ -101,10 +103,18 @@ export default async function HomePage() {
               {forCarersHomeCta()}
             </Link>
           </p>
-          <p className="mt-4 text-sm text-stone-500">
-            {stats._count} verified profiles · typical rate{" "}
-            {formatAud(Math.round(stats._avg.hourlyRateCents ?? 0))}/hr
-          </p>
+          {stats._count > 0 ? (
+            <p className="mt-4 text-sm text-stone-500">
+              {stats._count} listed profiles
+              {stats._avg.hourlyRateCents
+                ? ` · typical rate ${formatAud(Math.round(stats._avg.hourlyRateCents))}/hr`
+                : ""}
+            </p>
+          ) : (
+            <p className="mt-4 text-sm text-stone-500">
+              Directory hubs are live. Public carer profiles appear here as families and carers join.
+            </p>
+          )}
           <ul className="mt-5 flex flex-wrap gap-2 text-xs text-stone-600">
             {["WWCC / Blue Card / Ochre Card", "NDIS Worker Screening", "AHPRA for nurses", "Escrow until care is done"].map(
               (item) => (
@@ -114,7 +124,7 @@ export default async function HomePage() {
               ),
             )}
           </ul>
-          {viewer?.role === "FAMILY" ? (
+          {leftoverFamily(viewer?.role === "FAMILY") ? (
             <div className="mt-6 rounded-xl bg-sage p-3 text-sm">
               <p>{homeFamilyNotice()}</p>
               <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
@@ -257,7 +267,7 @@ export default async function HomePage() {
 
       <section>
         <h2 className="text-2xl font-semibold text-ink">Capital-city hubs</h2>
-        <p className="mt-2 text-sm text-stone-600">Live listings, not a brochure. Open a city then filter by suburb.</p>
+        <p className="mt-2 text-sm text-stone-600">Open a city, then every suburb page underneath it.</p>
         <div className="mt-5 grid gap-3 sm:grid-cols-2 md:grid-cols-5">
           {hubs.map((city) => (
             <Link
@@ -266,9 +276,7 @@ export default async function HomePage() {
               className="rounded-2xl border border-line bg-card p-4 no-underline hover:border-teal"
             >
               <p className="font-semibold text-ink">{city.name}</p>
-              <p className="mt-1 text-sm text-stone-500">
-                {city._count.caregivers} carers · {city.state.abbrev}
-              </p>
+              <p className="mt-1 text-sm text-stone-500">{city.state.name}</p>
             </Link>
           ))}
         </div>
@@ -290,27 +298,29 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section>
-        <div className="flex items-end justify-between">
-          <h2 className="text-2xl font-semibold text-ink">Highly reviewed carers</h2>
-          <Link href="/caregivers" className="text-sm text-teal">
-            View directory
-          </Link>
-        </div>
-        <div className="mt-5 grid gap-4">
-          {featured.map((carer) => (
-            <CaregiverCardView
-              key={carer.id}
-              caregiver={withTrust(carer)}
-              shortlist={{
-                saved: savedIds.has(carer.id),
-                signedIn: Boolean(canShortlist),
-                next: "/",
-              }}
-            />
-          ))}
-        </div>
-      </section>
+      {featured.length > 0 ? (
+        <section>
+          <div className="flex items-end justify-between">
+            <h2 className="text-2xl font-semibold text-ink">Highly reviewed carers</h2>
+            <Link href="/caregivers" className="text-sm text-teal">
+              View directory
+            </Link>
+          </div>
+          <div className="mt-5 grid gap-4">
+            {featured.map((carer) => (
+              <CaregiverCardView
+                key={carer.id}
+                caregiver={withTrust(carer)}
+                shortlist={{
+                  saved: savedIds.has(carer.id),
+                  signedIn: Boolean(canShortlist),
+                  next: "/",
+                }}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {reviews.length > 0 ? (
         <section>
@@ -343,14 +353,15 @@ export default async function HomePage() {
           <p className="text-sm uppercase tracking-wide text-sage">1. Choose</p>
           <h3 className="mt-2 text-xl font-semibold">Verified experience</h3>
           <p className="mt-2 text-sage">
-            Every profile shows WWCC, NDIS screening, AHPRA and employer-confirmed work history — not just a bio.
+            Profiles list WWCC, NDIS screening, AHPRA and work history as the carer entered them, so families can check
+            the document.
           </p>
         </div>
         <div>
           <p className="text-sm uppercase tracking-wide text-sage">2. Book</p>
           <h3 className="mt-2 text-xl font-semibold">Hire in a few clicks</h3>
           <p className="mt-2 text-sage">
-            Instant Book from a profile, or post a request and compare proposals the way you would on Upwork.
+            Post a care request and compare proposals, or book from a profile when that carer is taking Instant Book.
           </p>
         </div>
         <div>

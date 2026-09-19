@@ -46,6 +46,7 @@ import { getCaregiverBySlug, getShortlistedIds, getUpcomingAvailability, similar
 import { requireUser } from "@/lib/session";
 import { breadcrumbJsonLd, pageMeta } from "@/lib/seo";
 import { absolutePhotoUrl } from "@/lib/photos";
+import { leftoverFamily } from "@/lib/demo-mode";
 import { WORK_VERIFICATION_LABELS, siteUrl } from "@/lib/constants";
 import { canReplyToReview } from "@/lib/reviews";
 import { trustLabel } from "@/lib/trust";
@@ -147,11 +148,11 @@ export default async function CaregiverProfilePage({
   const canShortlist = viewer?.role === "FAMILY";
   const expiringSoon = profileCheckExpiringSoon(credentialWatchlist(carer.credentials));
   const showProfileCheckNext = profileCheckNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     expiringSoon,
   });
   const showPhotosNext = photosNextShows({
-    isFamily: Boolean(canShortlist),
+    isFamily: leftoverFamily(Boolean(canShortlist)),
     hasPhoto: photosNextHasPhoto(carer.photoUrl),
     expiringSoon,
   });

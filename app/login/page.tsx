@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { GuestBrowsePanel } from "@/components/guest-browse";
 import { loginAction } from "@/lib/actions";
+import { leftoverFamily, isDemoMode } from "@/lib/demo-mode";
 import { DEMO_CARER_EMAIL, DEMO_FAMILY_EMAIL } from "@/lib/constants";
 import { loginNextLinks, loginNextNotice, loginNextShows } from "@/lib/login-next";
 import { pageMeta } from "@/lib/seo";
@@ -20,13 +21,17 @@ export default async function LoginPage({
 }) {
   const query = await searchParams;
   const session = await auth();
-  const showLoginNext = loginNextShows({ isFamily: session?.user?.role === "FAMILY" });
+  const showLoginNext = loginNextShows({ isFamily: leftoverFamily(session?.user?.role === "FAMILY") });
   return (
     <div className="mx-auto max-w-md">
       <h1 className="text-3xl font-semibold text-ink">Log in</h1>
-      <p className="mt-2 text-sm text-stone-500">
-        Demo family: {DEMO_FAMILY_EMAIL} · Demo carer: {DEMO_CARER_EMAIL} · Password: CareProof123!
-      </p>
+      {isDemoMode() ? (
+        <p className="mt-2 text-sm text-stone-500">
+          Demo family: {DEMO_FAMILY_EMAIL} · Demo carer: {DEMO_CARER_EMAIL} · Password: CareProof123!
+        </p>
+      ) : (
+        <p className="mt-2 text-sm text-stone-500">Use the email and password for your CareProof account.</p>
+      )}
       {query.error ? <p className="mt-4 text-sm text-clay">Those details did not match.</p> : null}
       <form action={loginAction} className="mt-6 space-y-4 rounded-2xl border border-line bg-card p-5">
         <input type="hidden" name="callbackUrl" value={query.callbackUrl ?? "/dashboard"} />
@@ -44,6 +49,8 @@ export default async function LoginPage({
       </form>
       <p className="mt-4 text-sm">
         New here? <Link href="/register" className="text-teal">Create an account</Link>
+        {" · "}
+        <Link href="/forgot-password" className="text-teal">Forgot password</Link>
       </p>
       {showLoginNext ? (
         <div className="mt-6 rounded-xl bg-sage p-3 text-sm">

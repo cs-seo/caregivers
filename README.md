@@ -38,7 +38,18 @@ Demo logins (password `CareProof123!`):
 
 ## Vercel
 
-Preview builds no longer require `DATABASE_URL` at compile time. If it is missing, CareProof uses `prisma/demo.db` (copied to `/tmp` on Vercel so bookings can write). Production domain is **caregiver.com.au**. Set `AUTH_SECRET`, `AUTH_URL=https://caregiver.com.au`, and `NEXT_PUBLIC_SITE_URL=https://caregiver.com.au` on the project.
+Preview builds no longer require `DATABASE_URL` at compile time. If it is missing, CareProof uses `prisma/demo.db` (copied to `/tmp` on Vercel so bookings can write). Production domain is **caregiver.com.au**. `www.caregiver.com.au` 301s to the apex host.
+
+On the Vercel production project set:
+
+- `NEXT_PUBLIC_DEMO_MODE=false` — hides seeded `@caregiver.com.au` profiles from the directory, sitemap and homepage, 404s those profile URLs, gates leftover demo boxes, and noindexes care-request pages
+- `AUTH_SECRET` — required; production refuses the insecure preview default
+- `AUTH_URL=https://caregiver.com.au`
+- `NEXT_PUBLIC_SITE_URL=https://caregiver.com.au`
+- `DATABASE_URL` — Postgres when you are ready; SQLite demo.db is only a launch fallback
+- `NEXT_PUBLIC_PLATFORM_ABN` — only after you have a real ABN; invoices omit the demo number until then
+
+Support mail is `hello@caregiver.com.au`. Stripe and transactional email are still owner-side before Instant Book and password reset can go live.
 
 ## Payments
 

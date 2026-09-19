@@ -79,19 +79,23 @@ import { jobViewerFamilyHeading, jobViewerFamilyLinks, jobViewerFamilyNotice } f
 import { formatAud } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { directoryStats, searchCaregivers } from "@/lib/queries";
+import { isDemoMode, isSeededAccountEmail, publicJobWhere } from "@/lib/demo-mode";
+import { marketplacePageNoIndex } from "@/lib/launch-seo";
 import { breadcrumbJsonLd, pageMeta } from "@/lib/seo";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const job = await prisma.careRequest.findUnique({
     where: { slug },
-    include: { city: { include: { state: true } }, specialty: true },
+    include: { city: { include: { state: true } }, specialty: true, family: { select: { email: true } } },
   });
   if (!job) return {};
+  if (!isDemoMode() && isSeededAccountEmail(job.family.email)) return {};
   return pageMeta({
     title: job.title,
     description: `${job.specialty.name} request in ${job.city.name}, ${job.city.state.abbrev}. ${job.description.slice(0, 140)}`,
     path: `/care-requests/${job.slug}`,
+    noIndex: marketplacePageNoIndex(),
   });
 }
 
@@ -121,7 +125,7 @@ export default async function CareRequestPage({
     include: {
       specialty: true,
       city: { include: { state: true } },
-      family: { select: { id: true, name: true } },
+      family: { select: { id: true, name: true, email: true } },
       bookings: {
         select: {
           id: true,
@@ -159,6 +163,9 @@ export default async function CareRequestPage({
     },
   });
   if (!job) notFound();
+  if (!isDemoMode() && isSeededAccountEmail(job.family.email) && session?.user?.id !== job.family.id) {
+    notFound();
+  }
   const isOwner = session?.user?.id === job.family.id;
   const isCarer = session?.user?.role === "CAREGIVER";
   const carer = isCarer
@@ -241,7 +248,7 @@ export default async function CareRequestPage({
     involved: carerInvolved,
   });
   const relatedJobs = await prisma.careRequest.findMany({
-    where: relatedJobsWhere(job),
+    where: { ...relatedJobsWhere(job), ...publicJobWhere() },
     include: {
       specialty: { select: { name: true } },
     },
