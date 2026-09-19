@@ -1,0 +1,138 @@
+import { BOOKING_STATUS } from "./constants";
+import { sydneyDateKey } from "./format";
+
+export function isPendingAcceptance(status: string) {
+  return status === BOOKING_STATUS.PENDING_ACCEPTANCE;
+}
+
+export function pendingAcceptanceCount(weeks: { status: string }[]) {
+  return weeks.filter((week) => isPendingAcceptance(week.status)).length;
+}
+
+export function familyPendingAcceptanceNotice(args: {
+  carerName: string;
+  pendingWeeks: number;
+  seriesTotal?: number;
+}) {
+  if (args.pendingWeeks <= 0) return null;
+  const series = Boolean(args.seriesTotal && args.seriesTotal > 1);
+  if (series && args.pendingWeeks === args.seriesTotal) {
+    return `${args.carerName} still needs to accept this ${args.seriesTotal}-week request-to-book series. You pay into escrow after they accept — not before.`;
+  }
+  if (series) {
+    return `${args.carerName} still needs to accept ${args.pendingWeeks} ${
+      args.pendingWeeks === 1 ? "week" : "weeks"
+    } of this series. You pay into escrow after they accept — not before.`;
+  }
+  return `${args.carerName} still needs to accept this request-to-book sit. You pay into escrow after they accept — not before.`;
+}
+
+export function familyPendingAcceptanceBanner(items: { carerName: string; pendingWeeks: number }[]) {
+  if (!items.length) return null;
+  if (items.length === 1) {
+    const { carerName, pendingWeeks } = items[0];
+    return pendingWeeks > 1
+      ? `${carerName} still needs to accept ${pendingWeeks} weeks.`
+      : `${carerName} still needs to accept this sit.`;
+  }
+  return `${items.length} request-to-book sits are waiting for a carer to accept.`;
+}
+
+export function familyPendingAcceptanceHint(pendingWeeks: number) {
+  if (pendingWeeks <= 0) return null;
+  return pendingWeeks > 1
+    ? "You cannot pay until the carer accepts. Cancel unpaid weeks if you need to withdraw."
+    : "You cannot pay until the carer accepts. Cancel if you need to withdraw.";
+}
+
+export function carerPendingAcceptanceNotice(args: {
+  familyName: string;
+  pendingWeeks: number;
+  seriesTotal?: number;
+}) {
+  if (args.pendingWeeks <= 0) return null;
+  const series = Boolean(args.seriesTotal && args.seriesTotal > 1);
+  if (series && args.pendingWeeks === args.seriesTotal) {
+    return `${args.familyName} is waiting for you to accept this ${args.seriesTotal}-week request-to-book series. Accept so they can pay into escrow, or decline if you cannot do it.`;
+  }
+  if (series) {
+    return `${args.familyName} is waiting for you to accept ${args.pendingWeeks} ${
+      args.pendingWeeks === 1 ? "week" : "weeks"
+    } of this series. Accept so they can pay into escrow, or decline if you cannot do it.`;
+  }
+  return `${args.familyName} is waiting for you to accept this request-to-book sit. Accept so they can pay into escrow, or decline if you cannot do it.`;
+}
+
+export function carerPendingAcceptanceBanner(items: { familyName: string; pendingWeeks: number }[]) {
+  if (!items.length) return null;
+  if (items.length === 1) {
+    const { familyName, pendingWeeks } = items[0];
+    return pendingWeeks > 1
+      ? `${familyName} is waiting for you to accept ${pendingWeeks} weeks.`
+      : `${familyName} is waiting for you to accept this sit.`;
+  }
+  return `${items.length} request-to-book sits are waiting for you to accept.`;
+}
+
+export function carerPendingAcceptanceHint(pendingWeeks: number) {
+  if (pendingWeeks <= 0) return null;
+  return pendingWeeks > 1
+    ? "Accept every week so the family can pay into escrow, or decline the series if you cannot do it."
+    : "Accept so the family can pay into escrow, or decline if you cannot do it.";
+}
+
+export function pendingSinceDays(createdAt: Date, now = new Date()) {
+  const from = sydneyDateKey(createdAt);
+  const to = sydneyDateKey(now);
+  const ms =
+    new Date(`${to}T00:00:00+10:00`).getTime() - new Date(`${from}T00:00:00+10:00`).getTime();
+  return Math.max(0, Math.round(ms / 86_400_000));
+}
+
+export function pendingSinceLabel(createdAt: Date | null | undefined, now = new Date()) {
+  if (!createdAt) return null;
+  const days = pendingSinceDays(createdAt, now);
+  if (days <= 0) return "Requested today.";
+  if (days === 1) return "Requested yesterday.";
+  return `Requested ${days} days ago.`;
+}
+
+export function earliestPendingCreatedAt(weeks: { status: string; createdAt?: Date | null }[]) {
+  const pending = weeks.filter((week) => isPendingAcceptance(week.status) && week.createdAt);
+  if (!pending.length) return null;
+  return pending.reduce((earliest, week) => {
+    const at = week.createdAt!;
+    return at < earliest ? at : earliest;
+  }, pending[0].createdAt!);
+}
+
+export const DECLINE_NOTE_LIMIT = 400;
+
+export function sanitizeDeclineNote(raw: string) {
+  return raw.trim().slice(0, DECLINE_NOTE_LIMIT);
+}
+
+export function canDeclinePending(args: { status: string; isCarer: boolean }) {
+  return args.isCarer && isPendingAcceptance(args.status);
+}
+
+export function firstDeclineNote(weeks: { declineNote?: string | null }[]) {
+  return weeks.find((week) => week.declineNote?.trim())?.declineNote?.trim() ?? null;
+}
+
+export function declineReasonNotice(args: {
+  note: string | null | undefined;
+  carerName: string;
+  isFamily: boolean;
+}) {
+  const note = (args.note ?? "").trim();
+  if (!note) return null;
+  return args.isFamily ? `${args.carerName} declined: “${note}”` : `You declined: “${note}”`;
+}
+
+export function declineReasonHint(args: { note: string | null | undefined; isFamily: boolean }) {
+  const note = (args.note ?? "").trim();
+  if (!note) return null;
+  const short = note.length > 140 ? `${note.slice(0, 137).trim()}…` : note;
+  return args.isFamily ? `The carer declined: “${short}”` : `You declined: “${short}”`;
+}

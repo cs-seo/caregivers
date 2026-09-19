@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" role="img" aria-label="James Okafor">
+  <rect width="80" height="80" rx="40" fill="#0f4c46"/>
+  <circle cx="18" cy="20" r="24" fill="#d7e6df" opacity="0.35"/>
+  <circle cx="64" cy="52" r="20" fill="#d7e6df" opacity="0.35"/>
+  <text x="40" y="47" text-anchor="middle" fill="#fff" font-size="22" font-family="Georgia, serif" font-weight="600">JO</text>
+</svg>

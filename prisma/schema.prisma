@@ -1,0 +1,397 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  passwordHash   String
+  name           String
+  phone          String?
+  role           String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  familyProfile    FamilyProfile?
+  caregiverProfile CaregiverProfile?
+  familyBookings   Booking[]      @relation("FamilyBookings")
+  familyRequests   CareRequest[]
+  reviewsAuthored  Review[]       @relation("ReviewAuthor")
+  messages         Message[]
+  jobMessages      CareRequestMessage[]
+  shortlists       Shortlist[]
+  savedSearches    SavedSearch[]
+  calendarFeed     CalendarFeed?
+}
+
+model FamilyProfile {
+  id          String  @id @default(cuid())
+  userId      String  @unique
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  suburb      String?
+  cityId      String?
+  city        City?   @relation(fields: [cityId], references: [id])
+  bio         String?
+  ndisNumber  String?
+  agedCareRef String?
+  handoverAccess    String?
+  handoverCare      String?
+  handoverEmergency String?
+  proposalAlertsOn         Boolean   @default(true)
+  lastProposalAlertedCount Int       @default(0)
+  proposalAlertedAt        DateTime?
+}
+
+model State {
+  id             String @id @default(cuid())
+  slug           String @unique
+  name           String
+  abbrev         String
+  seoTitle       String
+  seoDescription String
+  cities         City[]
+}
+
+model City {
+  id             String  @id @default(cuid())
+  slug           String
+  name           String
+  stateId        String
+  state          State   @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  seoTitle       String
+  seoDescription String
+  lat            Float?
+  lng            Float?
+  caregivers     CaregiverProfile[]
+  families       FamilyProfile[]
+  requests       CareRequest[]
+  suburbs        Suburb[]
+
+  @@unique([stateId, slug])
+}
+
+model Suburb {
+  id     String @id @default(cuid())
+  slug   String
+  name   String
+  cityId String
+  city   City   @relation(fields: [cityId], references: [id], onDelete: Cascade)
+
+  @@unique([cityId, slug])
+}
+
+model Specialty {
+  id             String @id @default(cuid())
+  slug           String @unique
+  name           String
+  pluralName     String
+  description    String
+  seoTitle       String
+  seoDescription String
+  caregivers     CaregiverSpecialty[]
+  requests       CareRequest[]
+  bookings       Booking[]
+}
+
+model CaregiverProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slug            String   @unique
+  headline        String
+  bio             String
+  photoUrl        String?
+  hourlyRateCents Int
+  yearsExperience Int
+  suburb          String
+  cityId          String
+  city            City     @relation(fields: [cityId], references: [id])
+  abn             String?
+  instantBook      Boolean  @default(false)
+  availableNow     Boolean  @default(false)
+  availabilityNote String?
+  weeklyHours      String?
+  noticeHours      Int      @default(4)
+  jobsLastSeenCount Int      @default(0)
+  jobsSeenAt        DateTime?
+  jobAlertsOn         Boolean   @default(true)
+  lastJobAlertedCount Int       @default(0)
+  jobAlertedAt        DateTime?
+  inviteAlertsOn         Boolean   @default(true)
+  lastInviteAlertedCount Int       @default(0)
+  inviteAlertedAt        DateTime?
+  lastActiveAt     DateTime @default(now())
+  ratingAvg       Float    @default(0)
+  reviewCount     Int      @default(0)
+  completedJobs   Int      @default(0)
+  verifiedHours   Int      @default(0)
+  stripeAccountId String?
+
+  specialties CaregiverSpecialty[]
+  workHistory WorkHistory[]
+  credentials Credential[]
+  bookings    Booking[]
+  proposals   Proposal[]
+  invites     CareRequestInvite[]
+  jobMessages CareRequestMessage[]
+  reviews     Review[]
+  shortlistedBy Shortlist[]
+  blockedDates CaregiverBlockedDate[]
+  weeklyWindows CaregiverWeeklyWindow[]
+}
+
+model CaregiverWeeklyWindow {
+  id          String           @id @default(cuid())
+  caregiverId String
+  caregiver   CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  weekday     Int
+  startMin    Int
+  endMin      Int
+
+  @@index([caregiverId])
+  @@index([weekday])
+}
+
+model CaregiverBlockedDate {
+  id          String           @id @default(cuid())
+  caregiverId String
+  caregiver   CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  dateKey     String
+  note        String?
+  createdAt   DateTime         @default(now())
+
+  @@unique([caregiverId, dateKey])
+  @@index([dateKey])
+}
+
+model CaregiverSpecialty {
+  caregiverId String
+  specialtyId String
+  caregiver   CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  specialty   Specialty        @relation(fields: [specialtyId], references: [id], onDelete: Cascade)
+
+  @@id([caregiverId, specialtyId])
+}
+
+model WorkHistory {
+  id           String    @id @default(cuid())
+  caregiverId  String
+  caregiver    CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  employer     String
+  title        String
+  startDate    DateTime
+  endDate      DateTime?
+  duties       String
+  verification String
+  hours        Int       @default(0)
+}
+
+model Credential {
+  id           String    @id @default(cuid())
+  caregiverId  String
+  caregiver    CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  type         String
+  issuingState String?
+  number       String?
+  expiresAt    DateTime?
+  verified     Boolean   @default(false)
+  verifiedAt   DateTime?
+}
+
+model CareRequest {
+  id            String    @id @default(cuid())
+  slug          String    @unique
+  familyId      String
+  family        User      @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  specialtyId   String
+  specialty     Specialty @relation(fields: [specialtyId], references: [id])
+  cityId        String
+  city          City      @relation(fields: [cityId], references: [id])
+  title         String
+  description   String
+  budgetType    String
+  budgetCents   Int
+  startDate     DateTime
+  endDate       DateTime?
+  hoursEstimate Int?
+  status        String    @default("open")
+  createdAt     DateTime  @default(now())
+  proposals     Proposal[]
+  invites       CareRequestInvite[]
+  jobMessages   CareRequestMessage[]
+  bookings      Booking[]
+}
+
+model Proposal {
+  id            String           @id @default(cuid())
+  careRequestId String
+  careRequest   CareRequest      @relation(fields: [careRequestId], references: [id], onDelete: Cascade)
+  caregiverId   String
+  caregiver     CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  coverLetter   String
+  rateCents     Int
+  status           String           @default("pending")
+  familyNote       String?
+  counterRateCents Int?
+  counterNote      String?
+  counteredAt      DateTime?
+  createdAt        DateTime         @default(now())
+
+  @@unique([careRequestId, caregiverId])
+}
+
+model CareRequestInvite {
+  id          String           @id @default(cuid())
+  requestId   String
+  request     CareRequest      @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  caregiverId String
+  caregiver   CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  status      String           @default("pending")
+  note        String?
+  reply       String?
+  createdAt   DateTime         @default(now())
+
+  @@unique([requestId, caregiverId])
+  @@index([caregiverId, status])
+  @@index([requestId, status])
+}
+
+model CareRequestMessage {
+  id          String           @id @default(cuid())
+  requestId   String
+  request     CareRequest      @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  caregiverId String
+  caregiver   CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  senderId    String
+  sender      User             @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  body        String
+  readAt      DateTime?
+  createdAt   DateTime         @default(now())
+
+  @@index([requestId, caregiverId])
+  @@index([caregiverId, readAt])
+}
+
+model Booking {
+  id               String    @id @default(cuid())
+  familyId         String
+  family           User      @relation("FamilyBookings", fields: [familyId], references: [id], onDelete: Cascade)
+  caregiverId      String
+  caregiver        CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  careRequestId    String?
+  careRequest      CareRequest? @relation(fields: [careRequestId], references: [id])
+  specialtyId      String
+  specialty        Specialty @relation(fields: [specialtyId], references: [id])
+  startAt          DateTime
+  endAt            DateTime
+  hours            Float
+  rateCents        Int
+  subtotalCents    Int
+  platformFeeCents Int
+  gstCents         Int
+  totalCents       Int
+  notes            String?
+  handoverAccess    String?
+  handoverCare      String?
+  handoverEmergency String?
+  disputeNote      String?
+  disputedAt       DateTime?
+  disputeReply     String?
+  disputeRepliedAt DateTime?
+  declineNote      String?
+  declinedAt       DateTime?
+  status           String
+  recurringGroupId String?
+  recurringIndex   Int       @default(1)
+  recurringTotal   Int       @default(1)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  payment          Payment?
+  review           Review?
+  messages         Message[]
+}
+
+model Message {
+  id        String    @id @default(cuid())
+  bookingId String
+  booking   Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  senderId  String
+  sender    User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  body      String
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model Payment {
+  id                    String    @id @default(cuid())
+  bookingId             String    @unique
+  booking               Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  provider              String
+  stripePaymentIntentId String?
+  stripeTransferId      String?
+  amountCents           Int
+  platformFeeCents      Int
+  caregiverPayoutCents  Int
+  status                String
+  invoiceNumber         String?   @unique
+  heldAt                DateTime?
+  releasedAt            DateTime?
+  createdAt             DateTime  @default(now())
+}
+
+model Shortlist {
+  id          String           @id @default(cuid())
+  familyId    String
+  family      User             @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  caregiverId String
+  caregiver   CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  createdAt   DateTime         @default(now())
+
+  @@unique([familyId, caregiverId])
+}
+
+model SavedSearch {
+  id               String    @id @default(cuid())
+  familyId         String
+  family           User      @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  name             String
+  href             String
+  lastSeenCount    Int       @default(0)
+  seenAt           DateTime?
+  alertsOn         Boolean   @default(true)
+  lastAlertedCount Int       @default(0)
+  alertedAt        DateTime?
+  createdAt        DateTime  @default(now())
+
+  @@unique([familyId, href])
+  @@index([familyId])
+}
+
+model CalendarFeed {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Review {
+  id          String           @id @default(cuid())
+  bookingId   String           @unique
+  booking     Booking          @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  authorId    String
+  author      User             @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  caregiverId String
+  caregiver   CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  rating      Int
+  body        String
+  reply       String?
+  repliedAt   DateTime?
+  createdAt   DateTime         @default(now())
+}

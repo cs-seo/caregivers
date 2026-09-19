@@ -1,61 +1,34 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
+import { isAvailableNowLive, isAwayToday, isInstantBookLive } from "@/lib/availability";
+import { parseFilters } from "@/lib/directory";
+import { searchCaregivers } from "@/lib/queries";
 
-// Mock data for caregivers
-const mockCaregivers = [
-  {
-    id: 'c1',
-    name: 'Sarah Johnson',
-    status: 'online' as const,
-    location: 'Building A, Floor 2',
-    lastSeen: 'just now',
-  },
-  {
-    id: 'c2',
-    name: 'Michael Chen',
-    status: 'busy' as const,
-    location: 'Room 205',
-    lastSeen: '2 minutes ago',
-  },
-  {
-    id: 'c3',
-    name: 'Emma Williams',
-    status: 'offline' as const,
-    location: 'Off-site',
-    lastSeen: '1 hour ago',
-  },
-  {
-    id: 'c4',
-    name: 'David Martinez',
-    status: 'online' as const,
-    location: 'Main Reception',
-    lastSeen: 'just now',
-  },
-  {
-    id: 'c5',
-    name: 'Lisa Anderson',
-    status: 'busy' as const,
-    location: 'Conference Room',
-    lastSeen: '5 minutes ago',
-  },
-];
-
-export async function GET() {
-  // Simulate some dynamic status changes for demo purposes
-  const caregivers = mockCaregivers.map((caregiver) => {
-    // Randomly change status to simulate real-time updates
-    const statuses = ['online', 'busy', 'offline'] as const;
-    const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-
-    return {
-      ...caregiver,
-      status: Math.random() > 0.3 ? caregiver.status : randomStatus,
-    };
-  });
-
-  return NextResponse.json(caregivers, {
-    headers: {
-      'Cache-Control': 'no-store, must-revalidate',
-      'Content-Type': 'application/json',
-    },
-  });
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const filters = parseFilters(Object.fromEntries(url.searchParams.entries()));
+  const caregivers = await searchCaregivers(filters, 40);
+  return NextResponse.json(
+    caregivers.map((carer) => ({
+      id: carer.id,
+      slug: carer.slug,
+      name: carer.user.name,
+      headline: carer.headline,
+      city: carer.city.name,
+      state: carer.city.state.abbrev,
+      hourlyRateCents: carer.hourlyRateCents,
+      instantBook: isInstantBookLive(
+        carer.instantBook,
+        carer.blockedDates.map((row) => row.dateKey),
+      ),
+      availableNow: isAvailableNowLive(
+        carer.availableNow,
+        carer.blockedDates.map((row) => row.dateKey),
+        carer.weeklyWindows,
+      ),
+      awayToday: isAwayToday(carer.blockedDates.map((row) => row.dateKey)),
+      ratingAvg: carer.ratingAvg,
+      photoUrl: carer.photoUrl,
+      trustScore: carer.trustScore,
+    })),
+  );
 }

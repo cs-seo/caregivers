@@ -1,0 +1,531 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { auth } from "@/auth";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { locationBoardLink, locationBoardNotice } from "@/lib/job-board";
+import { crawlSuburbSpecialtyLinks } from "@/lib/crawl-links";
+import { geelongNextLinks, geelongNextNotice, geelongNextShows } from "@/lib/geelong-next";
+import { goldCoastNextLinks, goldCoastNextNotice, goldCoastNextShows } from "@/lib/gold-coast-next";
+import { newcastleNextLinks, newcastleNextNotice, newcastleNextShows } from "@/lib/newcastle-next";
+import { perthNextLinks, perthNextNotice, perthNextShows } from "@/lib/perth-next";
+import { byronBayNextLinks, byronBayNextNotice, byronBayNextShows } from "@/lib/byron-bay-next";
+import { coffsHarbourNextLinks, coffsHarbourNextNotice, coffsHarbourNextShows } from "@/lib/coffs-harbour-next";
+import { hunterValleyNextLinks, hunterValleyNextNotice, hunterValleyNextShows } from "@/lib/hunter-valley-next";
+import { clareNextLinks, clareNextNotice, clareNextShows } from "@/lib/clare-next";
+import { gunnedahNextLinks, gunnedahNextNotice, gunnedahNextShows } from "@/lib/gunnedah-next";
+import { dalbyNextLinks, dalbyNextNotice, dalbyNextShows } from "@/lib/dalby-next";
+import { swanHillNextLinks, swanHillNextNotice, swanHillNextShows } from "@/lib/swan-hill-next";
+import { bundabergNextLinks, bundabergNextNotice, bundabergNextShows } from "@/lib/bundaberg-next";
+import { armidaleNextLinks, armidaleNextNotice, armidaleNextShows } from "@/lib/armidale-next";
+import { herveyBayNextLinks, herveyBayNextNotice, herveyBayNextShows } from "@/lib/hervey-bay-next";
+import { ipswichNextLinks, ipswichNextNotice, ipswichNextShows } from "@/lib/ipswich-next";
+import { gladstoneNextLinks, gladstoneNextNotice, gladstoneNextShows } from "@/lib/gladstone-next";
+import { maryboroughNextLinks, maryboroughNextNotice, maryboroughNextShows } from "@/lib/maryborough-next";
+import { gympieNextLinks, gympieNextNotice, gympieNextShows } from "@/lib/gympie-next";
+import { cairnsNextLinks, cairnsNextNotice, cairnsNextShows } from "@/lib/cairns-next";
+import { townsvilleNextLinks, townsvilleNextNotice, townsvilleNextShows } from "@/lib/townsville-next";
+import { mackayNextLinks, mackayNextNotice, mackayNextShows } from "@/lib/mackay-next";
+import { rockhamptonNextLinks, rockhamptonNextNotice, rockhamptonNextShows } from "@/lib/rockhampton-next";
+import { brisbaneNextLinks, brisbaneNextNotice, brisbaneNextShows } from "@/lib/brisbane-next";
+import { lismoreNextLinks, lismoreNextNotice, lismoreNextShows } from "@/lib/lismore-next";
+import { toowoombaNextLinks, toowoombaNextNotice, toowoombaNextShows } from "@/lib/toowoomba-next";
+import { leftoverFamily } from "@/lib/demo-mode";
+import { getCity, getSpecialties } from "@/lib/queries";
+import { pageMeta } from "@/lib/seo";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ state: string; city: string }>;
+}) {
+  const { state, city } = await params;
+  const place = await getCity(state, city);
+  if (!place) return {};
+  return pageMeta({
+    title: `Carers in ${place.name}, ${place.state.abbrev} — suburbs`,
+    description: `Suburb-by-suburb carers in ${place.name}: nannies, babysitters, aged care and NDIS support workers.`,
+    path: `/locations/${place.state.slug}/${place.slug}`,
+  });
+}
+
+export default async function CityLocationsPage({
+  params,
+}: {
+  params: Promise<{ state: string; city: string }>;
+}) {
+  const { state, city } = await params;
+  const [place, specialties, session] = await Promise.all([getCity(state, city), getSpecialties(), auth()]);
+  if (!place) notFound();
+  const board = locationBoardLink({ city: place.slug, cityName: place.name });
+  const isFamily = leftoverFamily(session?.user?.role === "FAMILY");
+  const showPerthNext = perthNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showGoldCoastNext = goldCoastNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showGeelongNext = geelongNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showNewcastleNext = newcastleNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showToowoombaNext = toowoombaNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showLismoreNext = lismoreNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showCoffsHarbourNext = coffsHarbourNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showByronBayNext = byronBayNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showHunterValleyNext = hunterValleyNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showClareNext = clareNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showGunnedahNext = gunnedahNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showDalbyNext = dalbyNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showSwanHillNext = swanHillNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showBundabergNext = bundabergNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showArmidaleNext = armidaleNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showHerveyBayNext = herveyBayNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showIpswichNext = ipswichNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showGladstoneNext = gladstoneNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showMaryboroughNext = maryboroughNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showGympieNext = gympieNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showCairnsNext = cairnsNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showTownsvilleNext = townsvilleNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showMackayNext = mackayNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showRockhamptonNext = rockhamptonNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+  const showBrisbaneNext = brisbaneNextShows({
+    isFamily,
+    stateSlug: place.state.slug,
+    citySlug: place.slug,
+  });
+
+  return (
+    <div>
+      <Breadcrumbs
+        items={[
+          { name: "Home", href: "/" },
+          { name: "Locations", href: "/locations" },
+          { name: place.state.name, href: `/locations/${place.state.slug}` },
+          { name: place.name },
+        ]}
+      />
+      <h1 className="text-3xl font-semibold text-ink">
+        Carers in {place.name}, {place.state.abbrev}
+      </h1>
+      <p className="mt-3 text-stone-600">
+        These suburb pages target local searches — “nanny in {place.suburbs[0]?.name ?? place.name}”, “aged care worker
+        near {place.name}”, “NDIS support worker {place.name}”.
+      </p>
+      <ul className="mt-4 flex flex-wrap gap-3 text-sm">
+        {specialties.map((spec) => (
+          <li key={spec.id}>
+            <Link
+              className="text-teal hover:underline"
+              href={`/caregivers/${spec.slug}/${place.state.slug}/${place.slug}`}
+            >
+              {spec.pluralName} in {place.name}
+            </Link>
+          </li>
+        ))}
+      </ul>
+      {showPerthNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{perthNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {perthNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : null}
+      {showGoldCoastNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{goldCoastNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {goldCoastNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : null}
+      {showGeelongNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{geelongNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {geelongNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : null}
+      {showNewcastleNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{newcastleNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {newcastleNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : null}
+      {showToowoombaNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{toowoombaNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {toowoombaNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : null}
+      {showLismoreNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{lismoreNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {lismoreNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showCoffsHarbourNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{coffsHarbourNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {coffsHarbourNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showByronBayNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{byronBayNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {byronBayNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showHunterValleyNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{hunterValleyNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {hunterValleyNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showClareNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{clareNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {clareNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showGunnedahNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{gunnedahNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {gunnedahNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showDalbyNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{dalbyNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {dalbyNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showSwanHillNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{swanHillNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {swanHillNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showBundabergNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{bundabergNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {bundabergNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showArmidaleNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{armidaleNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {armidaleNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showHerveyBayNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{herveyBayNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {herveyBayNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showIpswichNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{ipswichNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {ipswichNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showGladstoneNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{gladstoneNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {gladstoneNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showMaryboroughNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{maryboroughNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {maryboroughNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showGympieNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{gympieNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {gympieNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showCairnsNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{cairnsNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {cairnsNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showTownsvilleNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{townsvilleNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {townsvilleNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showMackayNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{mackayNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {mackayNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showRockhamptonNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{rockhamptonNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {rockhamptonNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : showBrisbaneNext ? (
+        <div className="mt-6 max-w-2xl rounded-xl bg-sage p-3 text-sm">
+          <p>{brisbaneNextNotice()}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {brisbaneNextLinks().map((link) => (
+              <Link key={link.href} href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            ))}
+          </p>
+        </div>
+      ) : null}
+      <p className="mt-6 text-sm text-stone-600">
+        {locationBoardNotice(place.name)}{" "}
+        <Link href={board.href} className="font-medium text-teal hover:underline">
+          {board.label}
+        </Link>
+        .
+      </p>
+      <h2 className="mt-10 text-xl font-semibold">Suburbs</h2>
+      {place.suburbs.length === 0 ? (
+        <p className="mt-3 text-sm text-stone-500">Suburb pages for {place.name} are still being added.</p>
+      ) : (
+        <ul className="mt-3 grid gap-2 sm:grid-cols-2 md:grid-cols-3">
+          {place.suburbs.map((suburb) => (
+            <li key={suburb.id}>
+              <span className="font-medium text-ink">{suburb.name}</span>
+              <ul className="mt-1 space-y-0.5 text-sm">
+                {crawlSuburbSpecialtyLinks(specialties, {
+                  stateSlug: place.state.slug,
+                  citySlug: place.slug,
+                  suburbSlug: suburb.slug,
+                }).map((link) => (
+                  <li key={link.href}>
+                    <Link className="text-teal hover:underline" href={link.href}>
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}

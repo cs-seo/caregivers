@@ -1,0 +1,206 @@
+import { INVITE_NOTE_LIMIT, INVITE_STATUS } from "./job-invite";
+import { isJobAccepting } from "./job-status";
+import { pendingSinceDays } from "./pending-acceptance";
+import { prisma } from "./prisma";
+
+type JobOpenState = { status: string; startDate?: Date | null };
+
+function jobStillAccepting(job: JobOpenState | string, now = new Date()) {
+  return typeof job === "string" ? job === "open" : isJobAccepting(job, now);
+}
+
+export const BOOKING_NOTE_LIMIT = INVITE_NOTE_LIMIT;
+
+export function sanitizeBookingNote(raw: string) {
+  return raw.trim().slice(0, BOOKING_NOTE_LIMIT);
+}
+
+export function composeBookingNotes(parts: { welcomeNote?: string | null; coverLetter?: string | null }) {
+  const welcome = sanitizeBookingNote(parts.welcomeNote ?? "");
+  const cover = (parts.coverLetter ?? "").trim();
+  if (welcome && cover) {
+    return `Welcome from the family:\n${welcome}\n\nProposal:\n${cover}`;
+  }
+  return welcome || cover || null;
+}
+
+export const PROPOSAL_STATUS = {
+  PENDING: "pending",
+  ACCEPTED: "accepted",
+  DECLINED: "declined",
+} as const;
+
+export function hiredProposalStatus(status: string, caregiverId: string, hiredCaregiverId: string) {
+  if (status !== PROPOSAL_STATUS.PENDING) return status;
+  return caregiverId === hiredCaregiverId ? PROPOSAL_STATUS.ACCEPTED : PROPOSAL_STATUS.DECLINED;
+}
+
+export function requestStatusLabel(status: string) {
+  if (status === "hired") return "Hired";
+  if (status === "open") return "Open";
+  if (status === "expired") return "Expired";
+  return status;
+}
+
+export function proposalStatusLabel(status: string, jobStatus?: string) {
+  if (status === PROPOSAL_STATUS.ACCEPTED) return "Hired";
+  if (status === PROPOSAL_STATUS.DECLINED) return jobStatus === "open" ? "Passed on" : "Not hired";
+  if (status === PROPOSAL_STATUS.PENDING) return "Pending";
+  return status;
+}
+
+export function proposalStatusTone(status: string): "teal" | "stone" | "clay" {
+  if (status === PROPOSAL_STATUS.ACCEPTED) return "teal";
+  if (status === PROPOSAL_STATUS.DECLINED) return "stone";
+  return "clay";
+}
+
+export function canWithdrawProposal(
+  proposal: { caregiverId: string; status: string } | null,
+  caregiverId: string,
+  job: JobOpenState | string,
+  now = new Date(),
+) {
+  return Boolean(
+    proposal &&
+      proposal.caregiverId === caregiverId &&
+      proposal.status === PROPOSAL_STATUS.PENDING &&
+      jobStillAccepting(job, now),
+  );
+}
+
+export function canPassOnProposal(
+  proposal: { status: string } | null,
+  job: { familyId: string; status: string; startDate?: Date | null } | null,
+  familyId: string,
+  now = new Date(),
+) {
+  return Boolean(
+    proposal &&
+      proposal.status === PROPOSAL_STATUS.PENDING &&
+      job &&
+      isJobAccepting(job, now) &&
+      job.familyId === familyId,
+  );
+}
+
+export function hasPendingCounter(proposal: { status: string; counterRateCents?: number | null } | null) {
+  return Boolean(
+    proposal && proposal.status === PROPOSAL_STATUS.PENDING && proposal.counterRateCents != null,
+  );
+}
+
+export function canCounterProposal(
+  proposal: { status: string } | null,
+  job: { familyId: string; status: string; startDate?: Date | null } | null,
+  familyId: string,
+  now = new Date(),
+) {
+  return canPassOnProposal(proposal, job, familyId, now);
+}
+
+export function canRespondToCounter(
+  proposal: { caregiverId: string; status: string; counterRateCents?: number | null } | null,
+  caregiverId: string,
+  job: JobOpenState | string,
+  now = new Date(),
+) {
+  return Boolean(hasPendingCounter(proposal) && proposal?.caregiverId === caregiverId && jobStillAccepting(job, now));
+}
+
+export function counterSinceLabel(counteredAt: Date | null | undefined, now = new Date()) {
+  if (!counteredAt) return null;
+  const days = pendingSinceDays(counteredAt, now);
+  if (days <= 0) return "Suggested today.";
+  if (days === 1) return "Suggested yesterday.";
+  return `Suggested ${days} days ago.`;
+}
+
+export function counterBanner(
+  items: { title: string; familyName: string; rateLabel: string; sinceLabel?: string | null }[],
+) {
+  if (!items.length) return null;
+  if (items.length === 1) {
+    const since = items[0].sinceLabel ? ` ${items[0].sinceLabel}` : "";
+    return `${items[0].familyName} suggested ${items[0].rateLabel}/hr on ${items[0].title}.${since}`;
+  }
+  return `${items.length} families suggested a different rate.`;
+}
+
+export function familyCounterBanner(
+  items: { title: string; carerName: string; rateLabel: string; sinceLabel?: string | null }[],
+) {
+  if (!items.length) return null;
+  if (items.length === 1) {
+    const since = items[0].sinceLabel ? ` ${items[0].sinceLabel}` : "";
+    return `${items[0].carerName} has not replied to your ${items[0].rateLabel}/hr suggestion on ${items[0].title}.${since}`;
+  }
+  return `${items.length} suggested rates are waiting for a carer to reply.`;
+}
+
+export function familyCounterHint(rateLabel: string, sinceLabel?: string | null) {
+  return sinceLabel
+    ? `Waiting on their reply to ${rateLabel}/hr. ${sinceLabel}`
+    : `Waiting on their reply to ${rateLabel}/hr.`;
+}
+
+export function notHiredBanner(
+  items: { title: string; familyName: string }[],
+) {
+  if (!items.length) return null;
+  if (items.length === 1) {
+    return `${items[0].familyName} hired someone else for ${items[0].title}.`;
+  }
+  return `${items.length} families hired someone else.`;
+}
+
+export function passedOnBanner(
+  items: { title: string; familyName: string; familyNote?: string | null }[],
+) {
+  if (!items.length) return null;
+  if (items.length === 1) {
+    const note = (items[0].familyNote ?? "").trim();
+    return note
+      ? `${items[0].familyName} passed on your proposal for ${items[0].title}: “${note}”`
+      : `${items[0].familyName} passed on your proposal for ${items[0].title}.`;
+  }
+  return `${items.length} families passed on a proposal.`;
+}
+
+export function passedOnHint(note?: string | null) {
+  const text = (note ?? "").trim();
+  if (!text) return null;
+  const short = text.length > 140 ? `${text.slice(0, 137).trim()}…` : text;
+  return `They wrote: “${short}”`;
+}
+
+export async function markRequestHired(careRequestId: string, hiredCaregiverId: string) {
+  await prisma.careRequest.update({
+    where: { id: careRequestId },
+    data: { status: "hired" },
+  });
+  await prisma.proposal.updateMany({
+    where: { careRequestId, caregiverId: hiredCaregiverId, status: PROPOSAL_STATUS.PENDING },
+    data: { status: PROPOSAL_STATUS.ACCEPTED },
+  });
+  await prisma.proposal.updateMany({
+    where: {
+      careRequestId,
+      caregiverId: { not: hiredCaregiverId },
+      status: PROPOSAL_STATUS.PENDING,
+    },
+    data: { status: PROPOSAL_STATUS.DECLINED },
+  });
+  await prisma.careRequestInvite.updateMany({
+    where: { requestId: careRequestId, caregiverId: hiredCaregiverId, status: INVITE_STATUS.PENDING },
+    data: { status: INVITE_STATUS.APPLIED },
+  });
+  await prisma.careRequestInvite.updateMany({
+    where: {
+      requestId: careRequestId,
+      caregiverId: { not: hiredCaregiverId },
+      status: INVITE_STATUS.PENDING,
+    },
+    data: { status: INVITE_STATUS.DECLINED },
+  });
+}

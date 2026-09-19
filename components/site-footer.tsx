@@ -1,0 +1,114 @@
+import Link from "next/link";
+import { SITE_HOST, SITE_NAME } from "@/lib/constants";
+import { SUPPORT_EMAIL } from "@/lib/demo-mode";
+import { crawlFooterSpecialtyLinks, crawlFooterStateLinks } from "@/lib/crawl-links";
+import { footerBoardLink } from "@/lib/footer-board";
+import { getSpecialties, getStates } from "@/lib/queries";
+
+export async function SiteFooter() {
+  const [specialties, states] = await Promise.all([getSpecialties(), getStates()]);
+  const board = footerBoardLink();
+  const specialtyLinks = crawlFooterSpecialtyLinks(specialties);
+  const stateLinks = crawlFooterStateLinks(states);
+
+  return (
+    <footer className="mt-16 border-t border-line bg-teal-deep text-sage print:hidden">
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 md:grid-cols-4">
+        <div>
+          <p className="text-lg font-semibold text-white">{SITE_NAME}</p>
+          <p className="mt-1 text-sm text-white/80">{SITE_HOST}</p>
+          <p className="mt-2 text-sm text-sage/80">
+            Australian carers directory. Browse by specialty and suburb, then request a sit. Support: {SUPPORT_EMAIL}
+          </p>
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-white">Specialties</p>
+          <ul className="mt-3 space-y-1 text-sm">
+            {specialtyLinks.map((link) => (
+              <li key={link.href}>
+                <Link className="hover:text-white" href={link.href}>
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-white">States</p>
+          <ul className="mt-3 space-y-1 text-sm">
+            {stateLinks.map((link) => (
+              <li key={link.href}>
+                <Link className="hover:text-white" href={link.href}>
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-white">Company</p>
+          <ul className="mt-3 space-y-1 text-sm">
+            <li>
+              <Link className="hover:text-white" href="/how-it-works">
+                How it works
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-white" href="/for-carers">
+                For carers
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-white" href="/trust-and-safety">
+                Trust and safety
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-white" href="/register">
+                Create an account
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-white" href="/locations">
+                Cities and suburbs
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-white" href="/guides">
+                Hiring guides
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-white" href={board.href}>
+                {board.label}
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-white" href="/post-a-job">
+                Post a care request
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-white" href="/privacy">
+                Privacy
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-white" href="/terms">
+                Terms
+              </Link>
+            </li>
+            <li>
+              <a className="hover:text-white" href={`mailto:${SUPPORT_EMAIL}`}>
+                {SUPPORT_EMAIL}
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div className="border-t border-white/10 py-4 text-center text-xs text-sage/70">
+        © {new Date().getFullYear()} {SITE_NAME} · {SITE_HOST}. Escrow protects families and carers. Prices in AUD.
+      </div>
+    </footer>
+  );
+}

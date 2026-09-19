@@ -1,0 +1,143 @@
+import Link from "next/link";
+import { isAvailableNowLive, isAwayToday, isInstantBookLive, noticeLabel, weeklyHourChips } from "@/lib/availability";
+import { formatDate, lastActiveLabel, parseSydneyDateTimeLocal } from "@/lib/format";
+import { bookHref, caregiverHref } from "@/lib/job-match";
+import { formatAud } from "@/lib/money";
+import { trustLabel } from "@/lib/trust";
+import type { CaregiverCard } from "@/lib/queries";
+import { Badge, CredentialBadges } from "./badges";
+import { InviteButton } from "./invite-button";
+import { Portrait } from "./portrait";
+import { ShortlistButton } from "./shortlist-button";
+
+export function CaregiverCardView({
+  caregiver,
+  shortlist,
+  neededOn,
+  neededAt,
+  job,
+  invite,
+}: {
+  caregiver: CaregiverCard & { trustScore: number };
+  shortlist?: { saved: boolean; signedIn: boolean; next: string };
+  neededOn?: string;
+  neededAt?: string;
+  job?: string;
+  invite?: {
+    jobSlug: string;
+    job: { familyId: string; status: string };
+    familyId?: string | null;
+    existing?: { status: string } | null;
+    proposed?: boolean;
+    next: string;
+    signedIn: boolean;
+  };
+}) {
+  const specialtyNames = caregiver.specialties.map((s) => s.specialty.name).join(" · ");
+  const blockedKeys = (caregiver.blockedDates ?? []).map((row) => row.dateKey);
+  const awayToday = isAwayToday(blockedKeys);
+  const liveInstant = isInstantBookLive(caregiver.instantBook, blockedKeys);
+  return (
+    <article className="rounded-2xl border border-line bg-card p-5 shadow-sm transition hover:border-teal/40">
+      <div className="flex gap-4">
+        <Portrait name={caregiver.user.name} photoUrl={caregiver.photoUrl} size={56} />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <h2 className="text-lg font-semibold text-ink">
+                <Link href={caregiverHref(caregiver.slug, { start: neededOn, at: neededAt, job })} className="hover:text-teal">
+                  {caregiver.user.name}
+                </Link>
+              </h2>
+              <p className="text-sm text-stone-600">
+                {caregiver.suburb}, {caregiver.city.name} {caregiver.city.state.abbrev}
+              </p>
+            </div>
+            <p className="text-right">
+              <span className="text-lg font-semibold text-teal">{formatAud(caregiver.hourlyRateCents)}</span>
+              <span className="block text-xs text-stone-500">per hour, inc GST</span>
+            </p>
+          </div>
+          <p className="mt-2 line-clamp-2 text-sm text-stone-700">{caregiver.headline}</p>
+          {caregiver.availabilityNote ? (
+            <p className="mt-2 line-clamp-2 text-sm text-stone-600">{caregiver.availabilityNote}</p>
+          ) : null}
+          {weeklyHourChips(caregiver.weeklyHours).length ? (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {weeklyHourChips(caregiver.weeklyHours).map((chip) => (
+                <span key={chip} className="rounded-full bg-sage px-2 py-0.5 text-xs text-teal-deep">
+                  {chip}
+                </span>
+              ))}
+            </div>
+          ) : null}
+          <p className="mt-2 text-xs text-stone-500">{specialtyNames}</p>
+          {caregiver.workHistory[0] ? (
+            <p className="mt-1 text-xs text-stone-500">
+              {caregiver.workHistory[0].title} · {caregiver.workHistory[0].employer}
+            </p>
+          ) : null}
+          <div className="mt-3">
+            <CredentialBadges credentials={caregiver.credentials} abn={caregiver.abn} />
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <Badge tone="teal">{trustLabel(caregiver.trustScore)}</Badge>
+            {liveInstant ? <Badge tone="clay">Instant Book</Badge> : null}
+            {caregiver.instantBook && awayToday ? <Badge tone="stone">Instant Book paused</Badge> : null}
+            {caregiver.instantBook && caregiver.noticeHours > 0 ? (
+              <Badge tone="stone">{noticeLabel(caregiver.noticeHours)}</Badge>
+            ) : null}
+            {awayToday ? <Badge>Away today</Badge> : null}
+            {isAvailableNowLive(caregiver.availableNow, blockedKeys, caregiver.weeklyWindows ?? []) ? (
+              <Badge>Available now</Badge>
+            ) : null}
+            <span className="text-xs text-stone-500">{lastActiveLabel(caregiver.lastActiveAt)}</span>
+            {caregiver.reviewCount > 0 ? (
+              <span className="text-xs text-stone-600">
+                {caregiver.ratingAvg.toFixed(1)} ★ · {caregiver.reviewCount} reviews · {caregiver.yearsExperience} yrs
+              </span>
+            ) : (
+              <span className="text-xs text-stone-600">{caregiver.yearsExperience} yrs experience</span>
+            )}
+          </div>
+          {neededOn ? (
+            <p className="mt-3 text-sm">
+              <Link
+                href={bookHref(caregiver.slug, { start: neededOn, at: neededAt, job })}
+                className="font-medium text-teal"
+              >
+                Book on {formatDate(parseSydneyDateTimeLocal(`${neededOn}T${neededAt ?? "17:00"}`))}
+              </Link>
+            </p>
+          ) : null}
+          {invite ? (
+            <div className="mt-3">
+              <InviteButton
+                caregiverId={caregiver.id}
+                jobSlug={invite.jobSlug}
+                job={invite.job}
+                familyId={invite.familyId}
+                existing={invite.existing}
+                proposed={invite.proposed}
+                next={invite.next}
+                signedIn={invite.signedIn}
+                compact
+              />
+            </div>
+          ) : null}
+          {shortlist ? (
+            <div className="mt-3">
+              <ShortlistButton
+                caregiverId={caregiver.id}
+                saved={shortlist.saved}
+                signedIn={shortlist.signedIn}
+                next={shortlist.next}
+                compact
+              />
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </article>
+  );
+}

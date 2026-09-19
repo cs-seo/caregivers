@@ -1,0 +1,183 @@
+import Link from "next/link";
+import { AttachJobBanner } from "@/components/attach-job-banner";
+import { Badge } from "@/components/badges";
+import { createBookingAction } from "@/lib/actions";
+import { bookingSubmitLinks, bookingSubmitNotice } from "@/lib/booking-submit";
+import { BOOKING_OCCASIONS } from "@/lib/constants";
+import { formatAud, quoteBooking, quoteDaySit, quoteOvernightSit, quoteWeeklySeries } from "@/lib/money";
+
+export function BookingForm({
+  slug,
+  specialties,
+  hourlyRateCents,
+  instantBook,
+  defaultStart,
+  job,
+  jobFit,
+}: {
+  slug: string;
+  specialties: { id: string; name: string }[];
+  hourlyRateCents: number;
+  instantBook: boolean;
+  defaultStart?: string;
+  job?: { slug: string; title: string; specialtyId: string } | null;
+  jobFit?: { fit: boolean; label: string; notice: string } | null;
+}) {
+  const sample = quoteBooking(hourlyRateCents, 4);
+  const day = quoteDaySit(hourlyRateCents);
+  const overnight = quoteOvernightSit(hourlyRateCents);
+  const fourWeeks = quoteWeeklySeries(hourlyRateCents, 4, 4);
+  const childCare = specialties.some((item) =>
+    ["Babysitter", "Nanny", "After-school care"].includes(item.name),
+  );
+
+  return (
+    <form action={createBookingAction} className="space-y-4">
+      <input type="hidden" name="slug" value={slug} />
+      {job ? (
+        <>
+          <input type="hidden" name="job" value={job.slug} />
+          <AttachJobBanner
+            title={job.title}
+            surface="book"
+            className="rounded-xl border border-teal/25 bg-sage px-3 py-2 text-sm text-ink"
+          />
+          {jobFit ? (
+            <p className="text-sm text-stone-600">
+              <Badge tone={jobFit.fit ? "teal" : "stone"}>{jobFit.label}</Badge>
+              <span className="ml-2">{jobFit.notice}</span>
+            </p>
+          ) : null}
+        </>
+      ) : null}
+      <label className="block text-sm">
+        <span className="font-medium text-stone-700">Care type</span>
+        <select
+          name="specialtyId"
+          required
+          defaultValue={job?.specialtyId}
+          className="mt-1 w-full rounded-xl border border-line px-3 py-2.5"
+        >
+          {specialties.map((specialty) => (
+            <option key={specialty.id} value={specialty.id}>
+              {specialty.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      {childCare ? (
+        <>
+          <label className="block text-sm">
+            <span className="font-medium text-stone-700">Occasion</span>
+            <select name="occasion" className="mt-1 w-full rounded-xl border border-line px-3 py-2.5">
+              {BOOKING_OCCASIONS.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block text-sm">
+            <span className="font-medium text-stone-700">Children</span>
+            <select name="children" className="mt-1 w-full rounded-xl border border-line px-3 py-2.5">
+              {["1", "2", "3", "4+"].map((count) => (
+                <option key={count} value={count}>
+                  {count}
+                </option>
+              ))}
+            </select>
+            <span className="mt-1 block text-xs text-stone-500">
+              No extra per sibling. The hourly rate stays the same for the household.
+            </span>
+          </label>
+        </>
+      ) : null}
+      <label className="block text-sm">
+        <span className="font-medium text-stone-700">Start</span>
+        <input
+          type="datetime-local"
+          name="startAt"
+          required
+          defaultValue={defaultStart}
+          className="mt-1 w-full rounded-xl border border-line px-3 py-2.5"
+        />
+      </label>
+      <label className="block text-sm">
+        <span className="font-medium text-stone-700">Repeat weekly</span>
+        <select name="weeks" defaultValue="1" className="mt-1 w-full rounded-xl border border-line px-3 py-2.5">
+          <option value="1">One-off sit</option>
+          <option value="2">2 weeks</option>
+          <option value="4">4 weeks</option>
+          <option value="6">6 weeks</option>
+          <option value="8">8 weeks</option>
+          <option value="12">12 weeks</option>
+        </select>
+        <span className="mt-1 block text-xs text-stone-500">
+          Each week is its own escrow booking. Cancel or dispute one week without touching the others.
+        </span>
+      </label>
+      <label className="block text-sm">
+        <span className="font-medium text-stone-700">Hours</span>
+        <input
+          type="number"
+          name="hours"
+          min={1}
+          max={24}
+          step={0.5}
+          defaultValue={4}
+          required
+          className="mt-1 w-full rounded-xl border border-line px-3 py-2.5"
+        />
+      </label>
+      <label className="block text-sm">
+        <span className="font-medium text-stone-700">Notes for the carer</span>
+        <textarea
+          name="notes"
+          rows={4}
+          placeholder="Who the care is for, access, routines, allergies, parking..."
+          className="mt-1 w-full rounded-xl border border-line px-3 py-2.5"
+        />
+      </label>
+      <div className="rounded-xl bg-sage/60 p-4 text-sm">
+        <p className="font-medium text-teal-deep">Example quotes at this rate</p>
+        <ul className="mt-2 space-y-1 text-stone-700">
+          <li className="flex justify-between">
+            <span>4-hour evening</span>
+            <span>{formatAud(sample.totalCents)} into escrow</span>
+          </li>
+          <li className="flex justify-between">
+            <span>Weekday day sit (8 hrs)</span>
+            <span>{formatAud(day.totalCents)}</span>
+          </li>
+          <li className="flex justify-between">
+            <span>Overnight (10 hrs)</span>
+            <span>{formatAud(overnight.totalCents)}</span>
+          </li>
+          <li className="flex justify-between">
+            <span>4 standing Fridays (4 hrs each)</span>
+            <span>{formatAud(fourWeeks.seriesTotalCents)}</span>
+          </li>
+        </ul>
+        <p className="mt-2 text-xs text-stone-600">
+          Rate includes GST. CareProof adds 10% on top and holds the total until you confirm. Sits that run after
+          midnight should be agreed in the notes — some sitters add an after-midnight rate.
+        </p>
+      </div>
+      <div className="rounded-xl bg-sage p-3 text-sm">
+        <p>{bookingSubmitNotice({ instantBook })}</p>
+        <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+          {bookingSubmitLinks({ caregiverSlug: slug }).map((link) => (
+            <li key={link.href}>
+              <Link href={link.href} className="font-medium text-teal hover:underline">
+                {link.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <button type="submit" className="w-full rounded-xl bg-teal py-3 font-semibold text-white hover:bg-teal-deep">
+        {instantBook ? "Book and pay into escrow" : "Request to book"}
+      </button>
+    </form>
+  );
+}
